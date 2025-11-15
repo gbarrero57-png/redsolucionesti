@@ -1,94 +1,232 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RedSoluciones TI</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedSoluciones TI - Flyer Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        /* 1. Dark Mode Base y Tipografía */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a1a; /* Deep Blue-Black para un look profesional */
+            color: #e5e7eb; /* Light Gray text por defecto */
+            transition: background-color 0.5s;
+        }
+        
+        /* Color primario: Azul Eléctrico (Tailwind Blue-500) */
+        .color-primary { background-color: #3b82f6; }
+        .text-primary { color: #3b82f6; }
+        .border-primary { border-color: #3b82f6; }
+
+        /* 2. Enhanced Tech Pattern Background (Circuit Lines) */
+        .tech-pattern-bg {
+            background-color: #111827; /* Dark Gray/Black */
+            /* Líneas de circuito sutiles y futuristas */
+            background-image: linear-gradient(0deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            box-shadow: 0 0 50px rgba(59, 130, 246, 0.3) inset; /* Sutil brillo interior */
+        }
+
+        /* Estilo para la imagen de fondo */
+        .cover-image {
+            background-image: url('https://images.unsplash.com/photo-1581090700227-4c4e1b9c7aeb?auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.7) contrast(1.1); /* Oscurecer y contrastar para Dark Mode */
+        }
+
+        /* Estilo para el fondo de la oferta de temporada */
+        .seasonal-offer-bg {
+            background-color: #000;
+            background-image: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+        }
+
+        /* 3. Movement Effects (Keyframes) */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.6), 0 0 5px rgba(59, 130, 246, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 10px rgba(59, 130, 246, 0.6); }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite alternate;
+        }
+
+        /* Hover para tarjetas en Dark Mode */
+        .card-hover:hover {
+            background-color: #1f2937 !important; /* gray-800 */
+        }
+    </style>
 </head>
-<body class="bg-gray-900 text-white">
+<body class="antialiased">
 
-  <!-- Banner Principal -->
-  <header class="p-6 rounded-lg shadow-xl bg-gradient-to-r from-blue-900 to-blue-700">
-    <h1 class="text-3xl font-bold text-blue-400 flex items-center">
-      <span class="mr-2">🔧</span> RedSoluciones TI
-    </h1>
-    <h2 class="text-5xl font-extrabold text-blue-300 mt-4">Oficina Moderna Digital</h2>
-    <p class="mt-4 text-lg text-gray-300">
-      Transforma tu espacio de trabajo y potencia tu productividad con soluciones inteligentes.
-    </p>
+    <!-- Contenedor principal del Flyer -->
+    <div class="max-w-3xl mx-auto shadow-2xl bg-gray-900">
 
-    <!-- Imagen del banner -->
-    <div class="mt-6 animate-fadeInUp" style="animation-delay: 0.4s;">
-      <img 
-        src="https://images.unsplash.com/photo-1581090700227-4c4e1b9c7aeb?auto=format&fit=crop&w=1200&q=80" 
-        alt="Oficina moderna" 
-        class="rounded-lg shadow-xl opacity-90 w-full h-48 object-cover">
-    </div>
-  </header>
+        <!-- Página 1: Portada (Dark Pattern) -->
+        <section class="tech-pattern-bg text-white p-8 md:p-12 h-[600px] flex flex-col justify-between rounded-t-xl">
+            <!-- Logo y Eslogan -->
+            <div class="flex items-center space-x-3 mb-10 animate-fadeInUp">
+                <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
+                <span class="text-3xl font-extrabold tracking-tight text-white">RedSoluciones TI</span>
+            </div>
 
-  <!-- Oferta destacada -->
-  <div class="bg-blue-800 p-4 rounded-lg mt-6 shadow-lg">
-    <p class="text-lg font-semibold">
-      🚀 Oferta exclusiva: Implementa tu oficina digital hoy y obtén 
-      <span class="text-yellow-400">50% de descuento</span> en el primer mes.
-    </p>
-    <p class="text-sm text-gray-200">
-      Incluye instalación, configuración y capacitación personalizada.
-    </p>
-  </div>
+            <!-- Contenido Principal -->
+            <div class="flex-grow flex flex-col justify-center">
+                <h1 class="text-5xl md:text-6xl font-black mb-4 leading-tight text-sky-400 animate-fadeInUp">
+                    Automatiza. Ahorra. Evoluciona.
+                </h1>
+                <p class="text-xl md:text-2xl font-light max-w-lg mb-8 text-gray-300 animate-fadeInUp" style="animation-delay: 0.2s;">
+                    Optimizamos tu empresa con inteligencia artificial y automatización avanzada.
+                </p>
+                <!-- Placeholder de Imagen -->
+                <div class="cover-image h-48 w-full rounded-lg shadow-xl opacity-90 mt-6 animate-fadeInUp" style="animation-delay: 0.4s;" role="img" aria-label="Imagen de una oficina moderna con pantallas digitales."></div>
+            </div>
+            
+            <div class="bg-sky-900 p-4 rounded-lg shadow-lg mt-6 animate-fadeInUp" style="animation-delay: 0.6s;">
+                <p class="text-lg text-center font-bold text-white">
+                    🚀 Oferta exclusiva: Implementa tu oficina digital hoy y obtén <span class="text-yellow-400">50% de descuento</span> en el primer mes.
+                </p>
+                <p class="text-center text-gray-300 mt-2 text-sm">Incluye instalación, configuración y capacitación personalizada.</p>
+            </div>
+            
+            <div class="text-right text-xs text-gray-500 mt-4">PÁGINA 1/6</div>
+        </section>
 
-  <!-- Sección de planes -->
-  <section class="mt-10">
-    <h3 class="text-3xl font-bold text-blue-400 mb-6 border-b border-blue-500">Nuestros Planes</h3>
-    <div class="grid md:grid-cols-3 gap-6">
-      
-      <!-- Plan Básico -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:scale-105 transform transition">
-        <h4 class="text-2xl font-bold text-blue-300">Plan Básico</h4>
-        <p class="mt-2 text-gray-400">Ideal para pequeñas empresas y emprendimientos.</p>
-        <ul class="mt-4 text-gray-300 list-disc list-inside">
-          <li>Configuración inicial</li>
-          <li>Correo corporativo</li>
-          <li>Soporte básico</li>
-        </ul>
-        <p class="mt-4 text-xl font-bold text-yellow-400">$99/mes</p>
-      </div>
+        <!-- Página 2: Presentación (Dark Background) -->
+        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700 animate-fadeInUp">
+            <h2 class="text-4xl font-bold text-white mb-6 border-b-4 border-primary pb-2 inline-block">¿Quiénes somos?</h2>
+            <div class="flex flex-col md:flex-row items-start space-y-6 md:space-y-0 md:space-x-8">
+                <p class="text-lg text-gray-300 md:w-2/3">
+                    Somos una empresa especializada en soluciones tecnológicas que ayudan a pequeñas y medianas empresas a ahorrar tiempo, reducir costos y escalar su productividad mediante la automatización de tareas repetitivas y la implementación de sistemas inteligentes.
+                </p>
+                <div class="md:w-1/3 p-4 bg-gray-800 rounded-lg shadow-inner flex flex-col items-center justify-center border border-gray-700">
+                    <svg class="w-10 h-10 text-sky-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <p class="text-sm font-semibold text-gray-200">Enfocados en eficiencia y crecimiento sostenible.</p>
+                </div>
+            </div>
+            <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 2/6</div>
+        </section>
 
-      <!-- Plan Profesional -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:scale-105 transform transition border-2 border-blue-500">
-        <h4 class="text-2xl font-bold text-blue-300">Plan Profesional</h4>
-        <p class="mt-2 text-gray-400">Para empresas que buscan optimizar sus flujos de trabajo.</p>
-        <ul class="mt-4 text-gray-300 list-disc list-inside">
-          <li>Todo del Plan Básico</li>
-          <li>Integración con herramientas de productividad</li>
-          <li>Soporte prioritario</li>
-        </ul>
-        <p class="mt-4 text-xl font-bold text-yellow-400">$199/mes</p>
-      </div>
+        <!-- Página 3: Servicios (Dark Background) -->
+        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
+            <h2 class="text-4xl font-bold text-white mb-8 text-center animate-fadeInUp">Soluciones Inteligentes</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- Servicio 1: Automatización -->
+                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp">
+                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10l3-3m3 3V7l3 3m3-3v10l3-3"></path></svg>
+                    </span>
+                    <div>
+                        <h3 class="text-xl font-semibold text-white">Automatización de Procesos Empresariales</h3>
+                        <p class="text-gray-400 text-sm">Elimina tareas repetitivas y optimiza flujos de trabajo clave.</p>
+                    </div>
+                </div>
 
-      <!-- Plan Premium -->
-      <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:scale-105 transform transition">
-        <h4 class="text-2xl font-bold text-blue-300">Plan Premium</h4>
-        <p class="mt-2 text-gray-400">Solución integral para grandes empresas.</p>
-        <ul class="mt-4 text-gray-300 list-disc list-inside">
-          <li>Todo del Plan Profesional</li>
-          <li>Desarrollo de soluciones a medida</li>
-          <li>Consultoría continua</li>
-        </ul>
-        <p class="mt-4 text-xl font-bold text-yellow-400">$299/mes</p>
-      </div>
+                <!-- Servicio 2: Bots de WhatsApp -->
+                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.1s;">
+                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    </span>
+                    <div>
+                        <h3 class="text-xl font-semibold text-white">Bots de WhatsApp Personalizados</h3>
+                        <p class="text-gray-400 text-sm">Atención al cliente 24/7 y generación de leads automáticos.</p>
+                    </div>
+                </div>
 
-    </div>
-  </section>
+                <!-- Servicio 3: Integración IA -->
+                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.2s;">
+                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
+                    </span>
+                    <div>
+                        <h3 class="text-xl font-semibold text-white">Integración de Inteligencia Artificial</h3>
+                        <p class="text-gray-400 text-sm">Análisis predictivo, clasificación de datos y asistentes virtuales.</p>
+                    </div>
+                </div>
 
-  <!-- Pie de página -->
-  <footer class="text-center py-6 text-gray-400 mt-10 border-t border-gray-700">
-    &copy; 2025 RedSoluciones TI - Todos los derechos reservados.
-  </footer>
+                <!-- Servicio 4: Soporte Técnico -->
+                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.3s;">
+                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
+                    </span>
+                    <div>
+                        <h3 class="text-xl font-semibold text-white">Soporte Técnico (Remoto y Presencial)</h3>
+                        <p class="text-gray-400 text-sm">Asistencia profesional rápida para empresas y hogares.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 3/6</div>
+        </section>
 
-</body>
-</html>
+        <!-- Página 4: Ofertas de Temporada (Black Friday) -->
+        <section class="seasonal-offer-bg p-8 md:p-12 border-b border-gray-700">
+            <h2 class="text-4xl font-black text-sky-400 mb-4 text-center animate-pulse">
+                🔥 Ofertas de Temporada: Black Friday Tech 🔥
+            </h2>
+            <div class="bg-indigo-900 p-6 md:p-10 rounded-2xl border border-sky-400 shadow-2xl animate-pulse-glow">
+                <p class="text-2xl md:text-4xl font-extrabold text-center mb-4 text-white">
+                    Automatiza tu negocio con hasta <span class="text-red-400">40% de descuento</span> en planes de integración IA.
+                </p>
+                <div class="h-1 w-20 bg-sky-400 mx-auto my-6 rounded-full"></div>
+                <p class="text-lg font-light text-center text-gray-300">
+                    Válido solo por tiempo limitado. Incluye configuración, entrenamiento y soporte personalizado durante el primer mes. ¡Máximo ahorro, máxima evolución!
+                </p>
+            </div>
+            <div class="text-right text-xs text-gray-600 mt-6">PÁGINA 4/6</div>
+        </section>
 
+        <!-- Página 5: Paquetes de Descuento y Gemini Feature (Dark Background) -->
+        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
+            <h2 class="text-4xl font-bold text-white mb-8 text-center animate-fadeInUp">Planes Mensuales Inteligentes</h2>
+
+            
+            <!-- Cards de Paquetes -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Plan Start -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center text-center card-hover animate-fadeInUp" style="animation-delay: 0.2s;">
+                    <h3 class="text-2xl font-bold text-white mb-2">Plan Start</h3>
+                    <p class="text-sm text-gray-400 mb-4">El inicio de la eficiencia</p>
+                    <ul class="text-left space-y-2 text-gray-300 w-full mb-6">
+                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Automatización básica (2 flujos)</li>
+                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Soporte remoto 24/7</li>
+                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Reporte de rendimiento semanal</li>
+                    </ul>
+                    <a href="#demo" class="mt-auto w-full py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition duration-300 shadow-md">
+                        Ver Precios
+                    </a>
+                </div>
+
+                <!-- Plan Pro (Destacado) -->
+                <div class="color-primary p-6 rounded-xl shadow-xl border-4 border-sky-300 flex flex-col items-center text-center transform scale-105 animate-pulse-glow" style="animation-delay: 0.3s;">
+                    <h3 class="text-3xl font-bold text-white mb-2">Plan Pro</h3>
+                    <p class="text-sm text-sky-200 mb-4">Potencia y crecimiento garantizado</p>
+                    <ul class="text-left space-y-2 text-white w-full mb-6">
+                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Integración avanzada (5 flujos)</li>
+                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Mantenimiento mensual preventivo</li>
+                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Bot de WhatsApp básico</li>
+                    </ul>
+                    <a href="#demo" class="mt-auto w-full py-3 bg-sky-400 text-gray-900 font-black rounded-lg hover:bg-sky-500 transition duration-300 shadow-lg">
+                        ¡El más popular!
+                    </a>
+                </div>
+
+                <!-- Plan Elite -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center text-center card-hover animate-
 
 
