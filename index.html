@@ -3,230 +3,485 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RedSoluciones TI - Flyer Digital</title>
+    <title>RedSoluciones TI | Automatización IA y Soporte Técnico 24/7 en Lima</title>
+    <!-- Carga de Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        
-        /* 1. Dark Mode Base y Tipografía */
+        /* Definiciones de color y fuente */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0a0a1a; /* Deep Blue-Black para un look profesional */
-            color: #e5e7eb; /* Light Gray text por defecto */
-            transition: background-color 0.5s;
+            background-color: #0c101c; /* Negro muy oscuro (Deep Navy) */
+            color: #E2E8F0; /* Gris claro */
+            scroll-behavior: smooth;
         }
+        .text-ti-blue { color: #3b82f6; } /* Azul Eléctrico (Blue-500) */
+        .bg-ti-dark { background-color: #1a202c; } /* Gris oscuro para tarjetas (Dark Slate) */
+        .bg-ti-dark-bg { background-color: #0c101c; }
         
-        /* Color primario: Azul Eléctrico (Tailwind Blue-500) */
-        .color-primary { background-color: #3b82f6; }
-        .text-primary { color: #3b82f6; }
-        .border-primary { border-color: #3b82f6; }
-
-        /* 2. Enhanced Tech Pattern Background (Circuit Lines) */
-        .tech-pattern-bg {
-            background-color: #111827; /* Dark Gray/Black */
-            /* Líneas de circuito sutiles y futuristas */
-            background-image: linear-gradient(0deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-            box-shadow: 0 0 50px rgba(59, 130, 246, 0.3) inset; /* Sutil brillo interior */
+        /* Efecto de brillo para CTAs */
+        .cta-glow {
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); 
+            transition: all 0.3s ease;
+        }
+        .cta-glow:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+            transform: translateY(-2px);
         }
 
-        /* Estilo para la imagen de fondo */
-        .cover-image {
-            background-image: url('https://images.unsplash.com/photo-1581090700227-4c4e1b9c7aeb?auto=format&fit=crop&w=1200&q=80');
-            background-size: cover;
-            background-position: center;
-            filter: brightness(0.7) contrast(1.1); /* Oscurecer y contrastar para Dark Mode */
+        /* Estilo para el fondo del hero con sutil degradado */
+        .hero-bg {
+            background: radial-gradient(circle at top center, #1a202c 0%, #0c101c 70%);
         }
 
-        /* Estilo para el fondo de la oferta de temporada */
-        .seasonal-offer-bg {
-            background-color: #000;
-            background-image: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
+        /* BANNER ANIMADO */
+        .animated-banner-bg {
+            background: linear-gradient(90deg, #1E3A8A, #3B82F6, #1E3A8A); /* Azul oscuro a Azul Eléctrico */
+            background-size: 200% 100%;
+            animation: gradient-shift 10s ease infinite alternate;
+        }
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
 
-        /* 3. Movement Effects (Keyframes) */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Botón fijo de WhatsApp */
+        .whatsapp-fixed {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .whatsapp-fixed:hover {
+            transform: scale(1.1);
         }
 
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.6), 0 0 5px rgba(59, 130, 246, 0.4); }
-            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 10px rgba(59, 130, 246, 0.6); }
+        /* Inputs y Textareas */
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #3B82F6;
+            background-color: #1a202c;
+            color: #E2E8F0;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #60A5FA;
+            box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
         }
 
-        .animate-fadeInUp {
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .animate-pulse-glow {
-            animation: pulse-glow 2s infinite alternate;
-        }
-
-        /* Hover para tarjetas en Dark Mode */
-        .card-hover:hover {
-            background-color: #1f2937 !important; /* gray-800 */
-        }
     </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'ti-blue': '#3B82F6', 
+                        'ti-dark-bg': '#0c101c',
+                        'ti-card': '#1a202c',
+                    }
+                }
+            }
+        }
+
+        /* Lógica simple para el menú mobile (Toggle Class) */
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
 </head>
-<body class="antialiased">
+<body class="bg-ti-dark-bg">
 
-    <!-- Contenedor principal del Flyer -->
-    <div class="max-w-3xl mx-auto shadow-2xl bg-gray-900">
+    <!-- WhatsApp Button Fijo -->
+    <a href="https://wa.me/51905858566" target="_blank" class="whatsapp-fixed bg-green-500 rounded-full p-3 shadow-xl">
+        <!-- SVG Icono de WhatsApp -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12c0 3.328 1.583 6.307 4.095 8.16l-.723 2.628 2.7-.732A10.038 10.038 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm3.328 14.88c-.147.195-.494.342-.84.44c-.347.098-.718.147-1.113.147-1.284 0-2.568-.392-3.69-.979a7.35 7.35 0 0 1-2.73-2.731c-.587-1.122-.979-2.406-.979-3.69 0-.395.049-.766.147-1.113.098-.347.245-.694.44-.84l.63-.44c.195-.147.469-.208.723-.153l1.113.294c.254.055.518.016.74-.117l.84-.44c.222-.122.378-.345.417-.597l.147-.84c.039-.252-.02-.506-.153-.74l-.44-.84c-.133-.234-.147-.468-.048-.718l.294-1.113c.1-.371.347-.694.63-.889l.84-.44c.283-.147.606-.147.889 0l.44.84c.147.195.345.342.597.417l.84.147c.252.039.506-.02.74-.153l.84-.44c.234-.133.468-.147.718-.048l1.113.294c.371.1.694.347.889.63l.44.84c.147.283.147.606 0 .889l-.84.44c-.195.147-.342.345-.417.597l-.147.84c-.039.252.02.506.153.74l.44.84c.133.234.147.468.048.718l-.294 1.113c-.1.371-.347.694-.63.889l-.84.44c-.283.147-.606.147-.889 0z"/></svg>
+    </a>
 
-        <!-- Página 1: Portada (Dark Pattern) -->
-        <section class="tech-pattern-bg text-white p-8 md:p-12 h-[600px] flex flex-col justify-between rounded-t-xl">
-            <!-- Logo y Eslogan -->
-            <div class="flex items-center space-x-3 mb-10 animate-fadeInUp">
-                <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
-                <span class="text-3xl font-extrabold tracking-tight text-white">RedSoluciones TI</span>
-            </div>
+    <!-- 1. Header & Navigation -->
+    <header class="sticky top-0 z-50 bg-ti-dark-bg bg-opacity-95 backdrop-blur-sm shadow-lg border-b border-ti-card">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center max-w-7xl">
+            <!-- Logo (Texto) -->
+            <a href="#" class="text-2xl font-extrabold text-ti-blue tracking-wide hover:opacity-80 transition duration-200">
+                RedSoluciones TI
+            </a>
 
-            <!-- Contenido Principal -->
-            <div class="flex-grow flex flex-col justify-center">
-                <h1 class="text-5xl md:text-6xl font-black mb-4 leading-tight text-sky-400 animate-fadeInUp">
-                    Automatiza. Ahorra. Evoluciona.
-                </h1>
-                <p class="text-xl md:text-2xl font-light max-w-lg mb-8 text-gray-300 animate-fadeInUp" style="animation-delay: 0.2s;">
-                    Optimizamos tu empresa con inteligencia artificial y automatización avanzada.
-                </p>
-                <!-- Placeholder de Imagen -->
-                <div class="cover-image h-48 w-full rounded-lg shadow-xl opacity-90 mt-6 animate-fadeInUp" style="animation-delay: 0.4s;" role="img" aria-label="Imagen de una oficina moderna con pantallas digitales."></div>
-            </div>
-            
-            <div class="bg-sky-900 p-4 rounded-lg shadow-lg mt-6 animate-fadeInUp" style="animation-delay: 0.6s;">
-                <p class="text-lg text-center font-bold text-white">
-                    🚀 Oferta exclusiva: Implementa tu oficina digital hoy y obtén <span class="text-yellow-400">50% de descuento</span> en el primer mes.
-                </p>
-                <p class="text-center text-gray-300 mt-2 text-sm">Incluye instalación, configuración y capacitación personalizada.</p>
-            </div>
-            
-            <div class="text-right text-xs text-gray-500 mt-4">PÁGINA 1/6</div>
-        </section>
+            <!-- Desktop Menu -->
+            <nav class="hidden md:flex space-x-8 font-medium">
+                <a href="#servicios" class="text-gray-300 hover:text-ti-blue transition duration-200">Servicios</a>
+                <a href="#beneficios" class="text-gray-300 hover:text-ti-blue transition duration-200">Propuesta</a>
+                <a href="#valor" class="text-gray-300 hover:text-ti-blue transition duration-200">IA & Valor</a>
+                <a href="#planes" class="text-gray-300 hover:text-ti-blue transition duration-200">Planes</a>
+                <a href="#contacto" class="bg-ti-blue text-white px-4 py-2 rounded-lg font-semibold cta-glow text-sm">Agenda una llamada</a>
+            </nav>
 
-        <!-- Página 2: Presentación (Dark Background) -->
-        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700 animate-fadeInUp">
-            <h2 class="text-4xl font-bold text-white mb-6 border-b-4 border-primary pb-2 inline-block">¿Quiénes somos?</h2>
-            <div class="flex flex-col md:flex-row items-start space-y-6 md:space-y-0 md:space-x-8">
-                <p class="text-lg text-gray-300 md:w-2/3">
-                    Somos una empresa especializada en soluciones tecnológicas que ayudan a pequeñas y medianas empresas a ahorrar tiempo, reducir costos y escalar su productividad mediante la automatización de tareas repetitivas y la implementación de sistemas inteligentes.
-                </p>
-                <div class="md:w-1/3 p-4 bg-gray-800 rounded-lg shadow-inner flex flex-col items-center justify-center border border-gray-700">
-                    <svg class="w-10 h-10 text-sky-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    <p class="text-sm font-semibold text-gray-200">Enfocados en eficiencia y crecimiento sostenible.</p>
+            <!-- Mobile Menu Button (Hamburger) -->
+            <button class="md:hidden p-2 text-ti-blue" onclick="toggleMenu()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu Dropdown -->
+        <nav id="mobile-menu" class="hidden md:hidden px-4 pt-2 pb-4 space-y-2 bg-ti-dark-bg border-t border-ti-card">
+            <a href="#servicios" class="block text-gray-300 hover:text-ti-blue transition duration-200 py-2">Servicios</a>
+            <a href="#beneficios" class="block text-gray-300 hover:text-ti-blue transition duration-200 py-2">Propuesta de Valor</a>
+            <a href="#valor" class="block text-gray-300 hover:text-ti-blue transition duration-200 py-2">IA y Valor</a>
+            <a href="#planes" class="block text-gray-300 hover:text-ti-blue transition duration-200 py-2">Planes</a>
+            <a href="#contacto" class="block bg-ti-blue text-white px-4 py-2 rounded-lg font-semibold cta-glow text-sm text-center">Agenda una llamada</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- 2. Hero Section -->
+        <section class="pt-20 lg:pt-32 pb-16 hero-bg">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-center max-w-7xl">
+                <!-- Contenido de Texto -->
+                <div class="space-y-6">
+                    <span class="text-sm font-semibold uppercase tracking-widest text-ti-blue">
+                        Lima, Perú | Soporte y Automatización
+                    </span>
+                    <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight text-white">
+                        <span class="text-ti-blue">IA 24/7</span> y Soluciones TI que <span class="underline decoration-ti-blue/50">Nunca Duermen</span>
+                    </h1>
+                    <p class="text-xl sm:text-2xl text-gray-400 font-light">
+                        "Automatizamos tu negocio con IA para que ganes tiempo y dinero."
+                    </p>
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pt-4">
+                        <a href="#contacto" class="bg-ti-blue text-white font-bold py-3 px-8 rounded-xl text-lg cta-glow text-center">
+                            Agenda una llamada
+                        </a>
+                        <a href="https://wa.me/51905858566" target="_blank" class="bg-green-600 text-white font-bold py-3 px-8 rounded-xl text-lg hover:bg-green-700 transition duration-200 text-center">
+                            Hablar por WhatsApp
+                        </a>
+                    </div>
                 </div>
-            </div>
-            <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 2/6</div>
-        </section>
-
-        <!-- Página 3: Servicios (Dark Background) -->
-        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-bold text-white mb-8 text-center animate-fadeInUp">Soluciones Inteligentes</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
-                <!-- Servicio 1: Automatización -->
-                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp">
-                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10l3-3m3 3V7l3 3m3-3v10l3-3"></path></svg>
-                    </span>
-                    <div>
-                        <h3 class="text-xl font-semibold text-white">Automatización de Procesos Empresariales</h3>
-                        <p class="text-gray-400 text-sm">Elimina tareas repetitivas y optimiza flujos de trabajo clave.</p>
-                    </div>
+                <!-- Ilustración Tecnológica (Placeholder Profesional) -->
+                <div class="hidden md:block">
+                    [Image of Technological blue circuit board]
+                    <img 
+                        src="https://images.pexels.com/photos/3861972/pexels-photo-3861972.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=600" 
+                        alt="Ilustración tecnológica de un sistema de IA funcionando 24/7" 
+                        class="w-full rounded-2xl shadow-2xl opacity-90 border border-ti-blue/50 transform hover:scale-[1.02] transition duration-500 object-cover h-96"
+                        onerror="this.src='https://placehold.co/600x450/1a202c/3B82F6?text=IA+System+24/7'">
                 </div>
+            </div>
+        </section>
 
-                <!-- Servicio 2: Bots de WhatsApp -->
-                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.1s;">
-                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                    </span>
-                    <div>
-                        <h3 class="text-xl font-semibold text-white">Bots de WhatsApp Personalizados</h3>
-                        <p class="text-gray-400 text-sm">Atención al cliente 24/7 y generación de leads automáticos.</p>
+        <!-- 2.5 BANNER LLAMATIVO CON MOVIMIENTO Y TEXTO INTRODUCTORIO -->
+        <section class="py-6 animated-banner-bg shadow-2xl">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-7xl">
+                <p class="text-sm sm:text-lg font-normal text-white mb-2 opacity-80">
+                    RedSoluciones TI es el socio que tu negocio local en Lima necesita.
+                </p>
+                <h3 class="text-xl sm:text-3xl font-extrabold text-white tracking-widest uppercase">
+                    LA EFICIENCIA YA NO ES UN LUJO, ES UNA AUTOMATIZACIÓN.
+                </h3>
+            </div>
+        </section>
+
+        <!-- 3. Sección de Servicios - Tarjetas Modernas -->
+        <section id="servicios" class="py-16 lg:py-24 bg-ti-card border-y border-ti-blue/20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-7xl">
+                <h2 class="text-4xl font-bold text-white mb-4">Servicios Diseñados para Negocios Locales</h2>
+                <p class="text-xl text-gray-400 mb-12 max-w-4xl mx-auto">
+                    Nuestra propuesta: Tecnología de punta con la atención personalizada que tu negocio en Lima necesita.
+                </p>
+
+                <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                    
+                    <!-- Servicio 1: Automatización de Procesos con IA -->
+                    <div class="p-5 rounded-xl bg-ti-dark-bg border border-ti-blue/30 shadow-lg space-y-3 hover:border-ti-blue transform hover:scale-[1.05] transition duration-300">
+                        <div class="text-4xl text-ti-blue">🤖</div>
+                        <h3 class="text-lg font-semibold text-white">Automatización con IA</h3>
+                        <p class="text-gray-400 text-sm">Delegación inteligente de tareas repetitivas para máxima eficiencia.</p>
                     </div>
-                </div>
 
-                <!-- Servicio 3: Integración IA -->
-                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.2s;">
-                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
-                    </span>
-                    <div>
-                        <h3 class="text-xl font-semibold text-white">Integración de Inteligencia Artificial</h3>
-                        <p class="text-gray-400 text-sm">Análisis predictivo, clasificación de datos y asistentes virtuales.</p>
+                    <!-- Servicio 2: Soporte Técnico 24/7 -->
+                    <div class="p-5 rounded-xl bg-ti-dark-bg border border-ti-blue/30 shadow-lg space-y-3 hover:border-ti-blue transform hover:scale-[1.05] transition duration-300">
+                        <div class="text-4xl text-ti-blue">📞</div>
+                        <h3 class="text-lg font-semibold text-white">Soporte Técnico 24/7</h3>
+                        <p class="text-gray-400 text-sm">Asistencia Nivel 1, siempre disponible. Mantenemos tu operación en marcha.</p>
                     </div>
-                </div>
 
-                <!-- Servicio 4: Soporte Técnico -->
-                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.3s;">
-                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
-                    </span>
-                    <div>
-                        <h3 class="text-xl font-semibold text-white">Soporte Técnico (Remoto y Presencial)</h3>
-                        <p class="text-gray-400 text-sm">Asistencia profesional rápida para empresas y hogares.</p>
+                    <!-- Servicio 3: Integraciones entre sistemas -->
+                    <div class="p-5 rounded-xl bg-ti-dark-bg border border-ti-blue/30 shadow-lg space-y-3 hover:border-ti-blue transform hover:scale-[1.05] transition duration-300">
+                        <div class="text-4xl text-ti-blue">🔗</div>
+                        <h3 class="text-lg font-semibold text-white">Integraciones de Plataformas</h3>
+                        <p class="text-gray-400 text-sm">Conectamos tus CRMs, ERPs y herramientas para un flujo de datos único.</p>
+                    </div>
+
+                    <!-- Servicio 4: Flujos Automatizados (n8n, Make) -->
+                    <div class="p-5 rounded-xl bg-ti-dark-bg border border-ti-blue/30 shadow-lg space-y-3 hover:border-ti-blue transform hover:scale-[1.05] transition duration-300">
+                        <div class="text-4xl text-ti-blue">📐</div>
+                        <h3 class="text-lg font-semibold text-white">Flujos y Workflows</h3>
+                        <p class="text-gray-400 text-sm">Diseño de lógica avanzada con n8n, Make y Zapier para tareas complejas.</p>
+                    </div>
+                    
+                    <!-- Servicio 5: Chatbots Inteligentes -->
+                    <div class="p-5 rounded-xl bg-ti-dark-bg border border-ti-blue/30 shadow-lg space-y-3 hover:border-ti-blue transform hover:scale-[1.05] transition duration-300">
+                        <div class="text-4xl text-ti-blue">💬</div>
+                        <h3 class="text-lg font-semibold text-white">Consultoría de Digitalización</h3>
+                        <p class="text-gray-400 text-sm">Guía estratégica para migrar tus procesos manuales a la nube y la IA.</p>
                     </div>
                 </div>
             </div>
-            <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 3/6</div>
         </section>
 
-        <!-- Página 4: Ofertas de Temporada (Black Friday) -->
-        <section class="seasonal-offer-bg p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-black text-sky-400 mb-4 text-center animate-pulse">
-                🔥 Ofertas de Temporada: Black Friday Tech 🔥
-            </h2>
-            <div class="bg-indigo-900 p-6 md:p-10 rounded-2xl border border-sky-400 shadow-2xl animate-pulse-glow">
-                <p class="text-2xl md:text-4xl font-extrabold text-center mb-4 text-white">
-                    Automatiza tu negocio con hasta <span class="text-red-400">40% de descuento</span> en planes de integración IA.
-                </p>
-                <div class="h-1 w-20 bg-sky-400 mx-auto my-6 rounded-full"></div>
-                <p class="text-lg font-light text-center text-gray-300">
-                    Válido solo por tiempo limitado. Incluye configuración, entrenamiento y soporte personalizado durante el primer mes. ¡Máximo ahorro, máxima evolución!
-                </p>
+        <!-- 4. Sección de Beneficios / Propuesta de Valor -->
+        <section id="beneficios" class="py-16 lg:py-24 bg-ti-dark-bg">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-white mb-4">Nuestra Propuesta de Valor Inigualable</h2>
+                    <p class="text-xl text-gray-400 max-w-4xl mx-auto">
+                        Velocidad, eficiencia y la tranquilidad de saber que tu negocio nunca se detiene.
+                    </p>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    
+                    <!-- Beneficio 1: Rapidez -->
+                    <div class="p-6 bg-ti-card rounded-xl shadow-xl space-y-3 border-t-4 border-ti-blue">
+                        <div class="text-3xl text-ti-blue">⚡️</div>
+                        <h3 class="text-xl font-bold text-white">Atención Rápida 24/7</h3>
+                        <p class="text-gray-400">Nuestro soporte IA te atiende inmediatamente, sin importar la hora o el día.</p>
+                    </div>
+                    
+                    <!-- Beneficio 2: Reducción de Costos -->
+                    <div class="p-6 bg-ti-card rounded-xl shadow-xl space-y-3 border-t-4 border-ti-blue">
+                        <div class="text-3xl text-ti-blue">💵</div>
+                        <h3 class="text-xl font-bold text-white">Optimización de Costos</h3>
+                        <p class="text-gray-400">Automatizar reduce drásticamente los gastos operativos por tareas manuales.</p>
+                    </div>
+                    
+                    <!-- Beneficio 3: Reducción de Errores -->
+                    <div class="p-6 bg-ti-card rounded-xl shadow-xl space-y-3 border-t-4 border-ti-blue">
+                        <div class="text-3xl text-ti-blue">🎯</div>
+                        <h3 class="text-xl font-bold text-white">Cero Errores Operacionales</h3>
+                        <p class="text-gray-400">Los procesos ejecutados por IA garantizan una precisión perfecta en cada paso.</p>
+                    </div>
+
+                    <!-- Beneficio 4: Optimización del Tiempo -->
+                    <div class="p-6 bg-ti-card rounded-xl shadow-xl space-y-3 border-t-4 border-ti-blue">
+                        <div class="text-3xl text-ti-blue">⏳</div>
+                        <h3 class="text-xl font-bold text-white">Foco en tu Negocio</h3>
+                        <p class="text-gray-400">Libera a tu equipo de la rutina para que se concentren en la estrategia y crecimiento.</p>
+                    </div>
+                </div>
             </div>
-            <div class="text-right text-xs text-gray-600 mt-6">PÁGINA 4/6</div>
         </section>
 
-        <!-- Página 5: Paquetes de Descuento y Gemini Feature (Dark Background) -->
-        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-bold text-white mb-8 text-center animate-fadeInUp">Planes Mensuales Inteligentes</h2>
-
-            
-            <!-- Cards de Paquetes -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- 5. Nueva Sección: Enamorando al Cliente con la IA (Valor y Visión) -->
+        <section id="valor" class="py-16 lg:py-24 bg-ti-card border-y border-ti-blue/20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-white mb-4">¿Por qué Elegir la Automatización 24/7?</h2>
+                    <p class="text-xl text-gray-400 max-w-4xl mx-auto">
+                        Te liberamos de la carga operativa para que te dediques a lo que realmente importa: hacer crecer tu negocio.
+                    </p>
+                </div>
                 
-                <!-- Plan Start -->
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center text-center card-hover animate-fadeInUp" style="animation-delay: 0.2s;">
-                    <h3 class="text-2xl font-bold text-white mb-2">Plan Start</h3>
-                    <p class="text-sm text-gray-400 mb-4">El inicio de la eficiencia</p>
-                    <ul class="text-left space-y-2 text-gray-300 w-full mb-6">
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Automatización básica (2 flujos)</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Soporte remoto 24/7</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Reporte de rendimiento semanal</li>
-                    </ul>
-                    <a href="#demo" class="mt-auto w-full py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition duration-300 shadow-md">
-                        Ver Precios
-                    </a>
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <!-- Propuesta 1: La Promesa de la IA -->
+                    <div class="space-y-4">
+                        <h3 class="text-3xl font-bold text-ti-blue">La IA Trabaja Mientras Tú Descansas</h3>
+                        <p class="text-lg text-gray-300">
+                            Imagina un empleado que no pide vacaciones ni comete errores. Eso es lo que ofrecemos. Nuestras automatizaciones basadas en Inteligencia Artificial gestionan leads, resuelven consultas Nivel 1 y procesan datos, 24 horas al día, 7 días a la semana. 
+                        </p>
+                        <img 
+                            src="https://images.pexels.com/photos/8386440/pexels-photo-8386440.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500" 
+                            alt="Ilustración de IA con cerebro digital y conexiones" 
+                            class="w-full rounded-xl shadow-lg border border-ti-blue/50 object-cover h-64"
+                            onerror="this.src='https://placehold.co/500x300/1a202c/3B82F6?text=IA+Inteligente'">
+                    </div>
+
+                    <!-- Propuesta 2: Soporte sin Esperas -->
+                    <div class="space-y-4">
+                        <h3 class="text-3xl font-bold text-ti-blue">Adiós a las Esperas Infinitas</h3>
+                        <p class="text-lg text-gray-300">
+                            En el competitivo mercado de Lima, la rapidez es todo. Nuestro modelo 24/7, respaldado por la visión de Gabriel Barrero, asegura que tu infraestructura tecnológica tenga atención inmediata. Minimizamos el tiempo de inactividad a segundos, no a horas.
+                        </p>
+                        <img 
+                            src="https://images.pexels.com/photos/1181676/pexels-photo-1181676.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500" 
+                            alt="Dos personas trabajando en soporte técnico eficiente" 
+                            class="w-full rounded-xl shadow-lg border border-ti-blue/50 object-cover h-64"
+                            onerror="this.src='https://placehold.co/500x300/1a202c/3B82F6?text=Soporte+Rápido+24/7'">
+                    </div>
                 </div>
+            </div>
+        </section>
 
-                <!-- Plan Pro (Destacado) -->
-                <div class="color-primary p-6 rounded-xl shadow-xl border-4 border-sky-300 flex flex-col items-center text-center transform scale-105 animate-pulse-glow" style="animation-delay: 0.3s;">
-                    <h3 class="text-3xl font-bold text-white mb-2">Plan Pro</h3>
-                    <p class="text-sm text-sky-200 mb-4">Potencia y crecimiento garantizado</p>
-                    <ul class="text-left space-y-2 text-white w-full mb-6">
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Integración avanzada (5 flujos)</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Mantenimiento mensual preventivo</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Bot de WhatsApp básico</li>
-                    </ul>
-                    <a href="#demo" class="mt-auto w-full py-3 bg-sky-400 text-gray-900 font-black rounded-lg hover:bg-sky-500 transition duration-300 shadow-lg">
-                        ¡El más popular!
-                    </a>
+        <!-- 6. Planes Mensuales Inteligentes (Pricing) -->
+        <section id="planes" class="py-16 lg:py-24 bg-ti-dark-bg">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-white mb-4">Planes Mensuales Inteligentes</h2>
+                    <p class="text-xl text-gray-400 max-w-4xl mx-auto">
+                        Encuentra la solución perfecta para tu tamaño y nivel de automatización. Todos incluyen nuestra garantía 24/7.
+                    </p>
                 </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    
+                    <!-- Plan 1: Esencial (Soporte Básico + 1 Automatización) -->
+                    <div class="bg-ti-card p-8 rounded-xl shadow-2xl border border-gray-700 space-y-6 hover:border-ti-blue transition duration-300">
+                        <h3 class="text-2xl font-bold text-white">Plan Esencial</h3>
+                        <p class="text-4xl font-extrabold text-ti-blue">S/ 499<span class="text-xl text-gray-500 font-normal">/mes</span></p>
+                        <p class="text-gray-400">Ideal para negocios que inician su digitalización y necesitan soporte confiable.</p>
+                        <ul class="text-gray-300 space-y-2 text-sm">
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> Soporte Nivel 1 por Chat (24/7 IA)</li>
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> 1 Flujo Automatizado Simple (Zapier/Make)</li>
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> 5 Usuarios/Dispositivos</li>
+                            <li class="flex items-center text-gray-500"><span class="text-gray-500 mr-2">✕</span> Consultoría Especializada</li>
+                        </ul>
+                        <a href="#contacto" class="block w-full text-center bg-ti-blue text-white py-3 rounded-lg font-semibold cta-glow">Empezar con Esencial</a>
+                    </div>
 
-                <!-- Plan Elite -->
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center text-center card-hover animate-
+                    <!-- Plan 2: Crecimiento (El Más Recomendado) -->
+                    <div class="bg-ti-card p-8 rounded-xl shadow-2xl border-4 border-ti-blue space-y-6 transform scale-[1.05]">
+                        <span class="block text-center text-xs font-bold uppercase tracking-widest text-ti-blue mb-[-1rem]">Más Popular</span>
+                        <h3 class="text-2xl font-bold text-white">Plan Crecimiento</h3>
+                        <p class="text-5xl font-extrabold text-ti-blue">S/ 999<span class="text-xl text-gray-500 font-normal">/mes</span></p>
+                        <p class="text-gray-400">La solución robusta para escalar, maximizando eficiencia y reduciendo costos.</p>
+                        <ul class="text-gray-300 space-y-2 text-sm">
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> Soporte Nivel 1 y 2 Prioritario 24/7</li>
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> 5 Flujos Automatizados Avanzados (n8n/Make)</li>
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> Integración de 3 Plataformas (CRM, ERP, etc.)</li>
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> Consultoría Mensual de Optimización</li>
+                        </ul>
+                        <a href="#contacto" class="block w-full text-center bg-ti-blue text-white py-3 rounded-lg font-semibold cta-glow">¡Lo Quiero!</a>
+                    </div>
 
+                    <!-- Plan 3: Ilimitado (Solución Empresarial) -->
+                    <div class="bg-ti-card p-8 rounded-xl shadow-2xl border border-gray-700 space-y-6 hover:border-ti-blue transition duration-300">
+                        <h3 class="text-2xl font-bold text-white">Plan Ilimitado</h3>
+                        <p class="text-4xl font-extrabold text-ti-blue">Personalizado</p>
+                        <p class="text-gray-400">Para grandes volúmenes de operación que requieren dedicación total y soluciones a medida.</p>
+                        <ul class="text-gray-300 space-y-2 text-sm">
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> Soporte 24/7 Dedicado y Proactivo</li>
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> Automatizaciones Ilimitadas con IA</li>
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> Integraciones Complejas a la Medida</li>
+                            <li class="flex items-center"><span class="text-ti-blue mr-2">✓</span> SLA Garantizado y Equipo Asignado</li>
+                        </ul>
+                        <a href="#contacto" class="block w-full text-center bg-gray-600 text-white py-3 rounded-lg font-semibold hover:bg-gray-700 transition duration-200">Contactar para Cotización</a>
+                    </div>
+                </div>
+            </div>
+        </section>
 
+        <!-- 7. Sección Contacto & Formulario (Similar al de Erik Taveras) -->
+        <section id="contacto" class="py-16 lg:py-24 bg-ti-card border-t border-ti-blue/20">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-start max-w-7xl">
+                
+                <!-- Columna de Texto y Visión -->
+                <div class="space-y-6">
+                    <h2 class="text-4xl font-bold text-ti-blue mb-2">Hablemos de tu Proyecto</h2>
+                    <p class="text-lg text-gray-300">
+                        ¿Listo para implementar el soporte 24/7 y automatizar tu operación? Cuéntanos sobre tus desafíos y te mostraremos cómo la IA puede trabajar para ti.
+                    </p>
+                    <div class="mt-8 pt-4 border-t border-ti-blue/20">
+                        <h3 class="text-2xl font-bold text-white">Sobre RedSoluciones TI</h3>
+                        <p class="text-base text-gray-400 mt-2">
+                            Fundada por Gabriel Barrero en Lima, nuestra misión es clara: combinar soporte técnico Nivel 1 de calidad con la potencia de la IA. Te ofrecemos rapidez, eficiencia y la tranquilidad de tener un socio tecnológico que nunca duerme.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Columna de Formulario -->
+                <div class="bg-ti-dark-bg p-8 rounded-xl shadow-2xl space-y-6 border border-ti-blue/50">
+                    <h3 class="text-3xl font-bold text-white text-center">Agenda tu Consultoría</h3>
+                    
+                    <!-- Formulario de Contacto -->
+                    <!-- 
+                        ATENCIÓN: Para que este formulario envíe emails de manera confiable sin abrir el cliente de correo, 
+                        DEBES cambiar el 'action' a un servicio backend como Formspree, Netlify Forms, o un servicio propio. 
+                        El 'mailto:' es solo para la demostración en HTML estático.
+                    -->
+                    <form action="mailto:gbarrero57@gmail.com" method="post" enctype="text/plain" class="space-y-4">
+                        
+                        <div>
+                            <label for="name" class="block text-gray-400 mb-1 font-medium">Nombre Completo</label>
+                            <input type="text" id="name" name="Nombre" placeholder="Tu nombre" class="form-input" required>
+                        </div>
+
+                        <div>
+                            <label for="email" class="block text-gray-400 mb-1 font-medium">Email</label>
+                            <input type="email" id="email" name="Email" placeholder="ejemplo@negocio.com" class="form-input" required>
+                        </div>
+
+                        <div>
+                            <label for="message" class="block text-gray-400 mb-1 font-medium">Tu Mensaje / Desafío Principal</label>
+                            <textarea id="message" name="Mensaje" rows="4" placeholder="Quiero automatizar mi gestión de pedidos..." class="form-input" required></textarea>
+                        </div>
+
+                        <button type="submit" class="w-full bg-ti-blue text-white font-bold py-3 px-8 rounded-xl text-lg cta-glow hover:bg-blue-600 transition duration-200">
+                            Enviar Solicitud
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 8. Footer -->
+    <footer class="bg-ti-dark-bg border-t border-ti-card pt-10 pb-6">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-4 gap-8 text-sm max-w-7xl">
+            
+            <!-- Columna 1: Logo & Slogan -->
+            <div>
+                <a href="#" class="text-xl font-extrabold text-ti-blue tracking-wider mb-2 block">
+                    RedSoluciones TI
+                </a>
+                <p class="text-gray-500 text-xs">Lima - Los Olivos.</p>
+                <p class="text-gray-400 mt-3">Automatizamos tu negocio con IA para que ganes tiempo y dinero.</p>
+            </div>
+            
+            <!-- Columna 2: Navegación -->
+            <div>
+                <h4 class="font-semibold text-white mb-3">Servicios</h4>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="#servicios" class="hover:text-ti-blue">Automatización IA</a></li>
+                    <li><a href="#servicios" class="hover:text-ti-blue">Soporte 24/7</a></li>
+                    <li><a href="#servicios" class="hover:text-ti-blue">Integraciones</a></li>
+                    <li><a href="#servicios" class="hover:text-ti-blue">Consultoría Digital</a></li>
+                </ul>
+            </div>
+            
+            <!-- Columna 3: Contacto -->
+            <div>
+                <h4 class="font-semibold text-white mb-3">Contacto Rápido</h4>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="mailto:gbarrero57@gmail.com" class="hover:text-ti-blue">Email: gbarrero57@gmail.com</a></li>
+                    <li><a href="tel:+51905858566" class="hover:text-ti-blue">Cel: +51 905 858 566</a></li>
+                    <li><a href="https://wa.me/51905858566" target="_blank" class="hover:text-ti-blue">WhatsApp: +51 905 858 566</a></li>
+                </ul>
+            </div>
+            
+            <!-- Columna 4: Legal & Redes -->
+            <div>
+                <h4 class="font-semibold text-white mb-3">Legal y Social</h4>
+                <ul class="space-y-2 text-gray-400">
+                    <li><a href="#" class="hover:text-ti-blue">Política de Privacidad</a></li>
+                    <li><a href="#" class="hover:text-ti-blue">Términos del Servicio</a></li>
+                    <li class="flex space-x-3 mt-2 text-xl">
+                        <!-- Iconos Placeholder -->
+                        <a href="#" class="hover:text-ti-blue">F</a> 
+                        <a href="#" class="hover:text-ti-blue">In</a> 
+                        <a href="#" class="hover:text-ti-blue">X</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="text-center text-gray-600 mt-10 text-xs border-t border-ti-card pt-4">
+            &copy; 2025 RedSoluciones TI. Todos los derechos reservados.
+        </div>
+    </footer>
+
+</body>
+</html>
