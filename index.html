@@ -1,169 +1,94 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RedSoluciones TI - Flyer Digital</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0a0a1a;
-            color: #e5e7eb;
-        }
-
-        .color-primary { background-color: #3b82f6; }
-        .text-primary { color: #3b82f6; }
-        .border-primary { border-color: #3b82f6; }
-
-        .tech-pattern-bg {
-            background-color: #111827;
-            background-image: linear-gradient(0deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
-                              linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-            box-shadow: 0 0 50px rgba(59, 130, 246, 0.3) inset;
-        }
-
-        .cover-image {
-            background-image: url('https://images.unsplash.com/photo-1581090700227-4c4e1b9c7aeb?auto=format&fit=crop&w=1200&q=80');
-            background-size: cover;
-            background-position: center;
-            filter: brightness(0.75);
-        }
-
-        .animate-fadeInUp {
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .animate-pulse-glow {
-            animation: pulse-glow 2s infinite alternate;
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
-            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
-        }
-
-        .card-hover:hover {
-            background-color: #1f2937 !important;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RedSoluciones TI</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-<body class="antialiased">
+<body class="bg-gray-900 text-white">
 
-    <div class="max-w-3xl mx-auto shadow-2xl bg-gray-900">
+  <!-- Banner Principal -->
+  <header class="p-6 rounded-lg shadow-xl bg-gradient-to-r from-blue-900 to-blue-700">
+    <h1 class="text-3xl font-bold text-blue-400 flex items-center">
+      <span class="mr-2">🔧</span> RedSoluciones TI
+    </h1>
+    <h2 class="text-5xl font-extrabold text-blue-300 mt-4">Oficina Moderna Digital</h2>
+    <p class="mt-4 text-lg text-gray-300">
+      Transforma tu espacio de trabajo y potencia tu productividad con soluciones inteligentes.
+    </p>
 
-        <!-- Portada -->
-        <section class="tech-pattern-bg text-white p-8 md:p-12 h-[600px] flex flex-col justify-between rounded-t-xl">
-            <div class="flex items-center space-x-3 mb-10 animate-fadeInUp">
-                <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
-                <span class="text-3xl font-extrabold">RedSoluciones TI</span>
-            </div>
+    <!-- Imagen del banner -->
+    <div class="mt-6 animate-fadeInUp" style="animation-delay: 0.4s;">
+      <img 
+        src="https://images.unsplash.com/photo-1581090700227-4c4e1b9c7aeb?auto=format&fit=crop&w=1200&q=80" 
+        alt="Oficina moderna" 
+        class="rounded-lg shadow-xl opacity-90 w-full h-48 object-cover">
+    </div>
+  </header>
 
-            <div class="flex-grow flex flex-col justify-center">
-                <h1 class="text-5xl md:text-6xl font-black mb-4 leading-tight text-sky-400 animate-fadeInUp">
-                    Oficina Moderna Digital
-                </h1>
-                <p class="text-xl md:text-2xl font-light max-w-lg mb-8 text-gray-300 animate-fadeInUp" style="animation-delay: 0.2s;">
-                    Transforma tu espacio de trabajo y potencia tu productividad con soluciones inteligentes.
-                </p>
-                <div class="cover-image h-48 w-full rounded-lg shadow-xl opacity-90 mt-6 animate-fadeInUp" style="animation-delay: 0.4s;"></div>
-            </div>
+  <!-- Oferta destacada -->
+  <div class="bg-blue-800 p-4 rounded-lg mt-6 shadow-lg">
+    <p class="text-lg font-semibold">
+      🚀 Oferta exclusiva: Implementa tu oficina digital hoy y obtén 
+      <span class="text-yellow-400">50% de descuento</span> en el primer mes.
+    </p>
+    <p class="text-sm text-gray-200">
+      Incluye instalación, configuración y capacitación personalizada.
+    </p>
+  </div>
 
-            <!-- Oferta irresistible -->
-            <div class="bg-sky-900 p-4 rounded-lg shadow-lg mt-6 animate-fadeInUp" style="animation-delay: 0.6s;">
-                <p class="text-lg text-center font-bold text-white">
-                    🚀 Oferta exclusiva: Implementa tu oficina digital hoy y obtén <span class="text-yellow-400">50% de descuento</span> en el primer mes.
-                </p>
-                <p class="text-center text-gray-300 mt-2 text-sm">Incluye instalación, configuración y capacitación personalizada.</p>
-            </div>
+  <!-- Sección de planes -->
+  <section class="mt-10">
+    <h3 class="text-3xl font-bold text-blue-400 mb-6 border-b border-blue-500">Nuestros Planes</h3>
+    <div class="grid md:grid-cols-3 gap-6">
+      
+      <!-- Plan Básico -->
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:scale-105 transform transition">
+        <h4 class="text-2xl font-bold text-blue-300">Plan Básico</h4>
+        <p class="mt-2 text-gray-400">Ideal para pequeñas empresas y emprendimientos.</p>
+        <ul class="mt-4 text-gray-300 list-disc list-inside">
+          <li>Configuración inicial</li>
+          <li>Correo corporativo</li>
+          <li>Soporte básico</li>
+        </ul>
+        <p class="mt-4 text-xl font-bold text-yellow-400">$99/mes</p>
+      </div>
 
-            <div class="text-right text-xs text-gray-500 mt-4">PÁGINA 1/6</div>
-        </section>
+      <!-- Plan Profesional -->
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:scale-105 transform transition border-2 border-blue-500">
+        <h4 class="text-2xl font-bold text-blue-300">Plan Profesional</h4>
+        <p class="mt-2 text-gray-400">Para empresas que buscan optimizar sus flujos de trabajo.</p>
+        <ul class="mt-4 text-gray-300 list-disc list-inside">
+          <li>Todo del Plan Básico</li>
+          <li>Integración con herramientas de productividad</li>
+          <li>Soporte prioritario</li>
+        </ul>
+        <p class="mt-4 text-xl font-bold text-yellow-400">$199/mes</p>
+      </div>
 
-        <!-- Presentación -->
-        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-bold text-white mb-6 border-b-4 border-primary pb-2 inline-block">¿Quiénes somos?</h2>
-            <p class="text-lg text-gray-300">
-                RedSoluciones TI ayuda a empresas y emprendedores a optimizar sus recursos implementando herramientas tecnológicas, automatización de procesos y soporte especializado.
-            </p>
-            <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 2/6</div>
-        </section>
-
-        <!-- Servicios -->
-        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-bold text-white mb-8 text-center">Soluciones Inteligentes</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 hover:scale-105 transition card-hover">
-                    <h3 class="text-xl font-semibold text-white">Automatización de Procesos</h3>
-                    <p class="text-gray-400 text-sm">Optimiza flujos de trabajo y reduce tiempos operativos.</p>
-                </div>
-                <div class="p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 hover:scale-105 transition card-hover">
-                    <h3 class="text-xl font-semibold text-white">Bots de WhatsApp</h3>
-                    <p class="text-gray-400 text-sm">Atención 24/7 y generación automática de clientes potenciales.</p>
-                </div>
-            </div>
-            <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 3/6</div>
-        </section>
-
-        <!-- Oferta temporada -->
-        <section class="bg-black p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-black text-sky-400 mb-4 text-center">🔥 Promoción Especial 🔥</h2>
-            <div class="bg-indigo-900 p-6 rounded-2xl border border-sky-400 shadow-2xl">
-                <p class="text-2xl font-extrabold text-center text-white">
-                    Moderniza tu empresa con <span class="text-red-400">40% de descuento</span> en planes seleccionados.
-                </p>
-                <p class="text-lg text-center text-gray-300 mt-4">
-                    Solo por tiempo limitado. Incluye soporte y asesoría personalizada.
-                </p>
-            </div>
-            <div class="text-right text-xs text-gray-600 mt-6">PÁGINA 4/6</div>
-        </section>
-
-        <!-- Planes -->
-        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-bold text-white mb-8 text-center">Planes Mensuales</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg text-center">
-                    <h3 class="text-2xl font-bold text-white mb-2">Plan Start</h3>
-                    <p class="text-sm text-gray-400 mb-4">Automatización básica</p>
-                    <a href="mailto:info@redsolucionesti.com" class="w-full py-3 bg-gray-700 text-white rounded-lg">Consultar</a>
-                </div>
-                <div class="color-primary p-6 rounded-xl shadow-xl text-center">
-                    <h3 class="text-3xl font-bold text-white mb-2">Plan Pro</h3>
-                    <p class="text-sm text-sky-200 mb-4">Potencia tu negocio</p>
-                    <a href="mailto:info@redsolucionesti.com" class="w-full py-3 bg-sky-400 text-gray-900 font-black rounded-lg">El más popular</a>
-                </div>
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg text-center">
-                    <h3 class="text-2xl font-bold text-white mb-2">Plan Elite</h3>
-                    <p class="text-sm text-gray-400 mb-4">Transformación total</p>
-                    <a href="mailto:info@redsolucionesti.com" class="w-full py-3 bg-gray-700 text-white rounded-lg">Solicitar</a>
-                </div>
-            </div>
-            <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 5/6</div>
-        </section>
-
-        <!-- Contacto -->
-        <section class="bg-gray-800 p-8 md:p-12 text-white flex flex-col justify-center items-center rounded-b-xl border-t border-gray-700">
-            <h2 class="text-4xl font-bold mb-4 text-center">Únete a la revolución tecnológica</h2>
-            <p class="text-lg text-center max-w-xl mb-8">Afíliate y lleva tu empresa al siguiente nivel con soporte premium y mejoras constantes.</p>
-            <a href="https://wa.me/51905858566" target="_blank" class="inline-flex items-center py-4 px-10 bg-primary text-white font-black rounded-full hover:bg-blue-600 transition shadow-xl">
-                💬 Contáctanos por WhatsApp
-            </a>
-            <div class="text-right text-xs text-gray-500 mt-4">PÁGINA 6/6</div>
-        </section>
+      <!-- Plan Premium -->
+      <div class="bg-gray-800 p-6 rounded-lg shadow-lg hover:scale-105 transform transition">
+        <h4 class="text-2xl font-bold text-blue-300">Plan Premium</h4>
+        <p class="mt-2 text-gray-400">Solución integral para grandes empresas.</p>
+        <ul class="mt-4 text-gray-300 list-disc list-inside">
+          <li>Todo del Plan Profesional</li>
+          <li>Desarrollo de soluciones a medida</li>
+          <li>Consultoría continua</li>
+        </ul>
+        <p class="mt-4 text-xl font-bold text-yellow-400">$299/mes</p>
+      </div>
 
     </div>
+  </section>
+
+  <!-- Pie de página -->
+  <footer class="text-center py-6 text-gray-400 mt-10 border-t border-gray-700">
+    &copy; 2025 RedSoluciones TI - Todos los derechos reservados.
+  </footer>
 
 </body>
 </html>
 
-</html>
+
 
