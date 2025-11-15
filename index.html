@@ -8,415 +8,162 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         
-        /* 1. Dark Mode Base y Tipografía */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #0a0a1a; /* Deep Blue-Black para un look profesional */
-            color: #e5e7eb; /* Light Gray text por defecto */
-            transition: background-color 0.5s;
+            background-color: #0a0a1a;
+            color: #e5e7eb;
         }
-        
-        /* Color primario: Azul Eléctrico (Tailwind Blue-500) */
+
         .color-primary { background-color: #3b82f6; }
         .text-primary { color: #3b82f6; }
         .border-primary { border-color: #3b82f6; }
 
-        /* 2. Enhanced Tech Pattern Background (Circuit Lines) */
         .tech-pattern-bg {
-            background-color: #111827; /* Dark Gray/Black */
-            /* Líneas de circuito sutiles y futuristas */
+            background-color: #111827;
             background-image: linear-gradient(0deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
                               linear-gradient(90deg, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
             background-size: 20px 20px;
-            box-shadow: 0 0 50px rgba(59, 130, 246, 0.3) inset; /* Sutil brillo interior */
+            box-shadow: 0 0 50px rgba(59, 130, 246, 0.3) inset;
         }
 
-        /* Estilo para la imagen de fondo */
         .cover-image {
-            background-image: url('https://placehold.co/1200x800/1e40af/ffffff?text=Oficina+Moderna+Digital');
+            background-image: url('https://images.unsplash.com/photo-1581090700227-4c4e1b9c7aeb?auto=format&fit=crop&w=1200&q=80');
             background-size: cover;
             background-position: center;
-            filter: brightness(0.7) contrast(1.1); /* Oscurecer y contrastar para Dark Mode */
-        }
-
-        /* Estilo para el fondo de la oferta de temporada */
-        .seasonal-offer-bg {
-            background-color: #000;
-            background-image: radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 70%);
-        }
-
-        /* Estilo para el área de resultado de la IA */
-        #ai-result-area {
-            white-space: pre-wrap;
-        }
-
-        /* 3. Movement Effects (Keyframes) */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.6), 0 0 5px rgba(59, 130, 246, 0.4); }
-            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 10px rgba(59, 130, 246, 0.6); }
+            filter: brightness(0.75);
         }
 
         .animate-fadeInUp {
             animation: fadeInUp 0.8s ease-out;
         }
 
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .animate-pulse-glow {
             animation: pulse-glow 2s infinite alternate;
         }
 
-        /* Hover para tarjetas en Dark Mode */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(59, 130, 246, 0.6); }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+        }
+
         .card-hover:hover {
-            background-color: #1f2937 !important; /* gray-800 */
+            background-color: #1f2937 !important;
         }
     </style>
 </head>
 <body class="antialiased">
 
-    <!-- Contenedor principal del Flyer -->
     <div class="max-w-3xl mx-auto shadow-2xl bg-gray-900">
 
-        <!-- Página 1: Portada (Dark Pattern) -->
+        <!-- Portada -->
         <section class="tech-pattern-bg text-white p-8 md:p-12 h-[600px] flex flex-col justify-between rounded-t-xl">
-            <!-- Logo y Eslogan -->
             <div class="flex items-center space-x-3 mb-10 animate-fadeInUp">
-                <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
-                <span class="text-3xl font-extrabold tracking-tight text-white">RedSoluciones TI</span>
+                <svg class="w-8 h-8 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
+                <span class="text-3xl font-extrabold">RedSoluciones TI</span>
             </div>
 
-            <!-- Contenido Principal -->
             <div class="flex-grow flex flex-col justify-center">
                 <h1 class="text-5xl md:text-6xl font-black mb-4 leading-tight text-sky-400 animate-fadeInUp">
-                    Automatiza. Ahorra. Evoluciona.
+                    Oficina Moderna Digital
                 </h1>
                 <p class="text-xl md:text-2xl font-light max-w-lg mb-8 text-gray-300 animate-fadeInUp" style="animation-delay: 0.2s;">
-                    Optimizamos tu empresa con inteligencia artificial y automatización avanzada.
+                    Transforma tu espacio de trabajo y potencia tu productividad con soluciones inteligentes.
                 </p>
-                <!-- Placeholder de Imagen -->
-                <div class="cover-image h-48 w-full rounded-lg shadow-xl opacity-90 mt-6 animate-fadeInUp" style="animation-delay: 0.4s;" role="img" aria-label="Imagen de una oficina moderna con pantallas digitales."></div>
+                <div class="cover-image h-48 w-full rounded-lg shadow-xl opacity-90 mt-6 animate-fadeInUp" style="animation-delay: 0.4s;"></div>
             </div>
-            
+
+            <!-- Oferta irresistible -->
+            <div class="bg-sky-900 p-4 rounded-lg shadow-lg mt-6 animate-fadeInUp" style="animation-delay: 0.6s;">
+                <p class="text-lg text-center font-bold text-white">
+                    🚀 Oferta exclusiva: Implementa tu oficina digital hoy y obtén <span class="text-yellow-400">50% de descuento</span> en el primer mes.
+                </p>
+                <p class="text-center text-gray-300 mt-2 text-sm">Incluye instalación, configuración y capacitación personalizada.</p>
+            </div>
+
             <div class="text-right text-xs text-gray-500 mt-4">PÁGINA 1/6</div>
         </section>
 
-        <!-- Página 2: Presentación (Dark Background) -->
-        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700 animate-fadeInUp">
+        <!-- Presentación -->
+        <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
             <h2 class="text-4xl font-bold text-white mb-6 border-b-4 border-primary pb-2 inline-block">¿Quiénes somos?</h2>
-            <div class="flex flex-col md:flex-row items-start space-y-6 md:space-y-0 md:space-x-8">
-                <p class="text-lg text-gray-300 md:w-2/3">
-                    Somos una empresa especializada en soluciones tecnológicas que ayudan a pequeñas y medianas empresas a ahorrar tiempo, reducir costos y escalar su productividad mediante la automatización de tareas repetitivas y la implementación de sistemas inteligentes.
-                </p>
-                <div class="md:w-1/3 p-4 bg-gray-800 rounded-lg shadow-inner flex flex-col items-center justify-center border border-gray-700">
-                    <svg class="w-10 h-10 text-sky-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    <p class="text-sm font-semibold text-gray-200">Enfocados en eficiencia y crecimiento sostenible.</p>
-                </div>
-            </div>
+            <p class="text-lg text-gray-300">
+                RedSoluciones TI ayuda a empresas y emprendedores a optimizar sus recursos implementando herramientas tecnológicas, automatización de procesos y soporte especializado.
+            </p>
             <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 2/6</div>
         </section>
 
-        <!-- Página 3: Servicios (Dark Background) -->
+        <!-- Servicios -->
         <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-bold text-white mb-8 text-center animate-fadeInUp">Soluciones Inteligentes</h2>
-            
+            <h2 class="text-4xl font-bold text-white mb-8 text-center">Soluciones Inteligentes</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
-                <!-- Servicio 1: Automatización -->
-                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp">
-                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10l3-3m3 3V7l3 3m3-3v10l3-3"></path></svg>
-                    </span>
-                    <div>
-                        <h3 class="text-xl font-semibold text-white">Automatización de Procesos Empresariales</h3>
-                        <p class="text-gray-400 text-sm">Elimina tareas repetitivas y optimiza flujos de trabajo clave.</p>
-                    </div>
+                <div class="p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 hover:scale-105 transition card-hover">
+                    <h3 class="text-xl font-semibold text-white">Automatización de Procesos</h3>
+                    <p class="text-gray-400 text-sm">Optimiza flujos de trabajo y reduce tiempos operativos.</p>
                 </div>
-
-                <!-- Servicio 2: Bots de WhatsApp -->
-                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.1s;">
-                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                    </span>
-                    <div>
-                        <h3 class="text-xl font-semibold text-white">Bots de WhatsApp Personalizados</h3>
-                        <p class="text-gray-400 text-sm">Atención al cliente 24/7 y generación de leads automáticos.</p>
-                    </div>
-                </div>
-
-                <!-- Servicio 3: Integración IA -->
-                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.2s;">
-                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
-                    </span>
-                    <div>
-                        <h3 class="text-xl font-semibold text-white">Integración de Inteligencia Artificial</h3>
-                        <p class="text-gray-400 text-sm">Análisis predictivo, clasificación de datos y asistentes virtuales.</p>
-                    </div>
-                </div>
-
-                <!-- Servicio 4: Soporte Técnico -->
-                <div class="flex items-start space-x-4 p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 transform hover:scale-[1.02] transition duration-300 card-hover animate-fadeInUp" style="animation-delay: 0.3s;">
-                    <span class="p-3 bg-primary rounded-full flex-shrink-0 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1v-3.25m-7.25 0l-5.75-5.75m14 0l5.75-5.75M12 4v16m-4-8h8"></path></svg>
-                    </span>
-                    <div>
-                        <h3 class="text-xl font-semibold text-white">Soporte Técnico (Remoto y Presencial)</h3>
-                        <p class="text-gray-400 text-sm">Asistencia profesional rápida para empresas y hogares.</p>
-                    </div>
+                <div class="p-4 bg-gray-800 rounded-xl shadow-lg border-l-4 border-sky-400 hover:scale-105 transition card-hover">
+                    <h3 class="text-xl font-semibold text-white">Bots de WhatsApp</h3>
+                    <p class="text-gray-400 text-sm">Atención 24/7 y generación automática de clientes potenciales.</p>
                 </div>
             </div>
             <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 3/6</div>
         </section>
 
-        <!-- Página 4: Ofertas de Temporada (Black Friday) -->
-        <section class="seasonal-offer-bg p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-black text-sky-400 mb-4 text-center animate-pulse">
-                🔥 Ofertas de Temporada: Black Friday Tech 🔥
-            </h2>
-            <div class="bg-indigo-900 p-6 md:p-10 rounded-2xl border border-sky-400 shadow-2xl animate-pulse-glow">
-                <p class="text-2xl md:text-4xl font-extrabold text-center mb-4 text-white">
-                    Automatiza tu negocio con hasta <span class="text-red-400">40% de descuento</span> en planes de integración IA.
+        <!-- Oferta temporada -->
+        <section class="bg-black p-8 md:p-12 border-b border-gray-700">
+            <h2 class="text-4xl font-black text-sky-400 mb-4 text-center">🔥 Promoción Especial 🔥</h2>
+            <div class="bg-indigo-900 p-6 rounded-2xl border border-sky-400 shadow-2xl">
+                <p class="text-2xl font-extrabold text-center text-white">
+                    Moderniza tu empresa con <span class="text-red-400">40% de descuento</span> en planes seleccionados.
                 </p>
-                <div class="h-1 w-20 bg-sky-400 mx-auto my-6 rounded-full"></div>
-                <p class="text-lg font-light text-center text-gray-300">
-                    Válido solo por tiempo limitado. Incluye configuración, entrenamiento y soporte personalizado durante el primer mes. ¡Máximo ahorro, máxima evolución!
+                <p class="text-lg text-center text-gray-300 mt-4">
+                    Solo por tiempo limitado. Incluye soporte y asesoría personalizada.
                 </p>
             </div>
             <div class="text-right text-xs text-gray-600 mt-6">PÁGINA 4/6</div>
         </section>
 
-        <!-- Página 5: Paquetes de Descuento y Gemini Feature (Dark Background) -->
+        <!-- Planes -->
         <section class="bg-gray-900 p-8 md:p-12 border-b border-gray-700">
-            <h2 class="text-4xl font-bold text-white mb-8 text-center animate-fadeInUp">Planes Mensuales Inteligentes</h2>
-
-            <!-- MÓDULO GEMINI: Generador de Ideas de Automatización -->
-            <div class="mb-12 p-6 bg-gray-800 text-white rounded-xl shadow-xl border-b-4 border-sky-500 animate-fadeInUp" style="animation-delay: 0.1s;">
-                <h3 class="text-2xl font-bold mb-4 text-center flex items-center justify-center text-sky-400">
-                    <span class="mr-2">✨</span> Generador de Ideas de Automatización IA
-                </h3>
-                <p class="text-center mb-4 text-gray-300">Describe brevemente tu negocio o el problema que deseas resolver y la IA te dará un análisis instantáneo.</p>
-                
-                <textarea id="business-description" rows="3" class="w-full p-3 rounded-lg text-gray-900 placeholder-gray-500 border border-sky-400 focus:ring-sky-500 focus:border-sky-500 resize-none" placeholder="Ej: 'Mi negocio es una tienda online de ropa con mucho volumen de preguntas por WhatsApp y necesito automatizar el inventario.'"></textarea>
-                
-                <button id="analyze-button" onclick="analyzeBusiness()" class="mt-4 w-full py-3 bg-sky-400 text-gray-900 font-bold rounded-lg hover:bg-sky-500 transition duration-300 shadow-lg flex items-center justify-center">
-                    <span id="button-text">Analizar mi Negocio con IA</span>
-                    <svg id="loading-spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-900 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                </button>
-
-                <div id="ai-output-container" class="mt-6 p-4 bg-gray-900 text-gray-200 rounded-lg shadow-inner border border-sky-500 hidden">
-                    <h4 class="text-xl font-bold mb-2 text-primary">Resultados de tu Análisis IA:</h4>
-                    <pre id="ai-result-area" class="text-sm overflow-auto"></pre>
-                    <div id="ai-sources" class="mt-4 pt-2 border-t border-gray-700 text-xs text-gray-500"></div>
-                </div>
-            </div>
-            <!-- FIN MÓDULO GEMINI -->
-            
-            <!-- Cards de Paquetes -->
+            <h2 class="text-4xl font-bold text-white mb-8 text-center">Planes Mensuales</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
-                <!-- Plan Start -->
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center text-center card-hover animate-fadeInUp" style="animation-delay: 0.2s;">
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg text-center">
                     <h3 class="text-2xl font-bold text-white mb-2">Plan Start</h3>
-                    <p class="text-sm text-gray-400 mb-4">El inicio de la eficiencia</p>
-                    <ul class="text-left space-y-2 text-gray-300 w-full mb-6">
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Automatización básica (2 flujos)</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Soporte remoto 24/7</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Reporte de rendimiento semanal</li>
-                    </ul>
-                    <a href="#demo" class="mt-auto w-full py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition duration-300 shadow-md">
-                        Ver Precios
-                    </a>
+                    <p class="text-sm text-gray-400 mb-4">Automatización básica</p>
+                    <a href="mailto:info@redsolucionesti.com" class="w-full py-3 bg-gray-700 text-white rounded-lg">Consultar</a>
                 </div>
-
-                <!-- Plan Pro (Destacado) -->
-                <div class="color-primary p-6 rounded-xl shadow-xl border-4 border-sky-300 flex flex-col items-center text-center transform scale-105 animate-pulse-glow" style="animation-delay: 0.3s;">
+                <div class="color-primary p-6 rounded-xl shadow-xl text-center">
                     <h3 class="text-3xl font-bold text-white mb-2">Plan Pro</h3>
-                    <p class="text-sm text-sky-200 mb-4">Potencia y crecimiento garantizado</p>
-                    <ul class="text-left space-y-2 text-white w-full mb-6">
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Integración avanzada (5 flujos)</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Mantenimiento mensual preventivo</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">★</span> Bot de WhatsApp básico</li>
-                    </ul>
-                    <a href="#demo" class="mt-auto w-full py-3 bg-sky-400 text-gray-900 font-black rounded-lg hover:bg-sky-500 transition duration-300 shadow-lg">
-                        ¡El más popular!
-                    </a>
+                    <p class="text-sm text-sky-200 mb-4">Potencia tu negocio</p>
+                    <a href="mailto:info@redsolucionesti.com" class="w-full py-3 bg-sky-400 text-gray-900 font-black rounded-lg">El más popular</a>
                 </div>
-
-                <!-- Plan Elite -->
-                <div class="bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center text-center card-hover animate-fadeInUp" style="animation-delay: 0.4s;">
+                <div class="bg-gray-800 p-6 rounded-xl shadow-lg text-center">
                     <h3 class="text-2xl font-bold text-white mb-2">Plan Elite</h3>
-                    <p class="text-sm text-gray-400 mb-4">La máxima transformación digital</p>
-                    <ul class="text-left space-y-2 text-gray-300 w-full mb-6">
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Automatización total (flujos ilimitados)</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> IA conversacional (Asistente avanzado)</li>
-                        <li class="flex items-center"><span class="text-sky-400 mr-2">✓</span> Asistencia prioritaria 24/7</li>
-                    </ul>
-                    <a href="#demo" class="mt-auto w-full py-3 bg-gray-700 text-white font-semibold rounded-lg hover:bg-gray-600 transition duration-300 shadow-md">
-                        Solicitar
-                    </a>
+                    <p class="text-sm text-gray-400 mb-4">Transformación total</p>
+                    <a href="mailto:info@redsolucionesti.com" class="w-full py-3 bg-gray-700 text-white rounded-lg">Solicitar</a>
                 </div>
             </div>
-            
-            <!-- CTA DEMO -->
-            <div id="demo" class="mt-10 p-4 bg-primary text-white rounded-xl text-center shadow-xl animate-fadeInUp" style="animation-delay: 0.5s;">
-                <h4 class="text-xl font-bold mb-2">¡Comienza tu transformación hoy!</h4>
-                <p class="mb-4">Solicita una demo gratuita de nuestros planes Pro y Elite.</p>
-                <a href="mailto:info@redsolucionesti.com" class="inline-block py-3 px-8 bg-black text-sky-400 font-bold rounded-full hover:bg-gray-700 transition duration-300 uppercase tracking-wider shadow-lg">
-                    Solicita una demo gratuita
-                </a>
-            </div>
-            
             <div class="text-right text-xs text-gray-500 mt-6">PÁGINA 5/6</div>
         </section>
 
-        <!-- Página 6: Afiliación y Suscripción (Dark Background) -->
-        <section class="bg-gray-800 p-8 md:p-12 text-white h-[450px] flex flex-col justify-center items-center rounded-b-xl border-t border-gray-700">
-            <h2 class="text-4xl font-bold mb-4 text-center text-white animate-fadeInUp">Únete a la revolución tecnológica</h2>
-            <p class="text-lg text-center max-w-xl mb-8 font-light text-gray-300 animate-fadeInUp" style="animation-delay: 0.1s;">
-                Afíliate a RedSoluciones TI y lleva tu empresa al siguiente nivel. Recibe reportes automáticos, soporte premium y actualizaciones exclusivas de forma constante.
-            </p>
-
-            <svg class="w-16 h-16 text-sky-400 mb-6 animate-spin-slow" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="animation-duration: 10s;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9M12 4h9M4 12h17m-6 0v6M12 12h.01M16 12h.01M8 12h.01"></path></svg>
-            
-            <a href="https://wa.me/51905858566" target="_blank" class="inline-flex items-center py-4 px-10 bg-primary text-white font-black rounded-full hover:bg-blue-600 transition duration-300 shadow-xl uppercase tracking-wider text-lg animate-pulse-glow" style="animation-delay: 0.2s;">
-                <span class="mr-3">💬</span> Contáctanos por WhatsApp: +51 905 858 566
+        <!-- Contacto -->
+        <section class="bg-gray-800 p-8 md:p-12 text-white flex flex-col justify-center items-center rounded-b-xl border-t border-gray-700">
+            <h2 class="text-4xl font-bold mb-4 text-center">Únete a la revolución tecnológica</h2>
+            <p class="text-lg text-center max-w-xl mb-8">Afíliate y lleva tu empresa al siguiente nivel con soporte premium y mejoras constantes.</p>
+            <a href="https://wa.me/51905858566" target="_blank" class="inline-flex items-center py-4 px-10 bg-primary text-white font-black rounded-full hover:bg-blue-600 transition shadow-xl">
+                💬 Contáctanos por WhatsApp
             </a>
-            
-            <div class="text-right text-xs text-gray-500 mt-auto pt-4 w-full">PÁGINA 6/6</div>
+            <div class="text-right text-xs text-gray-500 mt-4">PÁGINA 6/6</div>
         </section>
 
     </div>
-    
-    <script>
-        // Función para codificar URLs para llamadas a la API
-        function encodeUrl(obj) {
-            return Object.keys(obj).map(key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key])).join('&');
-        }
 
-        // --- Lógica de la API de Gemini ---
-        async function analyzeBusiness() {
-            const description = document.getElementById('business-description').value.trim();
-            const outputContainer = document.getElementById('ai-output-container');
-            const resultArea = document.getElementById('ai-result-area');
-            const sourcesDiv = document.getElementById('ai-sources');
-            const button = document.getElementById('analyze-button');
-            const buttonText = document.getElementById('button-text');
-            const spinner = document.getElementById('loading-spinner');
-
-            if (!description) {
-                resultArea.textContent = 'Por favor, describe tu negocio o problema para que la IA pueda analizarlo.';
-                outputContainer.classList.remove('hidden');
-                return;
-            }
-
-            // Mostrar estado de carga
-            buttonText.textContent = 'Analizando...';
-            spinner.classList.remove('hidden');
-            button.disabled = true;
-            outputContainer.classList.add('hidden');
-            resultArea.textContent = '';
-            sourcesDiv.innerHTML = '';
-
-            const systemPrompt = "Eres un analista de automatización de procesos B2B de RedSoluciones TI. Tu objetivo es proporcionar un análisis conciso y actionable para ayudar a una PyME a iniciar su transformación digital. Analiza la descripción del negocio del usuario y genera una respuesta en español en formato Markdown (sin encabezados). La respuesta debe contener 3 secciones numeradas:\n1. Tres Oportunidades de Automatización (procesos que podrían ser automatizados).\n2. Herramientas de IA sugeridas (ej. Bots de WhatsApp, Clasificación de Datos, Análisis Predictivo).\n3. Recomendación de Plan (Start, Pro, o Elite) de RedSoluciones TI que mejor se ajusta a estas necesidades iniciales, justificando brevemente el por qué.";
-            const userQuery = `Analiza este negocio: "${description}"`;
-            
-            // LA CLAVE DE API PERMANECE VACÍA COMO REQUIERE EL ENTORNO
-            const apiKey = ""; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                tools: [{ "google_search": {} }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
-                },
-            };
-
-            let response;
-            try {
-                // Implementación de reintento con retroceso exponencial
-                const maxRetries = 3;
-                let attempt = 0;
-                while (attempt < maxRetries) {
-                    try {
-                        response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        if (response.status === 429 && attempt < maxRetries - 1) {
-                            // Demasiadas solicitudes, esperar y reintentar
-                            const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            attempt++;
-                            continue;
-                        }
-                        break; // Salir si la respuesta es exitosa o si es el último intento
-                    } catch (error) {
-                        if (attempt < maxRetries - 1) {
-                             // Error de red, esperar y reintentar
-                            const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            attempt++;
-                            continue;
-                        }
-                        throw error;
-                    }
-                }
-                
-                if (!response.ok) {
-                    throw new Error(`Error en la API: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                const candidate = result.candidates?.[0];
-
-                if (candidate && candidate.content?.parts?.[0]?.text) {
-                    const text = candidate.content.parts[0].text;
-                    resultArea.textContent = text; // Mostrar el texto de la IA
-
-                    // Procesar y mostrar fuentes de conexión a tierra
-                    let sources = [];
-                    const groundingMetadata = candidate.groundingMetadata;
-                    if (groundingMetadata && groundingMetadata.groundingAttributions) {
-                        sources = groundingMetadata.groundingAttributions
-                            .map(attribution => ({
-                                uri: attribution.web?.uri,
-                                title: attribution.web?.title,
-                            }))
-                            .filter(source => source.uri && source.title);
-                    }
-
-                    if (sources.length > 0) {
-                        const sourceList = sources.map((s, index) => 
-                            `<a href="${s.uri}" target="_blank" class="text-primary hover:underline">${s.title}</a>`
-                        ).join(', ');
-                        sourcesDiv.innerHTML = `**Fuentes de la información:** ${sourceList}`;
-                    }
-
-                    outputContainer.classList.remove('hidden');
-                } else {
-                    resultArea.textContent = 'Lo sentimos, no pudimos generar un análisis en este momento. Inténtalo de nuevo con una descripción más detallada.';
-                    outputContainer.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error("Error al llamar a la API de Gemini:", error);
-                resultArea.textContent = `Ocurrió un error inesperado al contactar con la IA. Detalles: ${error.message}`;
-                outputContainer.classList.remove('hidden');
-            } finally {
-                // Ocultar estado de carga
-                buttonText.textContent = 'Analizar mi Negocio con IA';
-                spinner.classList.add('hidden');
-                button.disabled = false;
-            }
-        }
-    </script>
 </body>
 </html>
+
+</html>
+
