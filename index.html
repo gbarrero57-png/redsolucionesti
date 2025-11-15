@@ -402,27 +402,28 @@
                         DEBES cambiar el 'action' a un servicio backend como Formspree, Netlify Forms, o un servicio propio. 
                         El 'mailto:' es solo para la demostración en HTML estático.
                     -->
-                    <form action="netlify:gbarrero57@gmail.com" method="post" enctype="text/plain" class="space-y-4">
-                        
-                        <div>
-                            <label for="name" class="block text-gray-400 mb-1 font-medium">Nombre Completo</label>
-                            <input type="text" id="name" name="Nombre" placeholder="Tu nombre" class="form-input" required>
-                        </div>
+                    <form name="contact" method="POST" data-netlify="true" class="space-y-4">
+    <input type="hidden" name="form-name" value="contact">
 
-                        <div>
-                            <label for="email" class="block text-gray-400 mb-1 font-medium">Email</label>
-                            <input type="email" id="email" name="Email" placeholder="ejemplo@negocio.com" class="form-input" required>
-                        </div>
+    <div>
+        <label for="name" class="block text-gray-400 mb-1 font-medium">Nombre Completo</label>
+        <input type="text" id="name" name="Nombre" placeholder="Tu nombre" class="form-input" required>
+    </div>
 
-                        <div>
-                            <label for="message" class="block text-gray-400 mb-1 font-medium">Tu Mensaje / Desafío Principal</label>
-                            <textarea id="message" name="Mensaje" rows="4" placeholder="Quiero automatizar mi gestión de pedidos..." class="form-input" required></textarea>
-                        </div>
+    <div>
+        <label for="email" class="block text-gray-400 mb-1 font-medium">Email</label>
+        <input type="email" id="email" name="Email" placeholder="ejemplo@negocio.com" class="form-input" required>
+    </div>
 
-                        <button type="submit" class="w-full bg-ti-blue text-white font-bold py-3 px-8 rounded-xl text-lg cta-glow hover:bg-blue-600 transition duration-200">
-                            Enviar Solicitud
-                        </button>
-                    </form>
+    <div>
+        <label for="message" class="block text-gray-400 mb-1 font-medium">Tu Mensaje / Desafío Principal</label>
+        <textarea id="message" name="Mensaje" rows="4" placeholder="Quiero automatizar mi gestión de pedidos..." class="form-input" required></textarea>
+    </div>
+
+    <button type="submit" class="w-full bg-ti-blue text-white font-bold py-3 px-8 rounded-xl text-lg cta-glow hover:bg-blue-600 transition duration-200">
+        Enviar Solicitud
+    </button>
+</form>
                 </div>
             </div>
         </section>
@@ -485,4 +486,5 @@
 
 </body>
 </html>
+
 
