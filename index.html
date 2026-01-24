@@ -556,349 +556,166 @@
             &copy; 2025 RedSoluciones TI. Todos los derechos reservados.
         </div>
     </footer>
-<!-- ========================================
-     CHAT WIDGET REDSOLUCIONESTI.COM
-     Copia este código completo antes de </body>
-     ======================================== -->
+<!-- ===================================
+     CHAT N8N - REDSOLUCIONESTI.COM
+     Webhook configurado y listo
+     =================================== -->
 
+<!-- CSS del Chat n8n -->
+<link href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" rel="stylesheet" />
+
+<!-- Estilos Personalizados RedSoluciones TI -->
 <style>
-/* Estilos del Chat Widget - RedSoluciones TI */
-#chat-widget-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9999;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+:root {
+  /* Colores de RedSoluciones TI */
+  --chat--color--primary: #8B5CF6;
+  --chat--color--primary-shade-50: #7C3AED;
+  --chat--color--primary-shade-100: #6D28D9;
+  --chat--color--secondary: #6366F1;
+  --chat--color-secondary-shade-50: #4F46E5;
+  --chat--color-white: #fff;
+  --chat--color-light: #F9FAFB;
+  --chat--color-light-shade-50: #F3F4F6;
+  --chat--color-light-shade-100: #E5E7EB;
+  --chat--color-medium: #D1D5DB;
+  --chat--color-dark: #1F2937;
+  --chat--color-disabled: #D1D5DB;
+  --chat--color-typing: #6B7280;
+
+  /* Dimensiones de la ventana */
+  --chat--window--width: 400px;
+  --chat--window--height: 600px;
+  --chat--window--bottom: 20px;
+  --chat--window--right: 20px;
+  --chat--window--z-index: 9999;
+  --chat--window--border-radius: 20px;
+
+  /* Estilos del Header */
+  --chat--header--background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+  --chat--header--color: #fff;
+  --chat--header--padding: 1.5rem;
+  --chat--heading--font-size: 1.25rem;
+  --chat--subtitle--font-size: 0.875rem;
+
+  /* Botón Toggle */
+  --chat--toggle--size: 65px;
+  --chat--toggle--background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+  --chat--toggle--hover: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+  --chat--toggle--color: #fff;
+  --chat--toggle--border-radius: 50%;
+
+  /* Mensajes */
+  --chat--message--font-size: 0.95rem;
+  --chat--message--padding: 0.875rem 1rem;
+  --chat--message--border-radius: 12px;
+  --chat--message--bot--background: #fff;
+  --chat--message--bot--color: #1F2937;
+  --chat--message--bot--border: 1px solid #E5E7EB;
+  --chat--message--user--background: #8B5CF6;
+  --chat--message--user--color: #fff;
+  --chat--message--user--border: none;
+
+  /* Input */
+  --chat--input--background: #fff;
+  --chat--input--border: 1px solid #E5E7EB;
+  --chat--input--border-radius: 12px;
+  --chat--input--padding: 0.875rem;
+  --chat--input--send--button--background: #8B5CF6;
+  --chat--input--send--button--color: #fff;
+  --chat--input--send--button--background-hover: #7C3AED;
+
+  /* Footer */
+  --chat--footer--background: #F9FAFB;
+  --chat--footer--color: #6B7280;
+
+  /* Body */
+  --chat--body--background: #F9FAFB;
 }
 
-#chat-button {
-    width: 65px;
-    height: 65px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
-    border: none;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    position: relative;
+/* Sombra personalizada para el botón */
+#n8n-chat .chat-toggle {
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5) !important;
+  transition: all 0.3s ease !important;
 }
 
-#chat-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 30px rgba(139, 92, 246, 0.7);
+#n8n-chat .chat-toggle:hover {
+  box-shadow: 0 6px 30px rgba(139, 92, 246, 0.7) !important;
+  transform: scale(1.05) !important;
 }
 
-#chat-button svg {
-    width: 32px;
-    height: 32px;
-    fill: white;
-    transition: all 0.3s ease;
-}
-
-#chat-button.active svg.chat-icon {
-    display: none;
-}
-
-#chat-button svg.close-icon {
-    display: none;
-}
-
-#chat-button.active svg.close-icon {
-    display: block;
-}
-
-.notification-badge {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #EF4444;
-    color: white;
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: bold;
-    animation: pulse-badge 2s infinite;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-}
-
-@keyframes pulse-badge {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.15);
-    }
-}
-
-#chat-window {
-    position: fixed;
-    bottom: 95px;
-    right: 20px;
-    width: 400px;
-    height: 600px;
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#chat-window.active {
-    display: flex;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px) scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-
-.chat-header {
-    background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
-    color: white;
-    padding: 22px 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    box-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
-}
-
-.chat-header-avatar {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: #8B5CF6;
-    font-size: 18px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0;
-}
-
-.chat-header-info {
-    flex: 1;
-}
-
-.chat-header-info h3 {
-    font-size: 17px;
-    margin-bottom: 4px;
-    font-weight: 600;
-}
-
-.chat-header-info p {
-    font-size: 13px;
-    opacity: 0.95;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.status-indicator {
-    width: 8px;
-    height: 8px;
-    background: #10B981;
-    border-radius: 50%;
-    display: inline-block;
-    animation: pulse-status 2s infinite;
-}
-
-@keyframes pulse-status {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-.chat-iframe-container {
-    flex: 1;
-    background: #F9FAFB;
-    position: relative;
-}
-
-.chat-iframe-container iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-
-.chat-footer {
-    background: white;
-    padding: 12px 20px;
-    border-top: 1px solid #E5E7EB;
-    text-align: center;
-    font-size: 11px;
-    color: #6B7280;
-}
-
-.chat-footer a {
-    color: #8B5CF6;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.chat-footer a:hover {
-    text-decoration: underline;
-}
-
-/* Responsive Design */
+/* Ajustes responsive */
 @media (max-width: 768px) {
-    #chat-button {
-        width: 60px;
-        height: 60px;
-        bottom: 15px;
-        right: 15px;
-    }
-    
-    #chat-window {
-        width: calc(100vw - 30px);
-        height: calc(100vh - 120px);
-        right: 15px;
-        bottom: 85px;
-        max-width: 400px;
-        max-height: 600px;
-    }
-    
-    #chat-widget-container {
-        bottom: 15px;
-        right: 15px;
-    }
-}
-
-@media (max-width: 480px) {
-    #chat-window {
-        width: calc(100vw - 20px);
-        height: calc(100vh - 100px);
-        right: 10px;
-        bottom: 75px;
-        border-radius: 15px;
-    }
+  :root {
+    --chat--window--width: calc(100vw - 32px);
+    --chat--window--height: calc(100vh - 120px);
+    --chat--window--right: 16px;
+    --chat--window--bottom: 16px;
+  }
 }
 </style>
 
-<!-- HTML del Chat Widget -->
-<div id="chat-widget-container">
-    <button id="chat-button" aria-label="Abrir chat de soporte">
-        <svg class="chat-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-            <path d="M7 9h10v2H7zm0-3h10v2H7zm0 6h7v2H7z"/>
-        </svg>
-        <svg class="close-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-        </svg>
-        <span class="notification-badge" style="display: none;">1</span>
-    </button>
+<!-- Script de Inicialización del Chat -->
+<script type="module">
+  import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
 
-    <div id="chat-window">
-        <div class="chat-header">
-            <div class="chat-header-avatar">RS</div>
-            <div class="chat-header-info">
-                <h3>RedSoluciones TI</h3>
-                <p>
-                    <span class="status-indicator"></span>
-                    Soporte IA 24/7 - En línea
-                </p>
-            </div>
-        </div>
-        <div class="chat-iframe-container">
-            <iframe 
-                src="https://n8n-n8n.bzgfek.easypanel.host/webhook/829b3eaf-aa47-4306-af47-9f741634d2bd/chat"
-                title="Chat de RedSoluciones TI"
-                allow="microphone">
-            </iframe>
-        </div>
-        <div class="chat-footer">
-            Powered by <a href="https://redsolucionesti.com" target="_blank">RedSoluciones TI</a>
-        </div>
-    </div>
-</div>
+  createChat({
+    // URL de webhook de RedSoluciones TI
+    webhookUrl: 'https://n8n-n8n.bzgfek.easypanel.host/webhook/b742989d-c75c-4d23-aab6-098c0ca126db',
+    
+    // Configuración del webhook
+    webhookConfig: {
+      method: 'POST',
+      headers: {}
+    },
 
-<!-- JavaScript del Chat -->
-<script>
-(function() {
-    'use strict';
+    // Elemento donde se renderizará el chat
+    target: '#n8n-chat',
     
-    const chatButton = document.getElementById('chat-button');
-    const chatWindow = document.getElementById('chat-window');
-    const badge = document.querySelector('.notification-badge');
+    // Modo de visualización ('window' o 'fullscreen')
+    mode: 'window',
     
-    // Toggle chat window
-    chatButton.addEventListener('click', function() {
-        const isActive = chatWindow.classList.contains('active');
-        
-        chatButton.classList.toggle('active');
-        chatWindow.classList.toggle('active');
-        
-        // Ocultar badge cuando se abre el chat
-        if (!isActive) {
-            if (badge) badge.style.display = 'none';
-            
-            // Guardar en localStorage que el usuario ya vio el chat
-            try {
-                localStorage.setItem('chatOpened', 'true');
-            } catch (e) {
-                // Ignorar errores de localStorage
-            }
-        }
-    });
+    // Cargar sesión anterior
+    loadPreviousSession: true,
     
-    // Cerrar chat al hacer clic fuera (opcional)
-    document.addEventListener('click', function(e) {
-        if (chatWindow.classList.contains('active') && 
-            !chatWindow.contains(e.target) && 
-            !chatButton.contains(e.target)) {
-            // Descomentar las siguientes líneas si quieres que se cierre al hacer clic fuera
-            // chatButton.classList.remove('active');
-            // chatWindow.classList.remove('active');
-        }
-    });
+    // Mostrar pantalla de bienvenida
+    showWelcomeScreen: false,
     
-    // Mostrar badge de notificación después de 5 segundos si no han abierto el chat
-    setTimeout(function() {
-        try {
-            const hasOpened = localStorage.getItem('chatOpened');
-            if (!hasOpened && !chatWindow.classList.contains('active') && badge) {
-                badge.style.display = 'flex';
-            }
-        } catch (e) {
-            // Si localStorage no está disponible, mostrar el badge de todos modos
-            if (!chatWindow.classList.contains('active') && badge) {
-                badge.style.display = 'flex';
-            }
-        }
-    }, 5000);
+    // Mensajes iniciales
+    initialMessages: [
+      '¡Hola! 👋',
+      'Soy el asistente virtual de RedSoluciones TI.',
+      '¿En qué puedo ayudarte hoy?'
+    ],
     
-    // Soporte para tecla ESC para cerrar
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && chatWindow.classList.contains('active')) {
-            chatButton.classList.remove('active');
-            chatWindow.classList.remove('active');
-        }
-    });
-})();
+    // Textos personalizados
+    i18n: {
+      en: {
+        title: 'RedSoluciones TI',
+        subtitle: 'Soporte IA 24/7 - Siempre en línea para ayudarte',
+        footer: 'Powered by RedSoluciones TI',
+        getStarted: 'Iniciar Conversación',
+        inputPlaceholder: 'Escribe tu mensaje aquí...',
+      },
+    },
+    
+    // Habilitar streaming de respuestas (opcional)
+    enableStreaming: false,
+    
+    // Permitir subida de archivos (opcional)
+    allowFileUploads: false,
+    
+    // Idioma por defecto
+    defaultLanguage: 'en',
+  });
 </script>
 
-<!-- FIN DEL CÓDIGO DEL CHAT WIDGET -->
+<!-- Contenedor del Chat -->
+<div id="n8n-chat"></div>
+
+<!-- FIN DEL CHAT N8N -->
 </body>
 </html>
+
 
 
 
