@@ -558,7 +558,7 @@
     </footer>
 <!-- ===================================
      CHAT N8N - REDSOLUCIONESTI.COM
-     Webhook configurado y listo
+     Versión Final - Fondo Negro
      =================================== -->
 
 <!-- CSS del Chat n8n -->
@@ -567,20 +567,20 @@
 <!-- Estilos Personalizados RedSoluciones TI -->
 <style>
 :root {
-  /* Colores de RedSoluciones TI */
+  /* Colores de RedSoluciones TI - Tema Oscuro */
   --chat--color--primary: #8B5CF6;
   --chat--color--primary-shade-50: #7C3AED;
   --chat--color--primary-shade-100: #6D28D9;
   --chat--color--secondary: #6366F1;
   --chat--color-secondary-shade-50: #4F46E5;
   --chat--color-white: #fff;
-  --chat--color-light: #F9FAFB;
-  --chat--color-light-shade-50: #F3F4F6;
-  --chat--color-light-shade-100: #E5E7EB;
-  --chat--color-medium: #D1D5DB;
-  --chat--color-dark: #1F2937;
-  --chat--color-disabled: #D1D5DB;
-  --chat--color-typing: #6B7280;
+  --chat--color-light: #1F2937;
+  --chat--color-light-shade-50: #374151;
+  --chat--color-light-shade-100: #4B5563;
+  --chat--color-medium: #6B7280;
+  --chat--color-dark: #111827;
+  --chat--color-disabled: #4B5563;
+  --chat--color-typing: #9CA3AF;
 
   /* Dimensiones de la ventana */
   --chat--window--width: 400px;
@@ -589,6 +589,7 @@
   --chat--window--right: 20px;
   --chat--window--z-index: 9999;
   --chat--window--border-radius: 20px;
+  --chat--window--border: 1px solid #374151;
 
   /* Estilos del Header */
   --chat--header--background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
@@ -608,16 +609,19 @@
   --chat--message--font-size: 0.95rem;
   --chat--message--padding: 0.875rem 1rem;
   --chat--message--border-radius: 12px;
-  --chat--message--bot--background: #fff;
-  --chat--message--bot--color: #1F2937;
-  --chat--message--bot--border: 1px solid #E5E7EB;
+  --chat--message--bot--background: #374151;
+  --chat--message--bot--color: #F3F4F6;
+  --chat--message--bot--border: 1px solid #4B5563;
   --chat--message--user--background: #8B5CF6;
   --chat--message--user--color: #fff;
   --chat--message--user--border: none;
+  --chat--message--pre--background: rgba(0, 0, 0, 0.3);
 
   /* Input */
-  --chat--input--background: #fff;
-  --chat--input--border: 1px solid #E5E7EB;
+  --chat--input--background: #374151;
+  --chat--input--text-color: #F3F4F6;
+  --chat--input--border: 1px solid #4B5563;
+  --chat--input--border-active: 1px solid #8B5CF6;
   --chat--input--border-radius: 12px;
   --chat--input--padding: 0.875rem;
   --chat--input--send--button--background: #8B5CF6;
@@ -625,11 +629,11 @@
   --chat--input--send--button--background-hover: #7C3AED;
 
   /* Footer */
-  --chat--footer--background: #F9FAFB;
-  --chat--footer--color: #6B7280;
+  --chat--footer--background: #1F2937;
+  --chat--footer--color: #9CA3AF;
 
   /* Body */
-  --chat--body--background: #F9FAFB;
+  --chat--body--background: #111827;
 }
 
 /* Sombra personalizada para el botón */
@@ -641,6 +645,46 @@
 #n8n-chat .chat-toggle:hover {
   box-shadow: 0 6px 30px rgba(139, 92, 246, 0.7) !important;
   transform: scale(1.05) !important;
+}
+
+/* Estilos adicionales para tema oscuro */
+#n8n-chat {
+  color-scheme: dark;
+}
+
+#n8n-chat .chat-window {
+  background: #111827 !important;
+  border: 1px solid #374151 !important;
+}
+
+#n8n-chat .chat-message-list {
+  background: #111827 !important;
+}
+
+#n8n-chat input::placeholder {
+  color: #9CA3AF !important;
+}
+
+#n8n-chat input {
+  color: #F3F4F6 !important;
+}
+
+/* Scrollbar oscuro */
+#n8n-chat .chat-message-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+#n8n-chat .chat-message-list::-webkit-scrollbar-track {
+  background: #1F2937;
+}
+
+#n8n-chat .chat-message-list::-webkit-scrollbar-thumb {
+  background: #4B5563;
+  border-radius: 4px;
+}
+
+#n8n-chat .chat-message-list::-webkit-scrollbar-thumb:hover {
+  background: #6B7280;
 }
 
 /* Ajustes responsive */
@@ -659,8 +703,8 @@
   import { createChat } from 'https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js';
 
   createChat({
-    // URL de webhook de RedSoluciones TI
-    webhookUrl: 'https://n8n-n8n.bzgfek.easypanel.host/webhook/b742989d-c75c-4d23-aab6-098c0ca126db',
+    // URL del webhook de RedSoluciones TI
+    webhookUrl: 'https://n8n-n8n.bzgfek.easypanel.host/webhook/829b3eaf-aa47-4306-af47-9f741634d2bd/chat',
     
     // Configuración del webhook
     webhookConfig: {
@@ -682,7 +726,7 @@
     
     // Mensajes iniciales
     initialMessages: [
-      '¡Hola! 👋',
+      '¡Hey que tal! 👋',
       'Soy el asistente virtual de RedSoluciones TI.',
       '¿En qué puedo ayudarte hoy?'
     ],
@@ -715,6 +759,7 @@
 <!-- FIN DEL CHAT N8N -->
 </body>
 </html>
+
 
 
 
