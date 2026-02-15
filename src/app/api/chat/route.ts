@@ -26,12 +26,10 @@ export async function POST(req: Request) {
         console.log(`[TARGET_WEBHOOK]: ${webhookUrl}`);
 
         // 3. PREPARE PAYLOAD
-        // We send both 'message' and 'chatInput' to be safe, plus the standard 'action' for LangChain triggers.
         const payload = {
             action: "sendMessage",
-            message: message,
             chatInput: message,
-            sessionId: `web_session_${Math.random().toString(36).substring(7)}` // Basic session
+            sessionId: body.sessionId || `gen_${Math.random().toString(36).substring(7)}`
         };
 
         const headers: Record<string, string> = {

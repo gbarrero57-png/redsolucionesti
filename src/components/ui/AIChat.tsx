@@ -18,8 +18,21 @@ const AIChat = () => {
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [sessionId, setSessionId] = useState<string>('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    // Initialize session ID once
+    useEffect(() => {
+        const storedSession = localStorage.getItem('rs_session');
+        if (storedSession) {
+            setSessionId(storedSession);
+        } else {
+            const newSession = crypto.randomUUID();
+            localStorage.setItem('rs_session', newSession);
+            setSessionId(newSession);
+        }
+    }, []);
 
     const scrollToBottom = (instant = false) => {
         if (scrollContainerRef.current) {
@@ -49,7 +62,10 @@ const AIChat = () => {
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMsg }),
+                body: JSON.stringify({
+                    message: userMsg,
+                    sessionId: sessionId
+                }),
             });
 
             const data = await response.json();
