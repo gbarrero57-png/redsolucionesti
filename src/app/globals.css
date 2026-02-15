@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ti-blue: #3B82F6;
+  --color-ti-blue-dark: #2563EB;
+  --color-ti-blue-light: #60A5FA;
+  --color-ti-dark: #050505;
+  --color-ti-dark-card: #0a0a0a;
+  --color-ti-dark-lighter: #111111;
+
+  --font-inter: "Inter", sans-serif;
+
+  --background-image-hero-gradient: radial-gradient(circle at top center, #111111 0%, #050505 70%);
+  --background-image-animated-gradient: linear-gradient(90deg, #1E3A8A, #3B82F6, #1E3A8A);
+
+  --animate-gradient-shift: gradient-shift 10s ease infinite alternate;
+
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%
+    }
+
+    100% {
+      background-position: 100% 50%
+    }
+  }
+}
+
+:root {
+  font-family: var(--font-inter);
+  scroll-behavior: smooth;
+  --background: var(--color-ti-dark);
+  --foreground: #f8fafc;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.cta-glow {
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  transition: all 0.3s ease;
+}
+
+.cta-glow:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+  transform: translateY(-0.125rem);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-ti-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Global Hiding Rules for Widgets and Overlays */
+.chat-toggle,
+.n8n-chat-toggle,
+[class*="chat-toggle"],
+[id*="elfsight"],
+nextjs-portal,
+#nextjs-portal,
+.nextjs-toast-errors-parent {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  position: fixed !important;
+  left: -9999px !important;
+}
