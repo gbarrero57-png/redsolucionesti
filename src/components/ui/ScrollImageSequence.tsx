@@ -149,7 +149,7 @@ const ScrollImageSequence: React.FC<ScrollImageSequenceProps> = ({
                 ref={canvasRef}
                 className="block pointer-events-none brightness-[102%] contrast-[103%] saturate-[105%]"
                 style={{
-                    imageRendering: 'high-quality',
+                    imageRendering: 'auto',
                     filter: 'drop-shadow(0 0 10px rgba(0,0,0,0.5))'
                 }}
             />
