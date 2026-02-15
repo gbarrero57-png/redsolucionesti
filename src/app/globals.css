@@ -28,7 +28,7 @@
 
 :root {
   font-family: var(--font-inter);
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   --background: var(--color-ti-dark);
   --foreground: #f8fafc;
 }

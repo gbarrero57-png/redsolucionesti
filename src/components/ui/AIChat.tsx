@@ -19,13 +19,21 @@ const AIChat = () => {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToBottom = (instant = false) => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTo({
+                top: scrollContainerRef.current.scrollHeight,
+                behavior: instant ? 'auto' : 'smooth'
+            });
+        }
     };
 
     useEffect(() => {
-        scrollToBottom();
+        // Use instant scroll on first mount to avoid page jumps, then smooth
+        const isInitial = messages.length === 1 && !isLoading;
+        scrollToBottom(isInitial);
     }, [messages, isLoading]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -80,7 +88,10 @@ const AIChat = () => {
             </div>
 
             {/* Message Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            <div
+                ref={scrollContainerRef}
+                className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent"
+            >
                 <AnimatePresence initial={false}>
                     {messages.map((message, index) => (
                         <motion.div
@@ -91,16 +102,16 @@ const AIChat = () => {
                         >
                             <div className={`flex max-w-[85%] items-start gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                                 <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border ${message.role === 'user'
-                                        ? 'bg-ti-blue/10 border-ti-blue/30 text-ti-blue'
-                                        : 'bg-white/5 border-white/10 text-slate-400'
+                                    ? 'bg-ti-blue/10 border-ti-blue/30 text-ti-blue'
+                                    : 'bg-white/5 border-white/10 text-slate-400'
                                     }`}>
                                     {message.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                                 </div>
                                 <div className={`px-5 py-3.5 rounded-2xl text-[14px] leading-relaxed ${message.role === 'user'
-                                        ? 'bg-ti-blue text-white rounded-tr-none'
-                                        : message.role === 'error'
-                                            ? 'bg-red-500/10 border border-red-500/20 text-red-400 italic'
-                                            : 'bg-white/[0.05] border border-white/10 text-slate-200 rounded-tl-none'
+                                    ? 'bg-ti-blue text-white rounded-tr-none'
+                                    : message.role === 'error'
+                                        ? 'bg-red-500/10 border border-red-500/20 text-red-400 italic'
+                                        : 'bg-white/[0.05] border border-white/10 text-slate-200 rounded-tl-none'
                                     } shadow-sm`}>
                                     <span dangerouslySetInnerHTML={{
                                         __html: message.content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
