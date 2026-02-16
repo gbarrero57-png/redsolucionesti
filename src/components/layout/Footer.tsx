@@ -8,7 +8,7 @@ const Footer = () => {
                     <div className="space-y-6">
                         <h3 className="text-2xl font-black text-white">RedSoluciones TI</h3>
                         <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
-                            Automatizamos tu negocio con IA para que ganes tiempo y dinero. Sociedad estratégica en Lima Metropolitana.
+                            Automatizamos tu negocio con IA para que ganes tiempo y dinero. Tu socio estratégico en transformación digital.
                         </p>
                         <div className="flex space-x-4">
                             <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:bg-ti-blue hover:text-white transition-all"><Facebook size={20} /></a>

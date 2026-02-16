@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "RedSoluciones TI | Automatización con IA en Lima",
-  description: "Especialistas en automatización de procesos, soporte técnico 24/7 e integración de IA para negocios en Lima Metropolitana.",
+  title: "RedSoluciones TI | Automatización Inteligente para Empresas",
+  description: "Especialistas en automatización de procesos, soporte técnico 24/7 e integración de IA para empresas modernas. Soluciones digitales que transforman tu negocio.",
 };
 
 export default function RootLayout({
@@ -20,6 +20,9 @@ export default function RootLayout({
   return (
     <html lang="es">
       <head>
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />
       </head>
       <body className={`${inter.variable} antialiased`}>
         {children}

@@ -26,8 +26,8 @@ const Navbar = () => {
     return (
         <nav
             className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled
-                    ? 'bg-ti-dark/80 backdrop-blur-md border-b border-white/10 py-3'
-                    : 'bg-transparent py-5'
+                ? 'bg-ti-dark/80 backdrop-blur-md border-b border-white/10 py-3'
+                : 'bg-transparent py-5'
                 }`}
         >
             <div className="container mx-auto px-6 flex justify-between items-center max-w-7xl">
@@ -52,7 +52,7 @@ const Navbar = () => {
                         href="#contacto"
                         className="bg-ti-blue hover:bg-ti-blue-dark text-white px-5 py-2.5 rounded-full font-semibold text-sm cta-glow transition-all"
                     >
-                        Agenda una llamada
+                        Agenda tu Demo Gratis
                     </a>
                 </div>
 
@@ -90,7 +90,7 @@ const Navbar = () => {
                                 onClick={() => setIsOpen(false)}
                                 className="bg-ti-blue text-white px-6 py-3 rounded-xl font-bold text-center cta-glow"
                             >
-                                Agenda una llamada
+                                Agenda tu Demo Gratis
                             </a>
                         </div>
                     </motion.div>

@@ -29,7 +29,7 @@ const Hero = () => {
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-ti-blue"></span>
                             </span>
                             <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
-                                Lima Metropolitana | Soporte & IA
+                                Soluciones Digitales | Soporte & Automatización con IA
                             </span>
                         </div>
 
@@ -50,7 +50,7 @@ const Hero = () => {
                                 href="#contacto"
                                 className="bg-ti-blue hover:bg-ti-blue-dark text-white font-bold py-4 px-10 rounded-2xl text-lg cta-glow text-center transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-ti-blue/25"
                             >
-                                Agenda una llamada
+                                Agenda tu Demo Gratis
                             </a>
                             <a
                                 href="https://wa.me/51905858566"
