@@ -3,7 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthContext } from '@/lib/auth';
 
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
-const VALID_STATUSES = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'];
+const VALID_STATUSES       = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'];
+const VALID_PAYMENT_STATUS = ['not_required', 'pending', 'paid', 'partial', 'waived'];
 
 export async function GET(req: NextRequest) {
   const ctx = await getAuthContext(req);
@@ -96,16 +97,36 @@ export async function PATCH(req: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
 
   const body = await req.json();
-  const { id, status } = body;
+  const { id, status, payment_status, payment_amount } = body;
 
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
-  if (!status || !VALID_STATUSES.includes(status)) {
-    return NextResponse.json({ error: `status must be one of: ${VALID_STATUSES.join(', ')}` }, { status: 400 });
+
+  // Build update payload — supports status update, payment update, or both
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+  if (status !== undefined) {
+    if (!VALID_STATUSES.includes(status))
+      return NextResponse.json({ error: `status must be one of: ${VALID_STATUSES.join(', ')}` }, { status: 400 });
+    updates.status = status;
+  }
+
+  if (payment_status !== undefined) {
+    if (!VALID_PAYMENT_STATUS.includes(payment_status))
+      return NextResponse.json({ error: `payment_status must be one of: ${VALID_PAYMENT_STATUS.join(', ')}` }, { status: 400 });
+    updates.payment_status = payment_status;
+    // Reset reminder flag when payment is resolved
+    if (payment_status === 'paid' || payment_status === 'waived') {
+      updates.payment_reminder_sent = false;
+    }
+  }
+
+  if (payment_amount !== undefined) {
+    updates.payment_amount = payment_amount === null ? null : Number(payment_amount);
   }
 
   const { data, error } = await supabaseAdmin
     .from('appointments')
-    .update({ status, updated_at: new Date().toISOString() })
+    .update(updates)
     .eq('id', id)
     .eq('clinic_id', ctx.clinic_id)
     .select()
