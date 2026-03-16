@@ -235,45 +235,88 @@ export default function MetricsPage() {
 
       {/* Intent distribution */}
       {intentChartData.length > 0 && (
-        <div className="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-1 flex items-center gap-2">
-            <TrendingUp size={16} className="text-violet-400" /> Distribución de intenciones
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">{totalIntents} registros clasificados</p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  dataKey="value"
-                  data={intentChartData}
-                  cx="50%" cy="50%" outerRadius={80}
-                  label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {intentChartData.map((item, i) => (
-                    <Cell key={i} fill={INTENT_COLORS[item.name] || PIE_FALLBACK[i % PIE_FALLBACK.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }} />
-                <Legend formatter={v => <span style={{ color: '#9ca3af', fontSize: 12 }}>{v}</span>} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex flex-col justify-center space-y-3">
+        <div className="bg-gray-900 rounded-xl border border-gray-800 p-6 mb-6">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                <TrendingUp size={15} className="text-violet-400" /> Distribución de intenciones
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">{totalIntents} mensajes clasificados por el bot</p>
+            </div>
+            <div className="text-xs text-gray-600 bg-gray-800 px-3 py-1 rounded-full border border-gray-700">
+              Últimos {days}d
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center">
+            {/* Donut chart — 2 cols */}
+            <div className="lg:col-span-2 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie
+                    dataKey="value"
+                    data={intentChartData}
+                    cx="50%" cy="50%"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={3}
+                    strokeWidth={0}
+                  >
+                    {intentChartData.map((item, i) => (
+                      <Cell key={i} fill={INTENT_COLORS[item.name] || PIE_FALLBACK[i % PIE_FALLBACK.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: 10, fontSize: 12 }}
+                    formatter={(val, name) => [
+                      `${val} (${totalIntents > 0 ? Math.round((Number(val) / totalIntents) * 100) : 0}%)`,
+                      String(name),
+                    ]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Intent cards — 3 cols */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {intentChartData.map((item, i) => {
                 const pct = totalIntents > 0 ? Math.round((item.value / totalIntents) * 100) : 0;
                 const color = INTENT_COLORS[item.name] || PIE_FALLBACK[i % PIE_FALLBACK.length];
+                const INTENT_LABEL: Record<string, string> = {
+                  AGENDAR: 'Agendar cita',
+                  AGENDAR_CITA: 'Agendar cita',
+                  ESCALATE: 'Escalar a humano',
+                  INFO: 'Consulta info',
+                  UNKNOWN: 'Sin clasificar',
+                  CANCEL: 'Cancelar cita',
+                };
+                const INTENT_ICON: Record<string, string> = {
+                  AGENDAR: '📅', AGENDAR_CITA: '📅',
+                  ESCALATE: '🚨', INFO: 'ℹ️',
+                  UNKNOWN: '❓', CANCEL: '❌',
+                };
                 return (
-                  <div key={item.name}>
-                    <div className="flex items-center justify-between mb-1">
+                  <div
+                    key={item.name}
+                    className="rounded-xl p-4 border border-gray-800 bg-gray-800/40 hover:bg-gray-800/70 transition-colors"
+                    style={{ borderLeftColor: color, borderLeftWidth: 3 }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                        <span className="text-sm text-gray-300">{item.name}</span>
+                        <span className="text-base leading-none">{INTENT_ICON[item.name] || '🔹'}</span>
+                        <span className="text-xs font-medium text-gray-300">{INTENT_LABEL[item.name] || item.name}</span>
                       </div>
-                      <span className="text-sm font-semibold text-white">{item.value} <span className="text-gray-500 font-normal">({pct}%)</span></span>
+                      <span className="text-lg font-bold text-white leading-none">{pct}%</span>
                     </div>
-                    <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-                      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+                    {/* Progress bar */}
+                    <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden mb-2">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%`, background: color }}
+                      />
                     </div>
+                    <p className="text-xs text-gray-500">{item.value} mensajes</p>
                   </div>
                 );
               })}
