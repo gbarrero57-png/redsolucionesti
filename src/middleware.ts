@@ -6,7 +6,7 @@ const SA_ONLY = ['/admin/global-metrics', '/admin/onboarding'];
 // Pages regular staff/admin can access (superadmin must NOT land here)
 const CLINIC_ONLY = ['/admin/inbox', '/admin/appointments', '/admin/metrics', '/admin/knowledge', '/admin/users'];
 
-export function proxy(req: NextRequest) {
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Always pass login page + all auth APIs
