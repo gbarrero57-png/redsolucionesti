@@ -1,16 +1,5 @@
-import nodemailer from 'nodemailer';
-
-const smtpPort = Number(process.env.SMTP_PORT || 587);
-const transporter = nodemailer.createTransport({
-  host:   process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port:   smtpPort,
-  secure: smtpPort === 465,  // SSL for port 465 (GoDaddy), STARTTLS otherwise
-  auth: {
-    user: process.env.SMTP_USER!,
-    pass: process.env.SMTP_PASS!,
-  },
-  tls: { rejectUnauthorized: false },  // required for GoDaddy
-});
+// Uses Brevo REST API instead of SMTP — Vercel serverless blocks outbound TCP (587/465)
+const BREVO_API_KEY = process.env.BREVO_API_KEY || process.env.SMTP_PASS!;
 
 export interface SendReportEmailParams {
   to: string;
@@ -130,17 +119,27 @@ export async function sendReportEmail(params: SendReportEmailParams): Promise<vo
 </html>
 `;
 
-  await transporter.sendMail({
-    from:    process.env.SMTP_FROM || 'SofIA Reports <info@redsolucionesti.com>',
-    to,
-    subject: `📊 Reporte Mensual SofIA — ${clinic_name} · ${month_label}`,
-    html,
-    attachments: [
-      {
-        filename:    pdf_filename,
-        content:     pdf_buffer,
-        contentType: 'application/pdf',
-      },
-    ],
+  const fromRaw = process.env.SMTP_FROM || 'SofIA Reports <gabriel@redsolucionesti.com>';
+  const fromMatch = fromRaw.match(/^(.+?)\s*<(.+?)>$/);
+  const senderName  = fromMatch ? fromMatch[1].trim() : 'SofIA Reports';
+  const senderEmail = fromMatch ? fromMatch[2].trim() : 'gabriel@redsolucionesti.com';
+
+  const body = {
+    sender:      { name: senderName, email: senderEmail },
+    to:          [{ email: to }],
+    subject:     `📊 Reporte Mensual SofIA — ${clinic_name} · ${month_label}`,
+    htmlContent: html,
+    attachment:  [{ content: pdf_buffer.toString('base64'), name: pdf_filename }],
+  };
+
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method:  'POST',
+    headers: { 'api-key': BREVO_API_KEY, 'content-type': 'application/json' },
+    body:    JSON.stringify(body),
   });
+
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`Brevo API error ${res.status}: ${detail}`);
+  }
 }
