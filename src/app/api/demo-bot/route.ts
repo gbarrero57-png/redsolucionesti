@@ -34,7 +34,7 @@ function getLastAsked(botMsg: string): keyof DemoData | null {
 
 /* ── Is this message clearly a question/FAQ, not a demo data answer? ── */
 function looksLikeFAQ(norm: string): boolean {
-  return /que es|como funciona|cuanto cuesta|cuanto vale|precio|plan(es)?|recordatorio|whatsapp|integracion|seguridad|privacidad|cuanto tarda|recepcionista|reemplaz|hola$|gracias|buenas|hey |quienes son|cancelar|soporte|idioma|calendario/.test(norm);
+  return /que es|como funciona|cuanto cuesta|cuanto vale|precio|plan(es)?|recordatorio|whatsapp|integracion|seguridad|privacidad|cuanto tarda|recepcionista|reemplaz|hola$|gracias|buenas|hey |quienes son|cancelar|soporte|idioma|calendario|agenda|cita|reservar|como se|horario/.test(norm);
 }
 
 /* ── Extract all demo data from conversation history ── */
@@ -111,7 +111,7 @@ type Responder = (d: DemoData) => string;
 const FAQS: { pattern: RegExp; response: Responder }[] = [
   // Greetings
   {
-    pattern: /^(hola|hi|hey|buenas|buenos dias|buenas tardes|buenas noches|saludos|ola )/,
+    pattern: /^(hola|hi|hey|buenas|buenos dias|buenas tardes|buenas noches|saludos|ola|buen dia)/,
     response: (d) => d.name
       ? `¡Hola de nuevo, **${d.name.split(' ')[0]}**! 👋 ¿En qué te puedo ayudar?`
       : `¡Hola! 😊 Soy **SofIA**, el asistente de la plataforma SofIA AI para clínicas dentales.\n\nEstoy aquí para responder tus preguntas y ayudarte a agendar tu **demo gratuita de 7 días**. ¿Qué te gustaría saber?`,
@@ -147,11 +147,11 @@ const FAQS: { pattern: RegExp; response: Responder }[] = [
     response: () =>
       `SofIA se conecta nativamente con **WhatsApp Business** a través de Chatwoot. Tu número actual sigue siendo el mismo — los pacientes escriben como siempre y SofIA responde en nombre de tu clínica. 📱\n\nSoporta múltiples números si tienes varias sedes. La integración con Instagram y Facebook Messenger está en desarrollo.`,
   },
-  // Calendar / appointments
+  // Calendar / appointments — covers "¿Cómo se agenda una cita?", "agendar", "reservar", etc.
   {
-    pattern: /calendario|agendar cita|disponibilidad de citas|horarios disponibles|como agenda|agendamiento/,
+    pattern: /calendario|agendar|agenda.*cita|cita.*agenda|como se agenda|como agenda|disponibilidad|horarios disponibles|reservar cita|reserva.*cita|agendamiento|como.*cita|cita.*como/,
     response: () =>
-      `SofIA tiene su **propio sistema de calendario integrado**. 📅\n\nCuando un paciente quiere una cita:\n1. SofIA consulta la disponibilidad real de tu clínica\n2. Ofrece los horarios libres directamente en el chat\n3. Confirma la cita y la registra en el sistema\n4. Envía recordatorio automático 24h antes\n\nTodo sin salir de WhatsApp, sin intervención de tu equipo.`,
+      `¡Súper sencillo para el paciente! 📅\n\nAsí funciona el agendamiento en SofIA:\n\n1. El paciente escribe por **WhatsApp** pidiendo una cita\n2. SofIA consulta la **disponibilidad real** de tu clínica en tiempo real\n3. Ofrece **3 horarios libres** directamente en el chat\n4. El paciente elige y SofIA **confirma al instante**\n5. **24h antes** de la cita, SofIA envía un recordatorio automático\n\nTu equipo nunca tiene que intervenir — todo pasa solo. ✅\n\n¿Quieres ver cómo quedaría configurado para tu clínica?`,
   },
   // Security / privacy
   {
@@ -247,9 +247,9 @@ async function buildResponse(
   }
 
   // ── Contextual default ──
-  const firstName = collected.name ? `, **${collected.name.split(' ')[0]}**` : '';
+  const firstName = collected.name ? ` **${collected.name.split(' ')[0]}**,` : '';
   return {
-    response: `Entendido${firstName}. 😊\n\nSofIA convierte WhatsApp en el mejor asistente de tu clínica dental: responde 24/7, agenda citas automáticamente y envía recordatorios.\n\n¿Te cuento sobre los **precios**, los **recordatorios automáticos**, o prefieres agendar tu **demo gratuita de 7 días** ahora mismo?`,
+    response: `Hola${firstName} soy **SofIA** 👋\n\nPuedo contarte sobre:\n\n• 💬 **Cómo responde SofIA** en WhatsApp 24/7\n• 📅 **Agendamiento automático** de citas\n• 🔔 **Recordatorios** automáticos para pacientes\n• 💰 **Precios** y planes disponibles\n• 🚀 **Demo gratuita** de 7 días sin tarjeta\n\n¿Qué te interesa más?`,
     action: 'none',
   };
 }
