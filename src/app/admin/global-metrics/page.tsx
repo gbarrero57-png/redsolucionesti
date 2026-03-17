@@ -267,8 +267,8 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
               {[
                 { label: 'Staff', value: detail.staff.length, sub: `${detail.staff.filter(s => s.role === 'admin').length} admin`, icon: Users, color: 'text-violet-400' },
                 { label: 'KB', value: detail.kb.total, sub: `${detail.kb.active} activos`, icon: BookOpen, color: 'text-blue-400' },
-                { label: 'Convs.', value: detail.conversations.counts.total, sub: `${detail.conversations.counts.active} bot · ${detail.conversations.counts.human} humano`, icon: MessageSquare, color: 'text-green-400' },
-                { label: 'Citas', value: detail.appointments.counts.confirmed + detail.appointments.counts.completed, sub: `${detail.appointments.counts.cancelled} canc.`, icon: Calendar, color: 'text-amber-400' },
+                { label: 'Convs.', value: detail.conversations.counts?.total ?? 0, sub: `${detail.conversations.counts?.active ?? 0} bot · ${detail.conversations.counts?.human ?? 0} humano`, icon: MessageSquare, color: 'text-green-400' },
+                { label: 'Citas', value: (detail.appointments.counts?.confirmed ?? 0) + (detail.appointments.counts?.completed ?? 0), sub: `${detail.appointments.counts?.cancelled ?? 0} canc.`, icon: Calendar, color: 'text-amber-400' },
               ].map(({ label, value, sub, icon: Icon, color }) => (
                 <div key={label} className="bg-gray-900 rounded-xl p-3 border border-gray-800">
                   <div className="flex items-center justify-between mb-1">
@@ -286,7 +286,7 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
               {([
                 { key: 'staff', label: `Staff (${detail.staff.length})`, icon: Users },
                 { key: 'kb',    label: `Base de conocimiento (${detail.kb.total})`, icon: BookOpen },
-                { key: 'convs', label: `Conversaciones (${detail.conversations.counts.total})`, icon: MessageSquare },
+                { key: 'convs', label: `Conversaciones (${detail.conversations.counts?.total ?? 0})`, icon: MessageSquare },
                 { key: 'appts', label: `Citas (${detail.appointments.recent.length})`, icon: Calendar },
               ] as const).map(({ key, label, icon: Icon }) => (
                 <button
@@ -714,7 +714,13 @@ export default function GlobalMetricsPage() {
       const json = await res.json();
       // Validate shape before setting — prevent crash if API returns error object
       if (json && typeof json === 'object' && Array.isArray(json.clinics)) {
-        setData(json as GlobalMetrics);
+        // Ensure totals always exists with safe defaults (crashes KpiCard row if missing)
+        const safeTotals = {
+          total_conversations: 0, active_conversations: 0, human_now: 0,
+          total_appointments: 0, ever_escalated: 0, cancelled_appointments: 0, staff_count: 0,
+          ...(json.totals && typeof json.totals === 'object' ? json.totals : {}),
+        };
+        setData({ ...json, totals: safeTotals } as GlobalMetrics);
       } else {
         setFetchError(true); setData(null);
       }
@@ -725,7 +731,7 @@ export default function GlobalMetricsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const sortedClinics = data?.clinics.slice().sort((a, b) => {
-    if (sortBy === 'name') return a.name.localeCompare(b.name);
+    if (sortBy === 'name') return (a.name ?? '').localeCompare(b.name ?? '');
     if (sortBy === 'conversations') return b.total_conversations - a.total_conversations;
     if (sortBy === 'appointments')  return b.total_appointments - a.total_appointments;
     if (sortBy === 'escalation')    return b.escalation_rate - a.escalation_rate;

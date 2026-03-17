@@ -37,6 +37,8 @@ interface StackedBarProps {
 }
 
 export function StackedBarChart({ data, width = 460, height = 160 }: StackedBarProps) {
+  if (!data || data.length === 0) return null;
+
   const padL = 28, padR = 8, padT = 10, padB = 28;
   const chartW = width - padL - padR;
   const chartH = height - padT - padB;
