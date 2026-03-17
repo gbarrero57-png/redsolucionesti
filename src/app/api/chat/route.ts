@@ -50,11 +50,12 @@ export async function POST(req: Request) {
 
         console.log(`[PAYLOAD]:`, JSON.stringify(payload));
 
-        // 5. EXECUTION
+        // 5. EXECUTION (timeout 15s para evitar cuelgues)
         const n8nResponse = await fetch(webhookUrl, {
             method: 'POST',
             headers: headers,
             body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(15000),
         });
 
         const endTime = Date.now();
@@ -107,11 +108,11 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ reply: reply || 'Disculpa, el asistente no pudo procesar tu mensaje.' });
 
-    } catch (error: any) {
-        console.error('[CHAT PROXY CRITICAL EXCEPTION]:', error);
+    } catch (error: unknown) {
+        const isTimeout = error instanceof Error && error.name === 'TimeoutError';
+        console.error('[CHAT PROXY CRITICAL EXCEPTION]:', error instanceof Error ? error.message : error);
         return NextResponse.json({
-            error: 'Error interno del servidor proxy',
-            details: error.message
+            error: isTimeout ? 'El asistente tardó demasiado en responder. Intenta de nuevo.' : 'Error interno del servidor proxy',
         }, { status: 500 });
     }
 }

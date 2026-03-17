@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
 
-  // clinic_id: super admin passes it; regular admin uses own clinic
-  const clinic_id = body.clinic_id || ctx.clinic_id;
+  // clinic_id: superadmin puede especificarlo; admin regular solo puede ver su propia clínica
+  const clinic_id = ctx.is_superadmin ? (body.clinic_id || ctx.clinic_id) : ctx.clinic_id;
   if (!clinic_id) return NextResponse.json({ error: 'clinic_id required' }, { status: 400 });
 
   // month: 'YYYY-MM', defaults to last month

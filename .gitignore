@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scripts de prueba con credenciales
+test_report.mjs
+test_*.mjs
+test_*.js
+
+# reportes generados localmente
+reporte-*.pdf
+*.pdf

@@ -3,15 +3,17 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthContext } from '@/lib/auth';
 
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
+const VALID_CONV_STATUS = ['active', 'human', 'closed', 'paused'];
 
 export async function GET(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
 
   const { searchParams } = new URL(req.url);
-  const status = searchParams.get('status') || null;
-  const limit = parseInt(searchParams.get('limit') || '100');
-  const offset = parseInt(searchParams.get('offset') || '0');
+  const rawStatus = searchParams.get('status');
+  const status = rawStatus && VALID_CONV_STATUS.includes(rawStatus) ? rawStatus : null;
+  const limit  = Math.min(Math.max(parseInt(searchParams.get('limit')  || '100') || 100, 1), 200);
+  const offset = Math.max(parseInt(searchParams.get('offset') || '0')  || 0, 0);
 
   const { data, error } = await supabaseAdmin.rpc('list_conversations', {
     p_clinic_id: ctx.clinic_id,
@@ -20,7 +22,7 @@ export async function GET(req: NextRequest) {
     p_offset: offset,
   });
 
-  if (error) return NextResponse.json({ error: error.message, details: error.code }, { status: 500, headers: NO_CACHE });
+  if (error) return NextResponse.json({ error: 'Error al obtener conversaciones' }, { status: 500, headers: NO_CACHE });
   return NextResponse.json(data || [], { headers: NO_CACHE });
 }
 
@@ -44,6 +46,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   }
 
-  if (result.error) return NextResponse.json({ error: result.error.message }, { status: 500, headers: NO_CACHE });
+  if (result.error) return NextResponse.json({ error: 'Error al procesar acción' }, { status: 500, headers: NO_CACHE });
   return NextResponse.json(result.data, { headers: NO_CACHE });
 }

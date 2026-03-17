@@ -12,4 +12,5 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { persistSession: false },
 });
 
-export const CLINIC_ID = process.env.CLINIC_ID || 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+// CLINIC_ID sin fallback hardcoded — falla explícito si no está configurada
+export const CLINIC_ID = process.env.CLINIC_ID ?? '';

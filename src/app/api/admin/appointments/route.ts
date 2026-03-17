@@ -5,16 +5,23 @@ import { getAuthContext } from '@/lib/auth';
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
 const VALID_STATUSES       = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'];
 const VALID_PAYMENT_STATUS = ['not_required', 'pending', 'paid', 'partial', 'waived'];
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]+)?$/;
 
 export async function GET(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
 
   const { searchParams } = new URL(req.url);
-  const status = searchParams.get('status');
-  const from   = searchParams.get('from');
-  const to     = searchParams.get('to');
-  const limit  = parseInt(searchParams.get('limit') || '500');
+  const rawStatus = searchParams.get('status');
+  const from      = searchParams.get('from');
+  const to        = searchParams.get('to');
+  const limit     = Math.min(Math.max(parseInt(searchParams.get('limit') || '500') || 500, 1), 1000);
+
+  // Validar status contra allowlist
+  const status = rawStatus && VALID_STATUSES.includes(rawStatus) ? rawStatus : null;
+  // Validar que from/to sean fechas ISO válidas
+  const safeFrom = from && ISO_DATE_RE.test(from) ? from : null;
+  const safeTo   = to   && ISO_DATE_RE.test(to)   ? to   : null;
 
   let query = supabaseAdmin
     .from('appointments')
@@ -23,12 +30,12 @@ export async function GET(req: NextRequest) {
     .order('start_time', { ascending: true })
     .limit(limit);
 
-  if (status) query = query.eq('status', status);
-  if (from)   query = query.gte('start_time', from);
-  if (to)     query = query.lt('start_time', to);
+  if (status)   query = query.eq('status', status);
+  if (safeFrom) query = query.gte('start_time', safeFrom);
+  if (safeTo)   query = query.lt('start_time', safeTo);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE });
+  if (error) return NextResponse.json({ error: 'Error al obtener citas' }, { status: 500, headers: NO_CACHE });
   return NextResponse.json(data || [], { headers: NO_CACHE });
 }
 
@@ -83,10 +90,10 @@ export async function POST(req: NextRequest) {
         })
         .select()
         .single();
-      if (e2) return NextResponse.json({ error: e2.message }, { status: 500, headers: NO_CACHE });
+      if (e2) return NextResponse.json({ error: 'Error al crear cita' }, { status: 500, headers: NO_CACHE });
       return NextResponse.json({ ...d2, source: 'manual' }, { status: 201, headers: NO_CACHE });
     }
-    return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE });
+    return NextResponse.json({ error: 'Error al crear cita' }, { status: 500, headers: NO_CACHE });
   }
 
   return NextResponse.json(data, { status: 201, headers: NO_CACHE });
@@ -132,6 +139,6 @@ export async function PATCH(req: NextRequest) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE });
+  if (error) return NextResponse.json({ error: 'Error al actualizar cita' }, { status: 500, headers: NO_CACHE });
   return NextResponse.json(data, { headers: NO_CACHE });
 }
