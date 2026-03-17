@@ -46,6 +46,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => { setSidebarOpen(false); }, [pathname]);
 
   const doLogout = useCallback(async (reason = 'timeout') => {
+    setIsSuperadmin(false); // prevent redirect loop before navigation completes
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push(`/admin/login?reason=${reason}`);
   }, [router]);
@@ -91,6 +92,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const onSAPath = SA_PATHS.some(p => pathname.startsWith(p));
+    // Never redirect away from the login page — prevents logout loop
+    if (pathname.startsWith('/admin/login')) return;
     if (isSuperadmin && !onSAPath && pathname !== '/admin' && pathname !== '/admin/') {
       router.replace('/admin/global-metrics');
     }
