@@ -654,17 +654,27 @@ function ReportsSection({ clinics }: { clinics: ClinicMetric[] }) {
 export default function GlobalMetricsPage() {
   const [data, setData]           = useState<GlobalMetrics | null>(null);
   const [loading, setLoading]     = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [days, setDays]           = useState(30);
   const [sortBy, setSortBy]       = useState<'name' | 'conversations' | 'appointments' | 'escalation'>('conversations');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setFetchError(false);
     try {
       const res = await fetch(`/api/admin/global-metrics?days=${days}`, { cache: 'no-store' });
-      if (res.status === 403) { setData(null); return; }
-      setData(await res.json());
-    } finally { setLoading(false); }
+      if (res.status === 401 || res.status === 403) { setData(null); return; }
+      if (!res.ok) { setFetchError(true); setData(null); return; }
+      const json = await res.json();
+      // Validate shape before setting — prevent crash if API returns error object
+      if (json && typeof json === 'object' && Array.isArray(json.clinics)) {
+        setData(json as GlobalMetrics);
+      } else {
+        setFetchError(true); setData(null);
+      }
+    } catch { setFetchError(true); setData(null); }
+    finally { setLoading(false); }
   }, [days]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -685,9 +695,17 @@ export default function GlobalMetricsPage() {
 
   if (!data) return (
     <div className="p-6">
-      <div className="bg-red-900/20 border border-red-700/30 rounded-xl p-4 text-red-300 text-sm">
-        Acceso denegado — solo el superadmin puede ver métricas globales.
+      <div className="bg-red-900/20 border border-red-700/30 rounded-xl p-4 text-red-300 text-sm flex items-center gap-3">
+        <AlertTriangle size={16} />
+        {fetchError
+          ? 'Error al cargar métricas. Verifica la conexión y recarga.'
+          : 'Acceso denegado — solo el superadmin puede ver métricas globales.'}
       </div>
+      {fetchError && (
+        <button onClick={fetchData} className="mt-3 flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 text-sm transition-colors">
+          <RefreshCw size={14} /> Reintentar
+        </button>
+      )}
     </div>
   );
 
