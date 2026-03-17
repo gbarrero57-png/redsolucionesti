@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Superadmin path — no staff record required ────────────────
-  const superadminEmail = process.env.SUPERADMIN_EMAIL || '';
-  if (superadminEmail !== '' && data.user.email === superadminEmail) {
+  const superadminEmail = (process.env.SUPERADMIN_EMAIL || '').toLowerCase().trim();
+  if (superadminEmail !== '' && (data.user.email ?? '').toLowerCase().trim() === superadminEmail) {
     const res = NextResponse.json({
       ok: true,
       role: 'superadmin',

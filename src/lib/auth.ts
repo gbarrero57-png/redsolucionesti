@@ -53,8 +53,9 @@ export async function getAuthContext(req: NextRequest): Promise<AuthContext | nu
   const { user, newAccessToken } = result;
 
   // ── Superadmin check FIRST — does not require a staff record ──
-  const superadminEmail = process.env.SUPERADMIN_EMAIL || '';
-  const is_superadmin = superadminEmail !== '' && user.email === superadminEmail;
+  const superadminEmail = (process.env.SUPERADMIN_EMAIL || '').toLowerCase().trim();
+  const is_superadmin = superadminEmail !== '' &&
+    (user.email ?? '').toLowerCase().trim() === superadminEmail;
 
   if (is_superadmin) {
     return { user, clinic_id: '', role: 'superadmin', is_superadmin: true, newAccessToken };
