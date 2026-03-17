@@ -8,6 +8,7 @@ import {
   ArrowRight, Clock, Globe, BarChart2, Wifi, ChevronDown, X, Send,
   Bell, CreditCard, ChevronRight,
 } from 'lucide-react';
+import ChatWidget from '@/components/ChatWidget';
 
 /* ─────────────────────────────────────────────────────────────────
    GLOBAL STYLES
@@ -274,7 +275,7 @@ function Hero({ onLogin }: { onLogin: () => void }) {
             <div className="animate-fadeUp space-y-2.5 mb-10" style={{ animationDelay: '.4s' }}>
               {[
                 { icon: Zap,      text: 'Responde en menos de 2 segundos, las 24 horas' },
-                { icon: Calendar, text: 'Agenda citas en Google Calendar automáticamente' },
+                { icon: Calendar, text: 'Agenda citas automáticamente en el calendario de SofIA' },
                 { icon: Shield,   text: 'Control total: pausa el bot en 1 clic' },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex items-center gap-2.5 text-sm text-gray-300">
@@ -361,8 +362,8 @@ const FEATURES = [
     color: '#0ea5e9',
     bg: 'rgba(14,165,233,.12)',
     title: 'Agendamiento Automático',
-    desc: 'Se integra con Google Calendar. Ofrece slots disponibles, confirma citas y envía recordatorios 24h antes sin intervención.',
-    tag: 'Google Calendar',
+    desc: 'Calendario propio integrado. Ofrece slots disponibles, confirma citas y envía recordatorios 24h antes sin intervención.',
+    tag: 'Calendario SofIA',
   },
   {
     icon: Shield,
@@ -458,7 +459,7 @@ const STEPS = [
     icon: Calendar,
     color: '#10b981',
     title: 'Cita agendada automáticamente',
-    desc: 'Consulta disponibilidad real en Google Calendar y confirma la cita al instante con recordatorio automático.',
+    desc: 'Consulta disponibilidad real en el calendario de SofIA y confirma la cita al instante con recordatorio automático.',
   },
   {
     n: '04',
@@ -928,7 +929,7 @@ function DemoSection({ onChat }: { onChat: (msg: string) => void }) {
                 <ul className="space-y-2.5 mb-8">
                   {[
                     'Bot de WhatsApp activo desde el día 1',
-                    'Agendamiento automático con Google Calendar',
+                    'Agendamiento automático con calendario integrado',
                     'Dashboard con métricas en tiempo real',
                     'Base de conocimiento personalizada (ilimitada)',
                     'Recordatorios automáticos de citas y pagos',
@@ -994,209 +995,9 @@ function DemoSection({ onChat }: { onChat: (msg: string) => void }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   CHAT WIDGET (floating)
-───────────────────────────────────────────────────────────────── */
-interface ChatMsg { role: 'user' | 'bot'; content: string; }
+/* ChatWidget is now in src/components/ChatWidget.tsx */
 
-const GREETING_MSG: ChatMsg = {
-  role: 'bot',
-  content: '¡Hola! 👋 Soy **SofIA**, tu asistente de IA.\n\nPuedo responder tus preguntas sobre la plataforma, contarte sobre los **recordatorios automáticos** o ayudarte a agendar tu **demo gratuita de 7 días**. ¿En qué te ayudo?',
-};
-
-const QUICK_QUESTIONS = [
-  '¿Qué es SofIA?',
-  'Demo gratis 7 días 🚀',
-  '¿Cómo funcionan los recordatorios?',
-  '¿Cuánto cuesta?',
-];
-
-function renderBotText(text: string) {
-  // Simple markdown: **bold**
-  return text.split('\n').map((line, i) => (
-    <span key={i}>
-      {line.split(/(\*\*.*?\*\*)/).map((part, j) =>
-        part.startsWith('**') && part.endsWith('**')
-          ? <strong key={j} className="text-white font-semibold">{part.slice(2, -2)}</strong>
-          : part
-      )}
-      {i < text.split('\n').length - 1 && <br />}
-    </span>
-  ));
-}
-
-function ChatWidget({ initialMsg }: { initialMsg: string | null }) {
-  const [open, setOpen]           = useState(false);
-  const [messages, setMessages]   = useState<ChatMsg[]>([GREETING_MSG]);
-  const [input, setInput]         = useState('');
-  const [loading, setLoading]     = useState(false);
-  const [demoSaved, setDemoSaved] = useState(false);
-  const [unread, setUnread]       = useState(1);
-  const bottomRef                 = useRef<HTMLDivElement>(null);
-  const inputRef                  = useRef<HTMLInputElement>(null);
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading]);
-  useEffect(() => { if (open) { setUnread(0); setTimeout(() => inputRef.current?.focus(), 300); } }, [open]);
-
-  const send = useCallback(async (text?: string) => {
-    const msg = (text || input).trim();
-    if (!msg || loading) return;
-    setInput('');
-    const updated: ChatMsg[] = [...messages, { role: 'user', content: msg }];
-    setMessages(updated);
-    setLoading(true);
-    try {
-      const history = updated.slice(1, -1).map(m => ({ role: m.role === 'bot' ? 'assistant' : 'user', content: m.content }));
-      const res  = await fetch('/api/demo-bot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, history }) });
-      const data = await res.json();
-      setMessages(prev => [...prev, { role: 'bot', content: data.response || 'Hubo un error. Intenta de nuevo.' }]);
-      if (data.action === 'demo_saved') setDemoSaved(true);
-    } catch {
-      setMessages(prev => [...prev, { role: 'bot', content: 'Error de conexión. Intenta de nuevo.' }]);
-    } finally { setLoading(false); }
-  }, [input, messages, loading]);
-
-  // Auto-open + send when triggered from demo button
-  useEffect(() => {
-    if (initialMsg && !open) {
-      setOpen(true);
-      setTimeout(() => send(initialMsg), 500);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMsg]);
-
-  return (
-    <>
-      {/* ── Chat panel ── */}
-      {open && (
-        <div className="fixed bottom-[88px] right-4 sm:right-6 z-50 flex flex-col rounded-3xl overflow-hidden shadow-2xl"
-          style={{ width: 360, height: 520, background: '#080d1a', border: '1px solid rgba(124,58,237,.25)', boxShadow: '0 30px 80px -10px rgba(0,0,0,.8), 0 0 0 1px rgba(124,58,237,.15) inset' }}>
-
-          {/* Top accent */}
-          <div className="h-0.5 w-full flex-shrink-0" style={{ background: 'linear-gradient(to right,#7c3aed,#4f46e5,#0ea5e9)' }} />
-
-          {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b flex-shrink-0" style={{ borderColor: 'rgba(255,255,255,.06)' }}>
-            <div className="relative flex-shrink-0">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}>
-                <Bot size={16} className="text-white" />
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2" style={{ borderColor: '#080d1a' }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">SofIA</p>
-              <p className="text-[10px] text-emerald-400 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" style={{ animation: 'glow 1.5s ease infinite' }} />
-                En línea · Responde al instante
-              </p>
-            </div>
-            <button onClick={() => setOpen(false)} className="text-gray-600 hover:text-white transition-colors p-1">
-              <X size={16} />
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,.1) transparent' }}>
-            {messages.map((m, i) => (
-              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} gap-2`}>
-                {m.role === 'bot' && (
-                  <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center mt-auto" style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}>
-                    <Bot size={11} className="text-white" />
-                  </div>
-                )}
-                <div className="max-w-[75%] px-3 py-2 rounded-2xl text-xs leading-relaxed"
-                  style={{
-                    background:     m.role === 'user' ? 'linear-gradient(135deg,#7c3aed,#5b21b6)' : 'rgba(255,255,255,.06)',
-                    borderRadius:   m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                    border:         m.role === 'bot' ? '1px solid rgba(255,255,255,.06)' : 'none',
-                    color:          m.role === 'user' ? '#f3f4f6' : '#d1d5db',
-                  }}>
-                  {m.role === 'bot' ? renderBotText(m.content) : m.content}
-                </div>
-              </div>
-            ))}
-
-            {/* Demo saved success */}
-            {demoSaved && (
-              <div className="flex justify-center">
-                <div className="flex items-center gap-2 text-[11px] text-emerald-300 rounded-xl px-3 py-2" style={{ background: 'rgba(16,185,129,.1)', border: '1px solid rgba(16,185,129,.2)' }}>
-                  <CheckCircle size={12} />
-                  ¡Demo agendada! Te contactaremos pronto.
-                </div>
-              </div>
-            )}
-
-            {/* Typing indicator */}
-            {loading && (
-              <div className="flex justify-start gap-2">
-                <div className="w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#7c3aed,#4f46e5)' }}>
-                  <Bot size={11} className="text-white" />
-                </div>
-                <div className="px-3 py-2.5 rounded-2xl flex items-center gap-1.5" style={{ background: 'rgba(255,255,255,.06)', border: '1px solid rgba(255,255,255,.06)', borderRadius: '16px 16px 16px 4px' }}>
-                  {[0, 1, 2].map(i => (
-                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-gray-400" style={{ animation: `blink 1s ease ${i * 0.2}s infinite` }} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Quick questions (only when first message) */}
-            {messages.length === 1 && !loading && (
-              <div className="pt-1 space-y-1.5">
-                <p className="text-[10px] text-gray-600 px-1">Preguntas frecuentes:</p>
-                {QUICK_QUESTIONS.map(q => (
-                  <button key={q} onClick={() => send(q)}
-                    className="w-full text-left text-xs px-3 py-2 rounded-xl text-gray-400 hover:text-white transition-all flex items-center justify-between group"
-                    style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.06)' }}>
-                    <span>{q}</span>
-                    <ChevronRight size={11} className="text-gray-600 group-hover:text-violet-400 transition-colors" />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Input */}
-          <div className="px-3 pb-3 pt-2 flex-shrink-0 border-t" style={{ borderColor: 'rgba(255,255,255,.06)' }}>
-            <div className="flex items-center gap-2 rounded-2xl px-3 py-2" style={{ background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.08)' }}>
-              <input
-                ref={inputRef}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-                placeholder="Escribe tu pregunta..."
-                disabled={loading}
-                className="flex-1 bg-transparent text-xs text-white placeholder-gray-600 focus:outline-none disabled:opacity-40"
-              />
-              <button onClick={() => send()} disabled={!input.trim() || loading}
-                className="w-7 h-7 rounded-xl flex items-center justify-center transition-all disabled:opacity-30 flex-shrink-0"
-                style={{ background: input.trim() ? 'linear-gradient(135deg,#7c3aed,#4f46e5)' : 'rgba(255,255,255,.08)' }}>
-                <Send size={12} className="text-white" />
-              </button>
-            </div>
-            <p className="text-[9px] text-gray-700 text-center mt-1.5">Powered by SofIA AI · Respuesta garantizada</p>
-          </div>
-        </div>
-      )}
-
-      {/* ── Floating button ── */}
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="fixed bottom-6 right-4 sm:right-6 z-50 w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl transition-all hover:scale-110 active:scale-95"
-        style={{ background: open ? 'rgba(124,58,237,.3)' : 'linear-gradient(135deg,#7c3aed,#4f46e5)', border: open ? '1px solid rgba(124,58,237,.4)' : 'none', boxShadow: '0 8px 30px -4px rgba(124,58,237,.5)' }}
-      >
-        {open ? <X size={20} className="text-white" /> : <Bot size={22} className="text-white" />}
-        {!open && unread > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 text-[10px] font-bold text-white flex items-center justify-center pulse-ring">
-            {unread}
-          </span>
-        )}
-      </button>
-    </>
-  );
-}
+// ChatWidget is imported from @/components/ChatWidget
 
 /* ─────────────────────────────────────────────────────────────────
    SECTION: FOOTER CTA

@@ -133,7 +133,7 @@ const FAQS: { pattern: RegExp; response: Responder }[] = [
   {
     pattern: /que es sofia|que hace sofia|sobre sofia|como funciona sofia|cuentame (de|sobre)|para que sirve sofia|que ofrece sofia/,
     response: () =>
-      `**SofIA** es una plataforma de IA diseñada para clínicas dentales. 🦷\n\n• Responde mensajes de **WhatsApp** en menos de 2 segundos, las 24h\n• **Agenda citas** automáticamente en Google Calendar\n• Consulta tu **base de conocimiento** (precios, servicios, horarios)\n• **Escala a humano** cuando lo necesita\n• Envía **recordatorios** automáticos antes de cada cita\n\nTu equipo se libera de mensajes repetitivos y se enfoca en atender pacientes. 🚀`,
+      `**SofIA** es una plataforma de IA diseñada para clínicas dentales. 🦷\n\n• Responde mensajes de **WhatsApp** en menos de 2 segundos, las 24h\n• **Agenda citas** automáticamente en el calendario integrado\n• Consulta tu **base de conocimiento** (precios, servicios, horarios)\n• **Escala a humano** cuando lo necesita\n• Envía **recordatorios** automáticos antes de cada cita\n\nTu equipo se libera de mensajes repetitivos y se enfoca en atender pacientes. 🚀`,
   },
   // Pricing — CRITICAL: handles "¿Cuánto cuesta?", "precio", "planes"
   {
@@ -147,11 +147,11 @@ const FAQS: { pattern: RegExp; response: Responder }[] = [
     response: () =>
       `SofIA se conecta nativamente con **WhatsApp Business** a través de Chatwoot. Tu número actual sigue siendo el mismo — los pacientes escriben como siempre y SofIA responde en nombre de tu clínica. 📱\n\nSoporta múltiples números si tienes varias sedes. La integración con Instagram y Facebook Messenger está en desarrollo.`,
   },
-  // Google Calendar / appointments
+  // Calendar / appointments
   {
-    pattern: /calendario|google calendar|agendar cita|disponibilidad de citas|horarios disponibles/,
+    pattern: /calendario|agendar cita|disponibilidad de citas|horarios disponibles|como agenda|agendamiento/,
     response: () =>
-      `SofIA se integra directamente con **Google Calendar**. 📅\n\nCuando un paciente quiere una cita:\n1. SofIA consulta tu disponibilidad real\n2. Ofrece los horarios libres\n3. Confirma la cita en el calendario\n4. Envía recordatorio 24h antes\n\nTodo automático, sin intervención de tu equipo.`,
+      `SofIA tiene su **propio sistema de calendario integrado**. 📅\n\nCuando un paciente quiere una cita:\n1. SofIA consulta la disponibilidad real de tu clínica\n2. Ofrece los horarios libres directamente en el chat\n3. Confirma la cita y la registra en el sistema\n4. Envía recordatorio automático 24h antes\n\nTodo sin salir de WhatsApp, sin intervención de tu equipo.`,
   },
   // Security / privacy
   {
@@ -199,7 +199,7 @@ const FAQS: { pattern: RegExp; response: Responder }[] = [
   {
     pattern: /que incluye (la demo|el trial|la prueba)|como es la demo|detalles de la demo|en que consiste la demo/,
     response: () =>
-      `La **demo gratuita de 7 días** incluye el plan Pro completo:\n\n✅ SofIA activa en tu clínica real (no sandbox)\n✅ WhatsApp Business conectado\n✅ Google Calendar integrado\n✅ Recordatorios automáticos\n✅ Panel de administración completo\n✅ Soporte 1 a 1\n✅ Sin tarjeta de crédito\n\n¿Empezamos? 🚀`,
+      `La **demo gratuita de 7 días** incluye el plan Pro completo:\n\n✅ SofIA activa en tu clínica real (no sandbox)\n✅ WhatsApp Business conectado\n✅ Calendario integrado de SofIA\n✅ Recordatorios automáticos\n✅ Panel de administración completo\n✅ Soporte 1 a 1\n✅ Sin tarjeta de crédito\n\n¿Empezamos? 🚀`,
   },
 ];
 
