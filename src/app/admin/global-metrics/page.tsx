@@ -554,9 +554,10 @@ function ReportsSection({ clinics }: { clinics: ClinicMetric[] }) {
     if (sent > 0) fetchReports();
   }
 
-  const fmtMonth = (m: string) => {
+  const fmtMonth = (m: string | null | undefined) => {
+    if (!m || !/^\d{4}-\d{2}$/.test(m)) return m ?? '—';
     const [y, mo] = m.split('-').map(Number);
-    return `${MONTHS[mo - 1]} ${y}`;
+    return `${MONTHS[mo - 1] ?? '?'} ${y}`;
   };
 
   return (

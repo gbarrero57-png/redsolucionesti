@@ -1,13 +1,15 @@
 import nodemailer from 'nodemailer';
 
+const smtpPort = Number(process.env.SMTP_PORT || 587);
 const transporter = nodemailer.createTransport({
   host:   process.env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port:   Number(process.env.SMTP_PORT || 587),
-  secure: false,  // STARTTLS on port 587
+  port:   smtpPort,
+  secure: smtpPort === 465,  // SSL for port 465 (GoDaddy), STARTTLS otherwise
   auth: {
     user: process.env.SMTP_USER!,
     pass: process.env.SMTP_PASS!,
   },
+  tls: { rejectUnauthorized: false },  // required for GoDaddy
 });
 
 export interface SendReportEmailParams {
