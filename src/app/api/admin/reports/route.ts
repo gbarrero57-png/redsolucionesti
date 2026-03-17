@@ -12,7 +12,10 @@ export async function GET(req: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
 
   const { searchParams } = new URL(req.url);
-  const clinic_id = searchParams.get('clinic_id') || ctx.clinic_id;
+  // Only superadmin can override clinic_id — regular admins are locked to their own clinic
+  const clinic_id = ctx.is_superadmin
+    ? (searchParams.get('clinic_id') || ctx.clinic_id)
+    : ctx.clinic_id;
 
   let query = supabaseAdmin
     .from('monthly_reports')
@@ -25,6 +28,9 @@ export async function GET(req: NextRequest) {
   }
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE });
+  if (error) {
+    console.error('[reports] DB error:', error.message);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500, headers: NO_CACHE });
+  }
   return NextResponse.json(data || [], { headers: NO_CACHE });
 }

@@ -3,7 +3,22 @@ import { NextRequest, NextResponse } from 'next/server';
 const N8N_WEBHOOK = 'https://workflows.n8n.redsolucionesti.com/webhook/sofia-demo';
 const NO_CACHE = { 'Cache-Control': 'no-store' };
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY!;
+// Use anon key (not service key) — demo_requests has RLS INSERT policy for anon
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+/* ── Rate limiting: 30 req/IP/min ── */
+const ipWindows = new Map<string, { count: number; resetAt: number }>();
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const win = ipWindows.get(ip);
+  if (!win || now > win.resetAt) {
+    ipWindows.set(ip, { count: 1, resetAt: now + 60_000 });
+    return true;
+  }
+  if (win.count >= 30) return false;
+  win.count++;
+  return true;
+}
 
 /* ── Types ── */
 interface Message { role: 'user' | 'assistant'; content: string; }
@@ -256,6 +271,12 @@ async function buildResponse(
 
 /* ── Route handler ── */
 export async function POST(req: NextRequest) {
+  // Rate limit
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: 'Demasiadas solicitudes. Intenta en un momento.' }, { status: 429, headers: NO_CACHE });
+  }
+
   const body = await req.json().catch(() => ({}));
   const { message, history = [] } = body as { message: string; history: Message[] };
 
@@ -263,12 +284,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'message required' }, { status: 400 });
   }
 
+  // Cap history to prevent oversized payloads
+  const safeHistory = (Array.isArray(history) ? history : [])
+    .slice(-20)
+    .map(m => ({ role: m.role, content: String(m.content).slice(0, 500) }));
+
   // Try n8n first (AI-powered)
   try {
     const res = await fetch(N8N_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: message.slice(0, 1000), history }),
+      body: JSON.stringify({ message: message.slice(0, 1000), history: safeHistory }),
       signal: AbortSignal.timeout(8000),
     });
     if (res.ok) {

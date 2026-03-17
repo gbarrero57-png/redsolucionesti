@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase';
 
+/* ── Brute-force protection: 5 attempts / IP / 15 min ── */
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+function checkLoginLimit(ip: string): { allowed: boolean; remaining: number } {
+  const now = Date.now();
+  const win = loginAttempts.get(ip);
+  if (!win || now > win.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + 15 * 60_000 });
+    return { allowed: true, remaining: 4 };
+  }
+  if (win.count >= 5) return { allowed: false, remaining: 0 };
+  win.count++;
+  return { allowed: true, remaining: 5 - win.count };
+}
+function clearLoginLimit(ip: string) { loginAttempts.delete(ip); }
+
 const COOKIE_BASE = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
@@ -10,6 +25,15 @@ const COOKIE_BASE = {
 };
 
 export async function POST(req: NextRequest) {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown';
+  const { allowed } = checkLoginLimit(ip);
+  if (!allowed) {
+    return NextResponse.json(
+      { error: 'Demasiados intentos fallidos. Espera 15 minutos.' },
+      { status: 429 }
+    );
+  }
+
   const body = await req.json().catch(() => ({}));
   const { email, password } = body;
 
@@ -27,6 +51,7 @@ export async function POST(req: NextRequest) {
   if (error || !data.session) {
     return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
   }
+  clearLoginLimit(ip); // Reset on successful login
 
   const maxAge        = 60 * 60 * 8;   // 8h for access token cookie
   const refreshMaxAge = 60 * 60 * 24 * 7; // 7 days for refresh token cookie

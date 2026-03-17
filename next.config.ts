@@ -1,31 +1,38 @@
 import type { NextConfig } from "next";
 
+const IS_PROD = process.env.NODE_ENV === 'production';
+const APP_ORIGIN = 'https://sofia.redsolucionesti.com';
+
 const securityHeaders = [
-  // Evita que el browser interprete archivos con tipo MIME diferente al declarado
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  // Protege contra clickjacking
-  { key: 'X-Frame-Options', value: 'DENY' },
-  // Protege contra XSS en browsers antiguos
-  { key: 'X-XSS-Protection', value: '1; mode=block' },
-  // Solo permite HTTPS durante 1 año (HSTS)
-  { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
-  // Controla información de referrer enviada a terceros
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  // Restringe funcionalidades del browser no necesarias
-  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=()' },
-  // Content Security Policy: solo permite recursos del mismo origen + Supabase
+  { key: 'X-Content-Type-Options',  value: 'nosniff' },
+  { key: 'X-Frame-Options',         value: 'DENY' },
+  // HSTS: 2 years + preload (meets hstspreload.org requirements)
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  { key: 'Referrer-Policy',          value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy',       value: 'camera=(), microphone=(), geolocation=(), payment=()' },
   {
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",  // unsafe-eval requerido por Next.js dev
+      // Remove unsafe-eval in production (only needed for Next.js HMR in dev)
+      IS_PROD
+        ? "script-src 'self' 'unsafe-inline'"
+        : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self'",
-      "connect-src 'self' https://inhyrrjidhzrbqecnptn.supabase.co wss://inhyrrjidhzrbqecnptn.supabase.co https://workflows.n8n.redsolucionesti.com https://chat.redsolucionesti.com",
+      "connect-src 'self' https://inhyrrjidhzrbqecnptn.supabase.co wss://inhyrrjidhzrbqecnptn.supabase.co https://workflows.n8n.redsolucionesti.com https://chat.redsolucionesti.com https://api.brevo.com",
       "frame-ancestors 'none'",
     ].join('; '),
   },
+];
+
+// Restrict CORS on API routes to own origin only
+const corsHeaders = [
+  { key: 'Access-Control-Allow-Origin',      value: IS_PROD ? APP_ORIGIN : '*' },
+  { key: 'Access-Control-Allow-Methods',     value: 'GET, POST, PATCH, DELETE, OPTIONS' },
+  { key: 'Access-Control-Allow-Headers',     value: 'Content-Type, Authorization' },
+  { key: 'Access-Control-Allow-Credentials', value: 'true' },
 ];
 
 const nextConfig: NextConfig = {
@@ -36,10 +43,8 @@ const nextConfig: NextConfig = {
 
   async headers() {
     return [
-      {
-        source: '/(.*)',
-        headers: securityHeaders,
-      },
+      { source: '/(.*)',      headers: securityHeaders },
+      { source: '/api/(.*)', headers: corsHeaders },
     ];
   },
 };

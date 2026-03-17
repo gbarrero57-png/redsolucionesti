@@ -129,9 +129,13 @@ const AIChat = () => {
                                         ? 'bg-red-500/10 border border-red-500/20 text-red-400 italic'
                                         : 'bg-white/[0.05] border border-white/10 text-slate-200 rounded-tl-none'
                                     } shadow-sm`}>
-                                    <span dangerouslySetInnerHTML={{
-                                        __html: message.content.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
-                                    }} />
+                                    <span>
+                                        {message.content.split(/\*\*(.*?)\*\*/g).map((part, i) =>
+                                            i % 2 === 1
+                                                ? <strong key={i} className="text-white font-bold">{part}</strong>
+                                                : part
+                                        )}
+                                    </span>
                                 </div>
                             </div>
                         </motion.div>
