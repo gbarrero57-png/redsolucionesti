@@ -12,24 +12,29 @@ interface DemoData {
   phone?: string; preferred?: string;
 }
 
-/* ── State tracking: what was the bot last asking for? ── */
+/* ── Normalize: remove accents + lowercase ── */
 function normalize(s: string): string {
-  // Lowercase + strip markdown + remove accent diacritics for reliable matching
-  return s.toLowerCase().replace(/\*\*/g, '')
-    .replace(/[áàä]/g, 'a').replace(/[éèë]/g, 'e').replace(/[íìï]/g, 'i')
-    .replace(/[óòö]/g, 'o').replace(/[úùü]/g, 'u').replace(/ñ/g, 'n');
+  return s.toLowerCase()
+    .replace(/\*\*/g, '')
+    .replace(/[áàäâ]/g, 'a').replace(/[éèëê]/g, 'e')
+    .replace(/[íìïî]/g, 'i').replace(/[óòöô]/g, 'o')
+    .replace(/[úùüû]/g, 'u').replace(/ñ/g, 'n')
+    .replace(/[¿¡]/g, '');
 }
 
 function getLastAsked(botMsg: string): keyof DemoData | null {
   const b = normalize(botMsg);
   if (/tu nombre|como te llamas|nombre completo|cual es tu nombre/.test(b)) return 'name';
-  // phone BEFORE email — phone question ends with "si prefieres solo email" which contains "email"
   if (/telefono|celular|numero de (telefono|contacto|whatsapp)|whatsapp.*coordinar|coordinar.*whatsapp/.test(b)) return 'phone';
-  // email: require question markers to avoid false positives
   if (/direccion de (email|correo)|cual es tu (email|correo)|tu (email|correo) (electronico|electro)|correo electr/.test(b)) return 'email';
-  if (/nombre de (tu |la )?clinica|clinica se llama|como se llama.*clinica|nombre.*clinica/.test(b)) return 'clinic';
+  if (/nombre de (tu |la )?clinica|clinica se llama|como se llama.*clinica|nombre.*clinica|como se llama tu clinica/.test(b)) return 'clinic';
   if (/mejor momento|mejor hora|fecha.*prefer|horario.*prefer|cuando.*prefer|prefer.*fecha/.test(b)) return 'preferred';
   return null;
+}
+
+/* ── Is this message clearly a question/FAQ, not a demo data answer? ── */
+function looksLikeFAQ(norm: string): boolean {
+  return /que es|como funciona|cuanto cuesta|cuanto vale|precio|plan(es)?|recordatorio|whatsapp|integracion|seguridad|privacidad|cuanto tarda|recepcionista|reemplaz|hola$|gracias|buenas|hey |quienes son|cancelar|soporte|idioma|calendario/.test(norm);
 }
 
 /* ── Extract all demo data from conversation history ── */
@@ -74,95 +79,127 @@ async function saveDemoRequest(data: DemoData): Promise<boolean> {
 }
 
 /* ── Next step in demo collection flow ── */
-function nextDemoQuestion(collected: DemoData, name?: string): { response: string; action: string } {
-  const firstName = name || collected.name || '';
-  const greet = firstName ? `${firstName.split(' ')[0]}, ` : '';
+function nextDemoQuestion(collected: DemoData): { response: string; action: string } {
+  const firstName = collected.name ? collected.name.split(' ')[0] : '';
 
-  if (!collected.name) {
-    return {
-      response: `¡Perfecto! Me encantaría ayudarte a comenzar. 😊\n\nPrimero, ¿cuál es tu **nombre completo**?`,
-      action: 'none',
-    };
-  }
-  if (!collected.email) {
-    return {
-      response: `Encantado, ${greet.replace(', ', '')}! 👋\n\n¿Cuál es tu **dirección de email**? Te enviaremos ahí los detalles de la demo.`,
-      action: 'none',
-    };
-  }
-  if (!collected.clinic) {
-    return {
-      response: `Perfecto. Ahora, ¿cómo se llama **tu clínica dental**?`,
-      action: 'none',
-    };
-  }
-  if (!collected.phone) {
-    return {
-      response: `Excelente! Casi terminamos. ¿Cuál es tu **número de teléfono o WhatsApp** para coordinar la demo? (Puedes escribir "no tengo" si prefieres solo email)`,
-      action: 'none',
-    };
-  }
-  if (!collected.preferred) {
-    return {
-      response: `¡Ya casi! ¿Cuál sería el **mejor momento** para hacer la demo? Por ejemplo: *"lunes por la mañana"*, *"esta semana en cualquier tarde"*, o una fecha específica.`,
-      action: 'none',
-    };
-  }
-  return { response: '', action: 'none' }; // all collected
+  if (!collected.name) return {
+    response: `¡Perfecto! Me encantaría ayudarte a comenzar. 😊\n\n¿Cuál es tu **nombre completo**?`,
+    action: 'none',
+  };
+  if (!collected.email) return {
+    response: `Encantado, **${firstName}**! 👋\n\n¿Cuál es tu **dirección de email**? Te enviaremos ahí los detalles de acceso.`,
+    action: 'none',
+  };
+  if (!collected.clinic) return {
+    response: `Perfecto. ¿Cómo se llama **tu clínica dental**?`,
+    action: 'none',
+  };
+  if (!collected.phone) return {
+    response: `¡Casi listo, **${firstName}**! ¿Cuál es tu **número de WhatsApp o teléfono** para coordinar la demo? (Escribe "no tengo" si prefieres solo email)`,
+    action: 'none',
+  };
+  if (!collected.preferred) return {
+    response: `¡Ya casi! ¿Cuál sería el **mejor momento** para la demo? Por ejemplo: *"lunes por la mañana"*, *"esta semana cualquier tarde"*, o una fecha específica.`,
+    action: 'none',
+  };
+  return { response: '', action: 'none' };
 }
 
-/* ── FAQ rules ── */
+/* ── FAQ rules — ALL patterns run against normalize(text), no accents needed ── */
 type Responder = (d: DemoData) => string;
+
 const FAQS: { pattern: RegExp; response: Responder }[] = [
-  // ── Recordatorios FIRST (more specific than generic "cómo funciona") ──
+  // Greetings
   {
-    pattern: /recordatorio|reminder|aviso|notifi|recuerda/i,
+    pattern: /^(hola|hi|hey|buenas|buenos dias|buenas tardes|buenas noches|saludos|ola )/,
+    response: (d) => d.name
+      ? `¡Hola de nuevo, **${d.name.split(' ')[0]}**! 👋 ¿En qué te puedo ayudar?`
+      : `¡Hola! 😊 Soy **SofIA**, el asistente de la plataforma SofIA AI para clínicas dentales.\n\nEstoy aquí para responder tus preguntas y ayudarte a agendar tu **demo gratuita de 7 días**. ¿Qué te gustaría saber?`,
+  },
+  // Thanks
+  {
+    pattern: /^(gracias|thank|perfecto|genial|excelente|buenisimo|listo|entendido|ok|okay)/,
+    response: (d) => d.name
+      ? `¡Con gusto, **${d.name.split(' ')[0]}**! 😊 ¿Hay algo más en lo que te pueda ayudar?`
+      : `¡Con gusto! 😊 ¿Tienes alguna otra pregunta sobre SofIA?`,
+  },
+  // Reminders — BEFORE generic FAQ (more specific)
+  {
+    pattern: /recordatorio|reminder|aviso autom|notificacion|recuerda cita/,
     response: () =>
-      `SofIA tiene **dos sistemas de recordatorios completamente automáticos**:\n\n🗓️ **Recordatorios de citas:** WhatsApp automático 24 horas antes de cada cita agendada. El paciente confirma con un tap y SofIA actualiza el calendario.\n\n💳 **Recordatorios de pagos:** Aviso automático 3 días antes del vencimiento de tu suscripción. Sin sorpresas, sin interrupciones.\n\nAmbos funcionan desde el primer día, sin ninguna configuración extra. ✅`,
+      `SofIA tiene **dos sistemas de recordatorios completamente automáticos**:\n\n🗓️ **Recordatorio de citas:** WhatsApp automático **24 horas antes** de cada cita. El paciente confirma con un tap y SofIA actualiza el calendario al instante.\n\n💳 **Recordatorio de suscripción:** Aviso automático **3 días antes** del vencimiento de tu plan. Sin sorpresas.\n\nAmbos funcionan desde el primer día, sin configuración extra. ✅\n\n¿Te gustaría ver esto en acción con una **demo gratuita**?`,
   },
+  // What is SofIA / how it works
   {
-    pattern: /qu[eé]\s*(es|hace|ofrece|sabe)|sobre sofia|como funciona|c[oó]mo funciona|cu[eé]ntame/i,
+    pattern: /que es sofia|que hace sofia|sobre sofia|como funciona sofia|cuentame (de|sobre)|para que sirve sofia|que ofrece sofia/,
     response: () =>
-      `**SofIA** es una plataforma de inteligencia artificial diseñada especialmente para clínicas dentales. 🦷\n\nEn pocas palabras: SofIA gestiona todos los mensajes de **WhatsApp** de tu clínica, responde en menos de 2 segundos las 24 horas, agenda citas automáticamente en Google Calendar y escala a humano cuando lo necesita.\n\nTu equipo se libera de responder mensajes repetitivos y puede enfocarse en lo que realmente importa: atender a los pacientes.`,
+      `**SofIA** es una plataforma de IA diseñada para clínicas dentales. 🦷\n\n• Responde mensajes de **WhatsApp** en menos de 2 segundos, las 24h\n• **Agenda citas** automáticamente en Google Calendar\n• Consulta tu **base de conocimiento** (precios, servicios, horarios)\n• **Escala a humano** cuando lo necesita\n• Envía **recordatorios** automáticos antes de cada cita\n\nTu equipo se libera de mensajes repetitivos y se enfoca en atender pacientes. 🚀`,
   },
+  // Pricing — CRITICAL: handles "¿Cuánto cuesta?", "precio", "planes"
   {
-    pattern: /precio|cost[ao]|cuant[ao]|plan[es]?|tarifa|suscri|mensual/i,
+    pattern: /precio|costo|cuanto cuesta|cuanto vale|cuanto sale|cuantos cobran|plan(es)?|tarifa|suscri|mensual|anual|pagar|cobran|es caro|cuanto es/,
     response: () =>
-      `Tenemos planes para cada tamaño de clínica:\n\n💜 **Starter** — $49/mes · 1 clínica · 500 conversaciones/mes\n🚀 **Pro** — $149/mes · hasta 5 clínicas · conversaciones **ilimitadas** *(el más popular)*\n🏢 **Enterprise** — precio a medida · clínicas ilimitadas\n\nLos 3 incluyen **7 días de demo gratis** con el plan Pro completo. Sin tarjeta de crédito.`,
+      `Tenemos planes para cada tamaño de clínica:\n\n💜 **Starter** — $49/mes · 1 clínica · 500 conversaciones/mes\n🚀 **Pro** — $149/mes · hasta 5 clínicas · conversaciones **ilimitadas** *(el más popular)*\n🏢 **Enterprise** — precio a medida · clínicas ilimitadas\n\nLos 3 incluyen **7 días de demo gratis** con el plan Pro completo, sin tarjeta de crédito. 💳\n\n¿Quieres comenzar tu demo gratis ahora?`,
   },
+  // WhatsApp / integrations
   {
-    pattern: /whatsapp|chatwoot|integra/i,
+    pattern: /whatsapp|chatwoot|integracion|integra|canal de comunicacion|instagram|facebook/,
     response: () =>
-      `SofIA se conecta nativamente con **WhatsApp Business** a través de Chatwoot. Tu número actual sigue siendo el mismo — los pacientes escriben como siempre y SofIA responde en nombre de tu clínica.\n\nTambién funciona con múltiples números si tienes varias sedes. 📱`,
+      `SofIA se conecta nativamente con **WhatsApp Business** a través de Chatwoot. Tu número actual sigue siendo el mismo — los pacientes escriben como siempre y SofIA responde en nombre de tu clínica. 📱\n\nSoporta múltiples números si tienes varias sedes. La integración con Instagram y Facebook Messenger está en desarrollo.`,
   },
+  // Google Calendar / appointments
   {
-    pattern: /segur|privaci|datos|gdpr|cumplimiento|encriptad/i,
+    pattern: /calendario|google calendar|agendar cita|disponibilidad de citas|horarios disponibles/,
     response: () =>
-      `La seguridad es prioridad absoluta. Los datos de tu clínica y pacientes se almacenan en tu **propia base de datos Supabase** — no en servidores compartidos. Cada clínica tiene sus datos completamente aislados.\n\nCompatible con GDPR y estándares de privacidad internacionales. 🔒`,
+      `SofIA se integra directamente con **Google Calendar**. 📅\n\nCuando un paciente quiere una cita:\n1. SofIA consulta tu disponibilidad real\n2. Ofrece los horarios libres\n3. Confirma la cita en el calendario\n4. Envía recordatorio 24h antes\n\nTodo automático, sin intervención de tu equipo.`,
   },
+  // Security / privacy
   {
-    pattern: /recepcionista|personal|equipo|staff|reemplaz/i,
+    pattern: /seguridad|privacidad|datos del paciente|gdpr|cumplimiento|encriptad|hipaa|confidencial/,
     response: () =>
-      `SofIA **complementa** a tu equipo, nunca lo reemplaza. 🤝\n\nEl 80% de los mensajes que recibe una clínica son preguntas repetitivas: horarios, precios, disponibilidad. SofIA las maneja automáticamente.\n\nTu recepcionista puede enfocarse en recibir pacientes, coordinar tratamientos complejos y dar la atención personalizada que solo un humano puede dar.`,
+      `La seguridad es prioridad absoluta. 🔒\n\nLos datos de tu clínica y pacientes se almacenan en tu **propia base de datos Supabase** — completamente aislados de otras clínicas, sin servidores compartidos.\n\nCompatible con **GDPR** y estándares internacionales. Todo el tráfico va cifrado con HTTPS/TLS.`,
   },
+  // Multiple clinics
   {
-    pattern: /cuanto tarda|cu[aá]nto tarda|configurar|setup|implementar|cu[aá]ndo empiez/i,
+    pattern: /varias clinicas|multiples clinicas|grupo dental|cadena|franquicia|sucursal(es)?|escalar negocio/,
     response: () =>
-      `¡Muy rápido! El setup inicial toma aproximadamente **5 minutos**:\n\n1. Conectamos tu número de WhatsApp\n2. Cargamos la información básica de tu clínica\n3. ¡Listo! SofIA ya puede responder\n\nDurante la demo gratuita te acompañamos personalmente en cada paso. 🛠️`,
+      `¡SofIA está diseñada para escalar! 🏢\n\nEl plan **Pro** soporta hasta 5 clínicas desde un único panel. El plan **Enterprise** no tiene límite.\n\nDesde el **Superadmin** puedes ver métricas de todas tus clínicas, pausar/reanudar bots individualmente y gestionar el equipo de cada sede.`,
   },
+  // Team / receptionist
   {
-    pattern: /hola|hi |hey |buenas|buenos dias|buenas tardes|buenas noches/i,
-    response: (d) =>
-      d.name
-        ? `¡Hola de nuevo, ${d.name.split(' ')[0]}! 👋 ¿En qué puedo ayudarte?`
-        : `¡Hola! 😊 Soy **SofIA**, asistente de la plataforma SofIA AI para clínicas dentales.\n\nEstoy aquí para contarte cómo podemos transformar la atención de tu clínica con IA, responder tus preguntas, o ayudarte a agendar tu **demo gratuita de 7 días**. ¿Cómo te puedo ayudar?`,
+    pattern: /recepcionista|personal|equipo|staff|reemplaza|trabajo|empleado/,
+    response: () =>
+      `SofIA **complementa** a tu equipo, nunca lo reemplaza. 🤝\n\nEl 80% de los mensajes de una clínica son preguntas repetitivas: horarios, precios, disponibilidad. SofIA las maneja automáticamente.\n\nTu recepcionista se enfoca en recibir pacientes y atención personalizada. Cuando SofIA no puede con algo, **escala al humano en segundos**.`,
   },
+  // Setup time
   {
-    pattern: /gracias|thank|perfecto|genial|excelente|brutal|bien|ok |okay/i,
-    response: (d) =>
-      d.name
-        ? `¡Con gusto, ${d.name.split(' ')[0]}! 😊 ¿Hay algo más en lo que te pueda ayudar?`
-        : `¡Con gusto! 😊 Estoy aquí para lo que necesites. ¿Tienes alguna otra pregunta sobre SofIA?`,
+    pattern: /cuanto tarda|tiempo de implementacion|como se configura|proceso de setup|implementar sofia|cuando empieza|cuanto tiempo tarda/,
+    response: () =>
+      `¡Muy rápido! El setup inicial toma **5 minutos**:\n\n1. Conectamos tu número de WhatsApp\n2. Cargamos tu información (servicios, precios, horarios)\n3. ¡Listo! SofIA responde\n\nDurante la demo gratuita te acompañamos **personalmente** en cada paso. 🛠️`,
+  },
+  // Cancel / no contract
+  {
+    pattern: /cancelar|cancelacion|contrato|permanencia|sin compromiso|cuando cancelo|puedo cancelar/,
+    response: () =>
+      `SofIA funciona **mes a mes**, sin contratos ni permanencia. 🆓\n\nCancelas cuando quieras desde tu panel, sin cargos adicionales.\n\nLa demo de 7 días es **100% gratis** y sin tarjeta de crédito requerida.`,
+  },
+  // Support
+  {
+    pattern: /soporte|ayuda tecnica|asistencia|tengo un problema|error en sofia|atencion al cliente/,
+    response: () =>
+      `Ofrecemos **soporte completo** en todos los planes:\n\n💬 Chat en tiempo real (horario laboral)\n📧 Email con respuesta en menos de 4 horas\n🎥 Video-llamada de onboarding (Pro y Enterprise)\n\nDurante la **demo gratuita** tendrás soporte 1 a 1 con un especialista dedicado.`,
+  },
+  // Language
+  {
+    pattern: /idioma|espanol|ingles|frances|portugues|multilingual|idiomas/,
+    response: () =>
+      `SofIA está optimizada para **español latinoamericano** y responde en inglés cuando el paciente escribe en inglés. 🌎\n\nTu base de conocimiento se configura en el idioma de tus pacientes y SofIA responde en ese idioma automáticamente.`,
+  },
+  // Demo details
+  {
+    pattern: /que incluye (la demo|el trial|la prueba)|como es la demo|detalles de la demo|en que consiste la demo/,
+    response: () =>
+      `La **demo gratuita de 7 días** incluye el plan Pro completo:\n\n✅ SofIA activa en tu clínica real (no sandbox)\n✅ WhatsApp Business conectado\n✅ Google Calendar integrado\n✅ Recordatorios automáticos\n✅ Panel de administración completo\n✅ Soporte 1 a 1\n✅ Sin tarjeta de crédito\n\n¿Empezamos? 🚀`,
   },
 ];
 
@@ -171,53 +208,48 @@ async function buildResponse(
   message: string,
   history: Message[]
 ): Promise<{ response: string; action: string }> {
-  const lower = message.toLowerCase().trim();
+  const norm = normalize(message.trim());
 
-  // All messages including current for data extraction
   const allMsgs = [...history, { role: 'user' as const, content: message }];
   const collected = extractDemoData(allMsgs);
 
-  // What was the bot last asking about?
   const lastBot = history.filter(h => h.role === 'assistant').pop();
   const lastAsked = lastBot ? getLastAsked(lastBot.content) : null;
 
-  // ── Handling an answer in demo collection flow ──
-  if (lastAsked) {
-    // User answered the previous question — check if we now have everything
+  // ── Demo collection flow — only if NOT a FAQ question ──
+  if (lastAsked && !looksLikeFAQ(norm)) {
     const updatedCollected = extractDemoData(allMsgs);
 
-    // Check if all required fields are now collected
     if (updatedCollected.name && updatedCollected.email && updatedCollected.clinic && updatedCollected.preferred) {
       await saveDemoRequest(updatedCollected);
       const first = updatedCollected.name.split(' ')[0];
       return {
-        response: `¡Todo listo, **${first}**! 🎉\n\nHemos registrado tu solicitud de demo:\n✅ **Nombre:** ${updatedCollected.name}\n✅ **Email:** ${updatedCollected.email}\n✅ **Clínica:** ${updatedCollected.clinic}\n✅ **Disponibilidad:** ${updatedCollected.preferred}\n\nUn especialista de SofIA se pondrá en contacto contigo en las próximas **2-4 horas** hábiles para confirmar el horario y enviarte el acceso.\n\n¿Tienes alguna pregunta mientras tanto?`,
+        response: `¡Todo listo, **${first}**! 🎉\n\nHemos registrado tu solicitud:\n✅ **Nombre:** ${updatedCollected.name}\n✅ **Email:** ${updatedCollected.email}\n✅ **Clínica:** ${updatedCollected.clinic}\n✅ **Disponibilidad:** ${updatedCollected.preferred}\n\nUn especialista de SofIA te contactará en las próximas **2-4 horas hábiles** para confirmar el horario y enviarte el acceso. ¡Gracias!\n\n¿Tienes alguna pregunta mientras tanto?`,
         action: 'demo_saved',
       };
     }
 
-    // Still collecting — ask for the next missing field
     const next = nextDemoQuestion(updatedCollected);
     if (next.response) return next;
   }
 
-  // ── Explicit intent to start demo ──
-  if (/demo|prueba|gratis|free|7 d[ií]as|comenzar|empezar|start|agendar|quiero probar|registrar/i.test(lower)) {
+  // ── Explicit demo intent ──
+  if (/demo|prueba gratis|7 dias|free trial|comenzar ahora|empezar ahora|quiero probar|registrarme|quiero la demo|iniciar demo/.test(norm)) {
     const step = nextDemoQuestion(collected);
     if (step.response) return step;
   }
 
-  // ── FAQ matching ──
+  // ── FAQ matching (normalized text) ──
   for (const faq of FAQS) {
-    if (faq.pattern.test(lower)) {
+    if (faq.pattern.test(norm)) {
       return { response: faq.response(collected), action: 'none' };
     }
   }
 
   // ── Contextual default ──
-  const firstName = collected.name ? `, ${collected.name.split(' ')[0]}` : '';
+  const firstName = collected.name ? `, **${collected.name.split(' ')[0]}**` : '';
   return {
-    response: `Entendido${firstName}. 😊 SofIA convierte WhatsApp en el mejor asistente de tu clínica dental — responde automáticamente, agenda citas y envía recordatorios sin que tengas que hacer nada.\n\n¿Te cuento sobre los **recordatorios automáticos**, los **precios**, o prefieres agendar tu **demo gratuita de 7 días** ahora mismo?`,
+    response: `Entendido${firstName}. 😊\n\nSofIA convierte WhatsApp en el mejor asistente de tu clínica dental: responde 24/7, agenda citas automáticamente y envía recordatorios.\n\n¿Te cuento sobre los **precios**, los **recordatorios automáticos**, o prefieres agendar tu **demo gratuita de 7 días** ahora mismo?`,
     action: 'none',
   };
 }
@@ -231,7 +263,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'message required' }, { status: 400 });
   }
 
-  // Try n8n first (AI-powered, when webhook is registered)
+  // Try n8n first (AI-powered)
   try {
     const res = await fetch(N8N_WEBHOOK, {
       method: 'POST',
@@ -245,8 +277,8 @@ export async function POST(req: NextRequest) {
     }
   } catch { /* fallback */ }
 
-  // Context-aware rule-based fallback
-  await new Promise(r => setTimeout(r, 500));
+  // Rule-based fallback
+  await new Promise(r => setTimeout(r, 400));
   const result = await buildResponse(message, history);
   return NextResponse.json(result, { headers: NO_CACHE });
 }
