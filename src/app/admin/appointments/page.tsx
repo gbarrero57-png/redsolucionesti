@@ -5,6 +5,7 @@ import {
   ChevronLeft, ChevronRight, RefreshCw, CheckCircle,
   XCircle, AlertCircle, Clock, User, Phone, CalendarDays,
   Plus, X, Pencil, CreditCard, DollarSign, BadgeCheck, AlertTriangle,
+  Stethoscope,
 } from 'lucide-react';
 
 /* ── Types ── */
@@ -27,20 +28,29 @@ interface Appointment {
 
 /* ── Status config ── */
 const STATUS: Record<string, { label: string; dot: string; badge: string; icon: React.ElementType }> = {
-  scheduled: { label: 'Agendada',       dot: 'bg-blue-400',    badge: 'text-blue-400 bg-blue-400/10 border-blue-400/20',       icon: Clock },
+  scheduled: { label: 'Agendada',       dot: 'bg-blue-400',    badge: 'text-blue-400 bg-blue-400/10 border-blue-400/20',         icon: Clock },
   confirmed: { label: 'Confirmada',     dot: 'bg-emerald-400', badge: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20', icon: CheckCircle },
-  completed: { label: 'Completada',     dot: 'bg-gray-400',    badge: 'text-gray-400 bg-gray-400/10 border-gray-400/20',        icon: CheckCircle },
-  cancelled: { label: 'Cancelada',      dot: 'bg-red-400',     badge: 'text-red-400 bg-red-400/10 border-red-400/20',           icon: XCircle },
-  no_show:   { label: 'No se presentó', dot: 'bg-amber-400',   badge: 'text-amber-400 bg-amber-400/10 border-amber-400/20',     icon: AlertCircle },
+  completed: { label: 'Completada',     dot: 'bg-gray-400',    badge: 'text-gray-400 bg-gray-400/10 border-gray-400/20',          icon: CheckCircle },
+  cancelled: { label: 'Cancelada',      dot: 'bg-red-400',     badge: 'text-red-400 bg-red-400/10 border-red-400/20',             icon: XCircle },
+  no_show:   { label: 'No se presentó', dot: 'bg-amber-400',   badge: 'text-amber-400 bg-amber-400/10 border-amber-400/20',       icon: AlertCircle },
+};
+
+/* ── Status left-border color map ── */
+const STATUS_BORDER: Record<string, string> = {
+  scheduled: 'border-l-blue-500',
+  confirmed:  'border-l-emerald-500',
+  completed:  'border-l-gray-500',
+  cancelled:  'border-l-red-500',
+  no_show:    'border-l-amber-500',
 };
 
 /* ── Payment config ── */
 const PAYMENT: Record<string, { label: string; badge: string; dot: string }> = {
-  not_required: { label: 'Sin cobro',   badge: 'text-gray-500 bg-gray-500/10 border-gray-500/20',           dot: '' },
-  pending:      { label: 'Pago pend.',  badge: 'text-amber-400 bg-amber-400/10 border-amber-400/30',        dot: 'bg-amber-400' },
-  partial:      { label: 'Pago parcial',badge: 'text-orange-400 bg-orange-400/10 border-orange-400/30',     dot: 'bg-orange-400' },
-  paid:         { label: 'Pagado',      badge: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30',  dot: 'bg-emerald-400' },
-  waived:       { label: 'Condonado',   badge: 'text-gray-400 bg-gray-400/10 border-gray-400/20',           dot: 'bg-gray-500' },
+  not_required: { label: 'Sin cobro',    badge: 'text-gray-500 bg-gray-500/10 border-gray-500/20',          dot: '' },
+  pending:      { label: 'Pago pend.',   badge: 'text-amber-400 bg-amber-400/10 border-amber-400/30',       dot: 'bg-amber-400' },
+  partial:      { label: 'Pago parcial', badge: 'text-orange-400 bg-orange-400/10 border-orange-400/30',    dot: 'bg-orange-400' },
+  paid:         { label: 'Pagado',       badge: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/30', dot: 'bg-emerald-400' },
+  waived:       { label: 'Condonado',    badge: 'text-gray-400 bg-gray-400/10 border-gray-400/20',          dot: 'bg-gray-500' },
 };
 
 const SERVICES = [
@@ -221,7 +231,9 @@ export default function AppointmentsPage() {
 
   const isThisMonth = year === today.getFullYear() && month === today.getMonth();
 
-  // Month-level payment summary
+  // Month-level stats
+  const confirmedCount  = appts.filter(a => a.status === 'confirmed').length;
+  const cancelledCount  = appts.filter(a => a.status === 'cancelled').length;
   const pendingPayments = appts.filter(a => a.payment_status === 'pending' || a.payment_status === 'partial');
   const pendingTotal    = pendingPayments.reduce((s, a) => s + (a.payment_amount || 0), 0);
 
@@ -234,29 +246,53 @@ export default function AppointmentsPage() {
 
   return (
     <div className="p-4 lg:p-6 max-w-7xl">
+
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-start justify-between mb-5 gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl font-semibold flex items-center gap-2">
+          <h1 className="text-xl font-semibold flex items-center gap-2 text-white">
             <CalendarDays size={22} className="text-violet-400" />
             Calendario de Citas
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {appts.length} cita{appts.length !== 1 ? 's' : ''} en {MONTHS[month]} {year}
+          <p className="text-sm text-gray-500 mt-0.5">
+            {MONTHS[month]} {year}
           </p>
         </div>
-        <button
-          onClick={() => fetchMonth(year, month)}
-          className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800 transition-colors"
-        >
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-        </button>
+
+        {/* Stats pills row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-700">
+            <CalendarDays size={11} />
+            {appts.length} citas
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+            <CheckCircle size={11} />
+            {confirmedCount} confirmadas
+          </span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/25">
+            <XCircle size={11} />
+            {cancelledCount} canceladas
+          </span>
+          {pendingPayments.length > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+              <CreditCard size={11} />
+              {pendingPayments.length} pagos pend.
+            </span>
+          )}
+          <button
+            onClick={() => fetchMonth(year, month)}
+            className="p-2 rounded-lg text-gray-400 hover:text-gray-100 hover:bg-gray-800 border border-gray-800 transition-colors"
+            title="Actualizar"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
       </div>
 
       {/* ── Payment summary bar ── */}
       {pendingPayments.length > 0 && (
         <div
-          className="flex items-center justify-between bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3 mb-4 cursor-pointer hover:bg-amber-500/15 transition-colors"
+          className="flex items-center justify-between bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3 mb-5 cursor-pointer hover:bg-amber-500/15 transition-colors"
           onClick={() => setTab(t => t === 'pending_payment' ? 'all' : 'pending_payment')}
         >
           <div className="flex items-center gap-2.5">
@@ -276,10 +312,12 @@ export default function AppointmentsPage() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-[1fr_360px] gap-6">
+      <div className="grid lg:grid-cols-[1fr_380px] gap-6">
 
         {/* ─────────── Calendar ─────────── */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+
+          {/* Month nav */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
             <button onClick={prevMonth} className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
               <ChevronLeft size={18} />
@@ -287,7 +325,7 @@ export default function AppointmentsPage() {
             <div className="flex items-center gap-3">
               <h2 className="text-base font-semibold text-white">{MONTHS[month]} {year}</h2>
               {!isThisMonth && (
-                <button onClick={goToday} className="text-xs px-2.5 py-1 rounded-lg bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors">
+                <button onClick={goToday} className="text-xs px-2.5 py-1 rounded-lg bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors border border-violet-500/20">
                   Hoy
                 </button>
               )}
@@ -297,17 +335,21 @@ export default function AppointmentsPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-7 border-b border-gray-800">
+          {/* Weekday header */}
+          <div className="grid grid-cols-7 bg-gray-800/30 border-b border-gray-800">
             {WEEKDAYS.map(d => (
-              <div key={d} className="py-2.5 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">{d}</div>
+              <div key={d} className="py-2.5 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{d}</div>
             ))}
           </div>
 
+          {/* Days grid */}
           <div className="grid grid-cols-7">
             {Array.from({ length: totalCells }).map((_, idx) => {
               const dayNum = idx - firstDow + 1;
               const isValid = dayNum >= 1 && dayNum <= totalDays;
-              if (!isValid) return <div key={idx} className="min-h-[90px] border-r border-b border-gray-800/50 last:border-r-0" />;
+              if (!isValid) return (
+                <div key={idx} className="min-h-[90px] border-r border-b border-gray-800/40 last:border-r-0 bg-gray-900/30" />
+              );
 
               const cellDate  = new Date(year, month, dayNum);
               const key       = isoDate(cellDate);
@@ -321,17 +363,24 @@ export default function AppointmentsPage() {
                 <div
                   key={idx}
                   onClick={() => setSelected(cellDate)}
-                  className={`min-h-[90px] border-r border-b border-gray-800/50 p-1.5 cursor-pointer transition-colors
-                    ${isSel ? 'bg-violet-500/10' : 'hover:bg-gray-800/40'}
-                    ${(idx + 1) % 7 === 0 ? 'border-r-0' : ''}
-                  `}
+                  className={[
+                    'min-h-[90px] border-r border-b border-gray-800/40 p-1.5 cursor-pointer transition-all',
+                    (idx + 1) % 7 === 0 ? 'border-r-0' : '',
+                    isSel && !isToday ? 'bg-violet-500/15 ring-1 ring-inset ring-violet-500/30' : '',
+                    !isSel ? 'hover:bg-gray-800/40' : '',
+                  ].join(' ')}
                 >
                   <div className="flex justify-between items-start mb-1.5">
-                    <span className={`w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold
-                      ${isToday ? 'bg-violet-600 text-white' : ''}
-                      ${isSel && !isToday ? 'bg-gray-700 text-white' : ''}
-                      ${!isToday && !isSel ? (isPast ? 'text-gray-600' : 'text-gray-300') : ''}
-                    `}>
+                    <span className={[
+                      'w-6 h-6 flex items-center justify-center rounded-full text-xs font-semibold transition-all',
+                      isToday
+                        ? 'bg-violet-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.5)]'
+                        : isSel
+                          ? 'bg-gray-700 text-white'
+                          : isPast
+                            ? 'text-gray-600 opacity-60'
+                            : 'text-gray-300',
+                    ].join(' ')}>
                       {dayNum}
                     </span>
                     {hasPending && (
@@ -343,26 +392,29 @@ export default function AppointmentsPage() {
                     {cellAppts.slice(0, 3).map(a => {
                       const s = STATUS[a.status] || STATUS.scheduled;
                       const isManual = a.source === 'manual';
+                      const isDimmed = a.status === 'cancelled' || a.status === 'no_show';
+                      // pill color by status
+                      const pillColors: Record<string, string> = {
+                        scheduled: 'bg-blue-500/15 text-blue-300',
+                        confirmed:  'bg-emerald-500/15 text-emerald-300',
+                        completed:  'bg-gray-500/15 text-gray-400',
+                        cancelled:  'bg-red-500/15 text-red-400',
+                        no_show:    'bg-amber-500/15 text-amber-400',
+                      };
+                      const pillCls = isManual
+                        ? 'bg-orange-500/15 text-orange-300'
+                        : (pillColors[a.status] || 'bg-gray-500/15 text-gray-400');
                       return (
                         <div
                           key={a.id}
-                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] leading-tight truncate ${
-                            a.status === 'cancelled' || a.status === 'no_show' ? 'opacity-40' : ''
-                          }`}
-                          style={{ background: isManual ? 'rgba(251,146,60,.12)' : 'rgba(255,255,255,.05)' }}
+                          className={`px-1.5 py-0.5 rounded-md text-[10px] leading-tight truncate font-medium ${pillCls} ${isDimmed ? 'opacity-50' : ''}`}
                         >
-                          {isManual
-                            ? <Pencil size={8} className="flex-shrink-0 text-orange-400" />
-                            : <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${s.dot}`} />
-                          }
-                          <span className={`truncate ${isManual ? 'text-orange-200' : 'text-gray-300'}`}>
-                            {fmtTime(a.start_time)} {a.patient_name}
-                          </span>
+                          {fmtTime(a.start_time)} {a.patient_name}
                         </div>
                       );
                     })}
                     {cellAppts.length > 3 && (
-                      <div className="text-[9px] text-gray-500 px-1.5">+{cellAppts.length - 3} más</div>
+                      <div className="text-[9px] text-gray-500 px-1.5 font-medium">+{cellAppts.length - 3} más</div>
                     )}
                   </div>
                 </div>
@@ -370,39 +422,44 @@ export default function AppointmentsPage() {
             })}
           </div>
 
-          <div className="flex items-center gap-4 px-5 py-3 border-t border-gray-800 flex-wrap">
+          {/* Legend */}
+          <div className="flex items-center gap-2 px-5 py-3 border-t border-gray-800 flex-wrap">
             {Object.entries(STATUS).map(([, cfg]) => (
-              <div key={cfg.label} className="flex items-center gap-1.5 text-[11px] text-gray-500">
-                <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+              <span
+                key={cfg.label}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium border ${cfg.badge}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                 {cfg.label}
-              </div>
+              </span>
             ))}
-            <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
-              <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-400/10 text-amber-400 border border-amber-400/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
               Pago pend.
-            </div>
+            </span>
           </div>
         </div>
 
         {/* ─────────── Day detail ─────────── */}
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden flex flex-col">
+
           {/* Day header */}
           <div className="px-5 py-4 border-b border-gray-800 flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-0.5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-0.5 font-medium">
                 {selected.toLocaleDateString('es-ES', { weekday: 'long' })}
               </p>
               <h3 className="text-lg font-bold text-white">
                 {selected.getDate()} de {MONTHS[selected.getMonth()]}
                 {selected.getFullYear() !== today.getFullYear() && ` de ${selected.getFullYear()}`}
               </h3>
-              <p className="text-sm text-gray-500 mt-0.5">
-                {allDayAppts.length === 0 ? 'Sin citas' : `${allDayAppts.length} cita${allDayAppts.length !== 1 ? 's' : ''}`}
+              <p className="text-xs text-gray-500 mt-0.5">
+                {allDayAppts.length === 0 ? 'Sin citas' : `${allDayAppts.length} cita${allDayAppts.length !== 1 ? 's' : ''} programadas`}
               </p>
             </div>
             <button
               onClick={openModal}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-orange-500/15 text-orange-400 border border-orange-500/25 hover:bg-orange-500/25 transition-colors text-xs font-medium whitespace-nowrap"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition-colors text-xs font-semibold whitespace-nowrap shadow-lg shadow-violet-900/30"
             >
               <Plus size={14} /> Nueva Cita
             </button>
@@ -435,138 +492,41 @@ export default function AppointmentsPage() {
           {/* Appointment list */}
           <div className="flex-1 overflow-y-auto">
             {loading ? (
-              <div className="flex items-center justify-center h-32 text-gray-500">
-                <RefreshCw size={16} className="animate-spin mr-2" /> Cargando...
+              <div className="flex items-center justify-center h-32 text-gray-500 text-sm gap-2">
+                <RefreshCw size={16} className="animate-spin" /> Cargando...
               </div>
             ) : dayAppts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-gray-600">
+              <div className="flex flex-col items-center justify-center h-44 text-gray-600 px-6">
                 {tab === 'pending_payment' ? (
                   <>
-                    <BadgeCheck size={28} className="mb-2 text-emerald-600 opacity-50" />
-                    <p className="text-sm">Sin pagos pendientes este día</p>
+                    <BadgeCheck size={32} className="mb-3 text-emerald-600 opacity-40" />
+                    <p className="text-sm font-medium text-gray-500">Sin pagos pendientes este día</p>
                   </>
                 ) : (
                   <>
-                    <CalendarDays size={28} className="mb-2 opacity-30" />
-                    <p className="text-sm">No hay citas este día</p>
-                    <button onClick={openModal} className="mt-3 text-xs text-orange-400 hover:text-orange-300 transition-colors">
+                    <CalendarDays size={32} className="mb-3 opacity-20" />
+                    <p className="text-sm font-medium text-gray-500">No hay citas este día</p>
+                    <button
+                      onClick={openModal}
+                      className="mt-3 text-xs text-violet-400 hover:text-violet-300 transition-colors font-medium"
+                    >
                       + Crear cita manual
                     </button>
                   </>
                 )}
               </div>
             ) : (
-              <div className="divide-y divide-gray-800">
-                {dayAppts.map(appt => {
-                  const cfg      = STATUS[appt.status] || STATUS.scheduled;
-                  const payCfg   = PAYMENT[appt.payment_status || 'not_required'];
-                  const Icon     = cfg.icon;
-                  const isUpd    = updating === appt.id;
-                  const isManual = appt.source === 'manual';
-                  const hasPay   = appt.payment_status === 'pending' || appt.payment_status === 'partial';
-
-                  return (
-                    <div
-                      key={appt.id}
-                      className={`px-5 py-4 ${hasPay ? 'border-l-2 border-amber-500/60' : isManual ? 'border-l-2 border-orange-500/50' : ''}`}
-                    >
-                      {/* Time + badges */}
-                      <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-white">{fmtTime(appt.start_time)}</span>
-                          {appt.end_time && <span className="text-xs text-gray-500">– {fmtTime(appt.end_time)}</span>}
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          {isManual && (
-                            <span className="flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/25">
-                              <Pencil size={9} /> Manual
-                            </span>
-                          )}
-                          <span className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${cfg.badge}`}>
-                            <Icon size={11} /> {cfg.label}
-                          </span>
-                          {appt.payment_status && appt.payment_status !== 'not_required' && (
-                            <span className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${payCfg.badge}`}>
-                              <CreditCard size={9} /> {payCfg.label}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Patient info */}
-                      <div className="space-y-1 mb-3">
-                        <p className="text-sm font-medium text-gray-100 flex items-center gap-2">
-                          <User size={13} className="text-gray-500 flex-shrink-0" /> {appt.patient_name}
-                        </p>
-                        {appt.phone && (
-                          <p className="text-xs text-gray-400 flex items-center gap-2">
-                            <Phone size={12} className="text-gray-500 flex-shrink-0" /> {appt.phone}
-                          </p>
-                        )}
-                        {appt.service && <p className="text-xs text-gray-400 pl-5">{appt.service}</p>}
-                        {appt.notes   && <p className="text-xs text-gray-500 pl-5 italic">{appt.notes}</p>}
-
-                        {/* Payment amount display */}
-                        {hasPay && (
-                          <div className="flex items-center gap-2 pl-5 mt-1">
-                            <DollarSign size={11} className="text-amber-400" />
-                            <span className="text-xs text-amber-300 font-medium">
-                              {appt.payment_amount
-                                ? `${fmtAmount(appt.payment_amount, appt.payment_currency)} pendiente`
-                                : 'Monto por definir'}
-                            </span>
-                            {appt.payment_reminder_sent && (
-                              <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded-full">
-                                recordatorio enviado
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Status actions */}
-                      <div className="space-y-2">
-                        {appt.status === 'scheduled' && (
-                          <div className="flex gap-1.5 flex-wrap">
-                            <ActionBtn onClick={() => updateStatus(appt.id, 'confirmed')} disabled={isUpd} color="green">Confirmar</ActionBtn>
-                            <ActionBtn onClick={() => updateStatus(appt.id, 'cancelled')} disabled={isUpd} color="red">Cancelar</ActionBtn>
-                            <ActionBtn onClick={() => updateStatus(appt.id, 'no_show')}   disabled={isUpd} color="gray">No asistió</ActionBtn>
-                          </div>
-                        )}
-                        {appt.status === 'confirmed' && (
-                          <div className="flex gap-1.5 flex-wrap">
-                            <ActionBtn onClick={() => updateStatus(appt.id, 'completed')} disabled={isUpd} color="blue">Completada</ActionBtn>
-                            <ActionBtn onClick={() => updateStatus(appt.id, 'no_show')}   disabled={isUpd} color="gray">No asistió</ActionBtn>
-                          </div>
-                        )}
-
-                        {/* Payment actions */}
-                        <div className="flex gap-1.5 flex-wrap">
-                          {(!appt.payment_status || appt.payment_status === 'not_required') && (
-                            <ActionBtn onClick={() => openPayModal(appt)} disabled={isUpd} color="amber">
-                              💳 Registrar cobro
-                            </ActionBtn>
-                          )}
-                          {hasPay && (
-                            <>
-                              <ActionBtn onClick={() => quickPay(appt.id, 'paid')} disabled={isUpd} color="green">
-                                ✅ Pago recibido
-                              </ActionBtn>
-                              <ActionBtn onClick={() => openPayModal(appt)} disabled={isUpd} color="amber">
-                                ✏️ Editar cobro
-                              </ActionBtn>
-                            </>
-                          )}
-                          {appt.payment_status === 'paid' && (
-                            <ActionBtn onClick={() => openPayModal(appt)} disabled={isUpd} color="gray">
-                              Ver cobro
-                            </ActionBtn>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="p-3 space-y-3">
+                {dayAppts.map(appt => (
+                  <AppointmentCard
+                    key={appt.id}
+                    appt={appt}
+                    isUpdating={updating === appt.id}
+                    onUpdateStatus={updateStatus}
+                    onQuickPay={quickPay}
+                    onOpenPayModal={openPayModal}
+                  />
+                ))}
               </div>
             )}
           </div>
@@ -576,7 +536,11 @@ export default function AppointmentsPage() {
       {/* ─────────── Modal: Registrar cobro ─────────── */}
       {payModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm shadow-2xl">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+
+            {/* Gradient top line */}
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-violet-400/30 to-transparent" />
+
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
               <div className="flex items-center gap-2">
                 <CreditCard size={16} className="text-amber-400" />
@@ -589,8 +553,8 @@ export default function AppointmentsPage() {
 
             <div className="px-6 py-5 space-y-4">
               {/* Patient summary */}
-              <div className="px-3 py-2.5 rounded-lg bg-gray-800 border border-gray-700">
-                <p className="text-sm font-medium text-white">{payModal.patient_name}</p>
+              <div className="px-3 py-2.5 rounded-xl bg-gray-800/60 border border-gray-700/50">
+                <p className="text-sm font-semibold text-white">{payModal.patient_name}</p>
                 <p className="text-xs text-gray-400 mt-0.5">{payModal.service || 'Consulta'} · {fmtTime(payModal.start_time)}</p>
               </div>
 
@@ -607,7 +571,7 @@ export default function AppointmentsPage() {
                     <button
                       key={val}
                       onClick={() => setPayStatus(val)}
-                      className={`py-2 px-3 rounded-lg text-xs font-medium border transition-colors ${
+                      className={`py-2 px-3 rounded-xl text-xs font-medium border transition-colors ${
                         payStatus === val
                           ? 'bg-violet-600/30 border-violet-500/50 text-violet-300'
                           : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
@@ -632,7 +596,7 @@ export default function AppointmentsPage() {
                     value={payAmount}
                     onChange={e => setPayAmount(e.target.value)}
                     placeholder="Ej: 150.00"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/60 transition-colors"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500/60 transition-colors"
                   />
                 </div>
               )}
@@ -661,34 +625,39 @@ export default function AppointmentsPage() {
       {/* ─────────── Modal: Nueva Cita Manual ─────────── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+
+            {/* Gradient top line */}
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-violet-400/30 to-transparent" />
+
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
               <div className="flex items-center gap-2">
-                <Pencil size={16} className="text-orange-400" />
+                <Pencil size={16} className="text-violet-400" />
                 <h2 className="text-base font-semibold text-white">Nueva Cita Manual</h2>
               </div>
               <button onClick={() => setShowModal(false)} className="p-1 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors">
                 <X size={18} />
               </button>
             </div>
+
             <div className="px-6 py-5 space-y-4">
-              <div className="px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 text-sm text-orange-300">
-                📅 {selected.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+              <div className="px-3 py-2 rounded-xl bg-violet-500/10 border border-violet-500/20 text-sm text-violet-300 font-medium">
+                {selected.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">Nombre del paciente *</label>
                 <input type="text" value={form.patient_name} onChange={e => setForm(f => ({ ...f, patient_name: e.target.value }))} placeholder="Ej: María González"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/60 transition-colors" />
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500/60 transition-colors" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">Teléfono</label>
                 <input type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+51 999 123 456"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/60 transition-colors" />
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500/60 transition-colors" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">Servicio</label>
                 <select value={form.service} onChange={e => setForm(f => ({ ...f, service: e.target.value }))}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/60 transition-colors">
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/60 transition-colors">
                   <option value="">— Seleccionar —</option>
                   {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -697,12 +666,12 @@ export default function AppointmentsPage() {
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1.5">Hora de inicio *</label>
                   <input type="datetime-local" value={form.start} onChange={e => setForm(f => ({ ...f, start: e.target.value }))}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/60 transition-colors" />
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/60 transition-colors" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1.5">Duración</label>
                   <select value={form.duration} onChange={e => setForm(f => ({ ...f, duration: parseInt(e.target.value) }))}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500/60 transition-colors">
+                    className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/60 transition-colors">
                     <option value={15}>15 min</option><option value={30}>30 min</option>
                     <option value={45}>45 min</option><option value={60}>1 hora</option>
                     <option value={90}>1.5 horas</option><option value={120}>2 horas</option>
@@ -712,16 +681,20 @@ export default function AppointmentsPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-400 mb-1.5">Notas (opcional)</label>
                 <textarea value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="Indicaciones, motivo, etc." rows={2}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/60 transition-colors resize-none" />
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-violet-500/60 transition-colors resize-none" />
               </div>
-              {formErr && <p className="text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">{formErr}</p>}
+              {formErr && <p className="text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded-xl px-3 py-2">{formErr}</p>}
             </div>
+
             <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-800">
               <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 rounded-xl text-sm text-gray-400 border border-gray-700 hover:bg-gray-800 transition-colors">
                 Cancelar
               </button>
-              <button onClick={saveAppointment} disabled={saving}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-orange-500 hover:bg-orange-400 text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              <button
+                onClick={saveAppointment}
+                disabled={saving}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-500 text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-violet-900/30"
+              >
                 {saving ? <RefreshCw size={14} className="animate-spin" /> : <Plus size={14} />}
                 {saving ? 'Guardando...' : 'Guardar Cita'}
               </button>
@@ -729,6 +702,138 @@ export default function AppointmentsPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── AppointmentCard sub-component ── */
+function AppointmentCard({
+  appt,
+  isUpdating,
+  onUpdateStatus,
+  onQuickPay,
+  onOpenPayModal,
+}: {
+  appt: Appointment;
+  isUpdating: boolean;
+  onUpdateStatus: (id: string, status: string) => void;
+  onQuickPay: (id: string, payment_status: string) => void;
+  onOpenPayModal: (appt: Appointment) => void;
+}) {
+  const cfg      = STATUS[appt.status] || STATUS.scheduled;
+  const payCfg   = PAYMENT[appt.payment_status || 'not_required'];
+  const Icon     = cfg.icon;
+  const isManual = appt.source === 'manual';
+  const hasPay   = appt.payment_status === 'pending' || appt.payment_status === 'partial';
+  const borderCls = STATUS_BORDER[appt.status] || 'border-l-gray-500';
+
+  return (
+    <div
+      className={`bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 border-l-4 ${borderCls} hover:bg-gray-800/60 transition-colors`}
+    >
+      {/* Top row: time + status badge */}
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div>
+          <p className="text-lg font-bold text-white leading-none">
+            {fmtTime(appt.start_time)}
+            {appt.end_time && (
+              <span className="text-xs font-normal text-gray-500 ml-1.5">– {fmtTime(appt.end_time)}</span>
+            )}
+          </p>
+          <p className="text-sm font-medium text-gray-100 mt-1">{appt.patient_name}</p>
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-wrap justify-end flex-shrink-0">
+          {isManual && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/25">
+              <Pencil size={9} /> Manual
+            </span>
+          )}
+          <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.badge}`}>
+            <Icon size={11} /> {cfg.label}
+          </span>
+        </div>
+      </div>
+
+      {/* Details row */}
+      <div className="space-y-1 mb-3">
+        {appt.service && (
+          <p className="text-xs text-gray-400 flex items-center gap-1.5">
+            <Stethoscope size={11} className="text-gray-500 flex-shrink-0" />
+            {appt.service}
+          </p>
+        )}
+        {appt.phone && (
+          <p className="text-xs text-gray-400 flex items-center gap-1.5">
+            <Phone size={11} className="text-gray-500 flex-shrink-0" />
+            {appt.phone}
+          </p>
+        )}
+        {appt.notes && (
+          <p className="text-xs text-gray-500 italic pl-4">{appt.notes}</p>
+        )}
+
+        {/* Payment status row */}
+        {appt.payment_status && appt.payment_status !== 'not_required' && (
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border ${payCfg.badge}`}>
+              <CreditCard size={9} /> {payCfg.label}
+            </span>
+            {hasPay && (
+              <span className="text-xs text-amber-300 font-medium">
+                {appt.payment_amount
+                  ? `${fmtAmount(appt.payment_amount, appt.payment_currency)} pendiente`
+                  : 'Monto por definir'}
+              </span>
+            )}
+            {hasPay && appt.payment_reminder_sent && (
+              <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded-full">
+                recordatorio enviado
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Action buttons — full-width row */}
+      <div className="space-y-2 pt-3 border-t border-gray-700/40">
+        {appt.status === 'scheduled' && (
+          <div className="flex gap-2 flex-wrap">
+            <ActionBtn onClick={() => onUpdateStatus(appt.id, 'confirmed')} disabled={isUpdating} color="green">Confirmar</ActionBtn>
+            <ActionBtn onClick={() => onUpdateStatus(appt.id, 'cancelled')} disabled={isUpdating} color="red">Cancelar</ActionBtn>
+            <ActionBtn onClick={() => onUpdateStatus(appt.id, 'no_show')}   disabled={isUpdating} color="gray">No asistió</ActionBtn>
+          </div>
+        )}
+        {appt.status === 'confirmed' && (
+          <div className="flex gap-2 flex-wrap">
+            <ActionBtn onClick={() => onUpdateStatus(appt.id, 'completed')} disabled={isUpdating} color="blue">Completada</ActionBtn>
+            <ActionBtn onClick={() => onUpdateStatus(appt.id, 'no_show')}   disabled={isUpdating} color="gray">No asistió</ActionBtn>
+          </div>
+        )}
+
+        <div className="flex gap-2 flex-wrap">
+          {(!appt.payment_status || appt.payment_status === 'not_required') && (
+            <ActionBtn onClick={() => onOpenPayModal(appt)} disabled={isUpdating} color="amber">
+              Registrar cobro
+            </ActionBtn>
+          )}
+          {hasPay && (
+            <>
+              <ActionBtn onClick={() => onQuickPay(appt.id, 'paid')} disabled={isUpdating} color="green">
+                Pago recibido
+              </ActionBtn>
+              <ActionBtn onClick={() => onOpenPayModal(appt)} disabled={isUpdating} color="amber">
+                Editar cobro
+              </ActionBtn>
+            </>
+          )}
+          {appt.payment_status === 'paid' && (
+            <ActionBtn onClick={() => onOpenPayModal(appt)} disabled={isUpdating} color="gray">
+              Ver cobro
+            </ActionBtn>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -741,12 +846,15 @@ function ActionBtn({ onClick, disabled, color, children }: {
     green: 'bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/35 border-emerald-600/30',
     red:   'bg-red-600/20 text-red-400 hover:bg-red-600/35 border-red-600/30',
     blue:  'bg-blue-600/20 text-blue-400 hover:bg-blue-600/35 border-blue-600/30',
-    gray:  'bg-gray-700 text-gray-300 hover:bg-gray-600 border-gray-600',
+    gray:  'bg-gray-700/60 text-gray-300 hover:bg-gray-700 border-gray-600/50',
     amber: 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border-amber-500/30',
   };
   return (
-    <button onClick={onClick} disabled={disabled}
-      className={`text-xs px-2.5 py-1 rounded-lg border transition-colors disabled:opacity-40 ${colors[color] || colors.gray}`}>
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`text-xs px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-40 font-medium ${colors[color] || colors.gray}`}
+    >
       {children}
     </button>
   );
