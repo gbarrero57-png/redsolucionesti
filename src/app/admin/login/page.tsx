@@ -734,7 +734,8 @@ function LoginSection({ loginRef }: { loginRef: React.RefObject<HTMLDivElement |
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Credenciales inválidas'); setShake(true); setTimeout(()=>setShake(false),600); return; }
       setSuccess(true);
-      setTimeout(() => { router.push(data.redirect || next || '/admin'); router.refresh(); }, 600);
+      // Full page navigation — ensures cookies are sent and middleware runs fresh
+      setTimeout(() => { window.location.href = data.redirect || next || '/admin'; }, 600);
     } catch { setError('Error de conexión.'); setShake(true); setTimeout(()=>setShake(false),600);
     } finally { setLoading(false); }
   }
