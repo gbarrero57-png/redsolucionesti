@@ -353,9 +353,9 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
               {tab === 'kb' && (
                 <div className="p-6">
                   {/* Category summary */}
-                  {Object.keys(detail.kb.by_category).length > 0 && (
+                  {Object.keys(detail.kb.by_category ?? {}).length > 0 && (
                     <div className="mb-4 flex flex-wrap gap-2">
-                      {Object.entries(detail.kb.by_category).map(([cat, count]) => (
+                      {Object.entries(detail.kb.by_category ?? {}).map(([cat, count]) => (
                         <span key={cat} className="text-[11px] bg-gray-800 text-gray-400 border border-gray-700 px-2 py-1 rounded-full">
                           {cat} <span className="text-gray-600">({count})</span>
                         </span>
@@ -390,9 +390,9 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
                   {/* Count pills */}
                   <div className="flex gap-2 mb-4 flex-wrap">
                     {[
-                      { label: 'Bot activo', value: detail.conversations.counts.active, color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-                      { label: 'Con humano', value: detail.conversations.counts.human,  color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-                      { label: 'Cerradas',   value: detail.conversations.counts.closed,  color: 'bg-gray-700/50 text-gray-400 border-gray-600/20' },
+                      { label: 'Bot activo', value: detail.conversations.counts?.active ?? 0, color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+                      { label: 'Con humano', value: detail.conversations.counts?.human  ?? 0, color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
+                      { label: 'Cerradas',   value: detail.conversations.counts?.closed  ?? 0, color: 'bg-gray-700/50 text-gray-400 border-gray-600/20' },
                     ].map(({ label, value, color }) => (
                       <span key={label} className={`text-xs px-3 py-1 rounded-full border ${color}`}>
                         {label}: <strong>{value}</strong>
@@ -431,10 +431,10 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
                   {/* Count pills */}
                   <div className="flex gap-2 mb-4 flex-wrap">
                     {[
-                      { label: 'Pendientes',  value: detail.appointments.counts.pending,   color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-                      { label: 'Confirmadas', value: detail.appointments.counts.confirmed,  color: 'bg-violet-500/10 text-violet-400 border-violet-500/20' },
-                      { label: 'Completadas', value: detail.appointments.counts.completed,  color: 'bg-green-500/10 text-green-400 border-green-500/20' },
-                      { label: 'Canceladas',  value: detail.appointments.counts.cancelled,  color: 'bg-red-500/10 text-red-400 border-red-500/20' },
+                      { label: 'Pendientes',  value: detail.appointments.counts?.pending   ?? 0, color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+                      { label: 'Confirmadas', value: detail.appointments.counts?.confirmed  ?? 0, color: 'bg-violet-500/10 text-violet-400 border-violet-500/20' },
+                      { label: 'Completadas', value: detail.appointments.counts?.completed  ?? 0, color: 'bg-green-500/10 text-green-400 border-green-500/20' },
+                      { label: 'Canceladas',  value: detail.appointments.counts?.cancelled  ?? 0, color: 'bg-red-500/10 text-red-400 border-red-500/20' },
                     ].map(({ label, value, color }) => (
                       <span key={label} className={`text-xs px-3 py-1 rounded-full border ${color}`}>
                         {label}: <strong>{value}</strong>
