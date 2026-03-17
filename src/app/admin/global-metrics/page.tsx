@@ -730,7 +730,7 @@ export default function GlobalMetricsPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const sortedClinics = data?.clinics.slice().sort((a, b) => {
+  const sortedClinics = (data?.clinics ?? []).slice().sort((a, b) => {
     if (sortBy === 'name') return (a.name ?? '').localeCompare(b.name ?? '');
     if (sortBy === 'conversations') return b.total_conversations - a.total_conversations;
     if (sortBy === 'appointments')  return b.total_appointments - a.total_appointments;
