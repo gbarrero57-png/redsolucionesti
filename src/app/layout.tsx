@@ -8,7 +8,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "RedSoluciones TI | Automatización Inteligente para Empresas",
+  title: {
+    default: "SofIA — RedSoluciones TI",
+    template: "%s | SofIA",
+  },
   description: "Especialistas en automatización de procesos, soporte técnico 24/7 e integración de IA para empresas modernas. Soluciones digitales que transforman tu negocio.",
 };
 

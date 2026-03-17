@@ -105,8 +105,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const visibleNav = isSuperadmin ? SUPERADMIN_NAV : NAV;
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
-  // Nombre de la página actual para el header móvil
+  // Nombre de la página actual para el header móvil y el título del tab
   const currentPage = [...NAV, ...SUPERADMIN_NAV].find(n => pathname.startsWith(n.href))?.label ?? 'SofIA Admin';
+
+  useEffect(() => {
+    document.title = `${currentPage} — SofIA Admin`;
+  }, [currentPage]);
 
   /* ── Sidebar content (reutilizado en desktop y drawer móvil) ── */
   const SidebarContent = () => (
