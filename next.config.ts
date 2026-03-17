@@ -29,6 +29,10 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Packages that use native Node.js modules must NOT be bundled by webpack/turbopack.
+  // @react-pdf/renderer uses canvas (native binary), nodemailer uses net/tls.
+  serverExternalPackages: ['@react-pdf/renderer', 'nodemailer', 'canvas'],
+
   async headers() {
     return [
       {
