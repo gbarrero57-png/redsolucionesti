@@ -155,7 +155,7 @@ const FAQS: { pattern: RegExp; response: Responder }[] = [
   },
   // Security / privacy
   {
-    pattern: /seguridad|privacidad|datos del paciente|gdpr|cumplimiento|encriptad|hipaa|confidencial/,
+    pattern: /seguridad|segura|seguro|privacidad|datos del paciente|gdpr|cumplimiento|encriptad|hipaa|confidencial|tan segura|es segura/,
     response: () =>
       `La seguridad es prioridad absoluta. 🔒\n\nLos datos de tu clínica y pacientes se almacenan en tu **propia base de datos Supabase** — completamente aislados de otras clínicas, sin servidores compartidos.\n\nCompatible con **GDPR** y estándares internacionales. Todo el tráfico va cifrado con HTTPS/TLS.`,
   },
