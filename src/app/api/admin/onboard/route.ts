@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
         phone: clinic.phone || null,
         address: clinic.address || null,
         timezone: clinic.timezone || 'America/Lima',
+        admin_email: admin.email,   // saved for monthly PDF reports
         bot_config: {
           max_bot_interactions: 3,
           business_hours_start: 8,

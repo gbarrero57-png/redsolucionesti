@@ -322,7 +322,9 @@ export default function OnboardingPage() {
               />
             </div>
             <div>
-              <label className="text-xs text-gray-400 mb-1 block">Email *</label>
+              <label className="text-xs text-gray-400 mb-1 block">
+                Email * <span className="text-gray-600 normal-case">· recibirá reportes PDF mensuales</span>
+              </label>
               <input
                 type="email"
                 value={form.admin_email}
