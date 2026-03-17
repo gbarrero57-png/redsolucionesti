@@ -130,11 +130,24 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
   const [tab, setTab] = useState<'staff' | 'kb' | 'convs' | 'appts'>('staff');
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    fetch(`/api/admin/clinic-detail?clinic_id=${clinicId}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { setDetail(d); setLoading(false); })
-      .catch(() => setLoading(false));
+    setDetail(null);
+    (async () => {
+      try {
+        const res = await fetch(`/api/admin/clinic-detail?clinic_id=${clinicId}`);
+        if (cancelled) return;
+        if (!res.ok) { setLoading(false); return; }
+        const json = await res.json();
+        if (cancelled) return;
+        // Validate required shape to avoid render crashes
+        if (json && json.clinic && Array.isArray(json.staff)) {
+          setDetail(json as ClinicDetail);
+        }
+      } catch { /* network error — detail stays null */ }
+      finally { if (!cancelled) setLoading(false); }
+    })();
+    return () => { cancelled = true; };
   }, [clinicId]);
 
   // Close on Escape
