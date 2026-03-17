@@ -660,7 +660,7 @@ function DashboardPreview() {
                     <div key={name} className="flex items-center gap-2 p-2 rounded-xl" style={{ background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.05)' }}>
                       <div className="w-6 h-6 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0"
                         style={{ background: status === 'bot' ? '#6d28d9' : status === 'human' ? '#f59e0b' : '#374151' }}>
-                        {name.charAt(0)}
+                        {(name ?? '?').charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[9px] font-medium text-gray-200">{name}</p>
