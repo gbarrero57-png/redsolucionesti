@@ -48,14 +48,23 @@ interface ClinicDetail {
 /* ─── Helpers ────────────────────────────────────────────────────── */
 const CLINIC_COLORS = ['#7c3aed','#059669','#2563eb','#d97706','#0891b2','#9333ea','#16a34a','#ea580c','#e11d48','#0284c7'];
 
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+function fmtDate(d: string | null | undefined) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '—';
+  return dt.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 }
-function fmtDateTime(d: string) {
-  return new Date(d).toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+function fmtDateTime(d: string | null | undefined) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '—';
+  return dt.toLocaleString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
-function timeAgo(d: string) {
-  const diff = Date.now() - new Date(d).getTime();
+function timeAgo(d: string | null | undefined) {
+  if (!d) return '—';
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return '—';
+  const diff = Date.now() - dt.getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return 'ahora';
   if (m < 60) return `${m}m`;
@@ -141,8 +150,30 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
         const json = await res.json();
         if (cancelled) return;
         // Validate required shape to avoid render crashes
-        if (json && json.clinic && Array.isArray(json.staff)) {
+        if (
+          json &&
+          json.clinic &&
+          Array.isArray(json.staff) &&
+          json.kb && Array.isArray(json.kb.entries) &&
+          json.conversations && Array.isArray(json.conversations.recent) &&
+          json.appointments && Array.isArray(json.appointments.recent)
+        ) {
           setDetail(json as ClinicDetail);
+        } else if (json && json.clinic) {
+          // Partial response — fill in safe defaults
+          setDetail({
+            clinic: json.clinic,
+            staff: Array.isArray(json.staff) ? json.staff : [],
+            kb: json.kb && Array.isArray(json.kb.entries)
+              ? json.kb
+              : { total: 0, active: 0, by_category: {}, entries: [] },
+            conversations: json.conversations && Array.isArray(json.conversations.recent)
+              ? json.conversations
+              : { counts: { total: 0, active: 0, human: 0, closed: 0 }, recent: [] },
+            appointments: json.appointments && Array.isArray(json.appointments.recent)
+              ? json.appointments
+              : { counts: { pending: 0, confirmed: 0, completed: 0, cancelled: 0 }, recent: [] },
+          });
         }
       } catch { /* network error — detail stays null */ }
       finally { if (!cancelled) setLoading(false); }
@@ -286,7 +317,7 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
                           {/* Avatar */}
                           <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
                             style={{ background: s.role === 'admin' ? '#4f46e5' : '#374151' }}>
-                            {s.full_name.charAt(0).toUpperCase()}
+                            {(s.full_name ?? '?').charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
