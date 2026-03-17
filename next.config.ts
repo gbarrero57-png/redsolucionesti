@@ -29,6 +29,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // v2 — forces chunk hash regeneration after cache invalidation fix (2026-03-17)
   // Packages that use native Node.js modules must NOT be bundled by webpack/turbopack.
   // @react-pdf/renderer uses canvas (native binary), nodemailer uses net/tls.
   serverExternalPackages: ['@react-pdf/renderer', 'nodemailer', 'canvas'],

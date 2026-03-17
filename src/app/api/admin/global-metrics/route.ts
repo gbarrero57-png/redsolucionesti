@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { getAuthContext } from '@/lib/auth';
+import { getAuthContext, applyRefreshedToken } from '@/lib/auth';
 
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
 
@@ -102,10 +102,11 @@ export async function GET(req: NextRequest) {
     total_appointments: 0, ever_escalated: 0, cancelled_appointments: 0, staff_count: 0,
   });
 
-  return NextResponse.json({
+  const res = NextResponse.json({
     period_days: days,
     clinic_count: results.length,
     totals,
     clinics: results,
   }, { headers: NO_CACHE });
+  return applyRefreshedToken(res, ctx);
 }

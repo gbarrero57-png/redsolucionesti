@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   BarChart2, RefreshCw, MessageSquare, Calendar, AlertTriangle,
   Users, BookOpen, TrendingUp, Building2, Wifi, X, ChevronRight,
@@ -697,6 +698,7 @@ function ReportsSection({ clinics }: { clinics: ClinicMetric[] }) {
 
 /* ─── Main page ──────────────────────────────────────────────────── */
 export default function GlobalMetricsPage() {
+  const router = useRouter();
   const [data, setData]           = useState<GlobalMetrics | null>(null);
   const [loading, setLoading]     = useState(true);
   const [fetchError, setFetchError] = useState(false);
@@ -709,7 +711,8 @@ export default function GlobalMetricsPage() {
     setFetchError(false);
     try {
       const res = await fetch(`/api/admin/global-metrics?days=${days}`, { cache: 'no-store' });
-      if (res.status === 401 || res.status === 403) { setData(null); return; }
+      if (res.status === 401) { router.replace('/admin/login?reason=session_expired'); return; }
+      if (res.status === 403) { setData(null); return; }
       if (!res.ok) { setFetchError(true); setData(null); return; }
       const json = await res.json();
       // Validate shape before setting — prevent crash if API returns error object

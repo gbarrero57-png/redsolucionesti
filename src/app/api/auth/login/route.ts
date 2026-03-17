@@ -28,7 +28,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Credenciales inválidas' }, { status: 401 });
   }
 
-  const maxAge = 60 * 60 * 8; // 8h
+  const maxAge        = 60 * 60 * 8;   // 8h for access token cookie
+  const refreshMaxAge = 60 * 60 * 24 * 7; // 7 days for refresh token cookie
+
+  function setSessionCookies(res: NextResponse, accessToken: string, refreshToken: string, role: string) {
+    res.cookies.set('sb-token',   accessToken,  { ...COOKIE_BASE, maxAge });
+    res.cookies.set('sb-refresh', refreshToken, { ...COOKIE_BASE, maxAge: refreshMaxAge });
+    res.cookies.set('sb-role',    role,          { ...COOKIE_BASE, maxAge });
+  }
 
   // ── Superadmin path — no staff record required ────────────────
   const superadminEmail = process.env.SUPERADMIN_EMAIL || '';
@@ -39,8 +46,7 @@ export async function POST(req: NextRequest) {
       is_superadmin: true,
       redirect: '/admin/global-metrics',
     });
-    res.cookies.set('sb-token', data.session.access_token, { ...COOKIE_BASE, maxAge });
-    res.cookies.set('sb-role', 'superadmin', { ...COOKIE_BASE, maxAge });
+    setSessionCookies(res, data.session.access_token, data.session.refresh_token, 'superadmin');
     return res;
   }
 
@@ -67,7 +73,6 @@ export async function POST(req: NextRequest) {
     is_superadmin: false,
     redirect,
   });
-  res.cookies.set('sb-token', data.session.access_token, { ...COOKIE_BASE, maxAge });
-  res.cookies.set('sb-role', staff.role, { ...COOKIE_BASE, maxAge });
+  setSessionCookies(res, data.session.access_token, data.session.refresh_token, staff.role);
   return res;
 }
