@@ -15,16 +15,18 @@ export type AuthContext = {
   clinic_id: string;
   role: string;
   is_superadmin: boolean;
+  /** The current valid access token (used to create user-auth Supabase clients for RPCs) */
+  accessToken: string;
   /** Set when the access token was refreshed — caller should update the sb-token cookie */
   newAccessToken?: string;
 };
 
-async function getUserWithRefresh(req: NextRequest): Promise<{ user: AuthContext['user']; newAccessToken?: string } | null> {
+async function getUserWithRefresh(req: NextRequest): Promise<{ user: AuthContext['user']; accessToken: string; newAccessToken?: string } | null> {
   const token = req.cookies.get('sb-token')?.value;
   if (!token) return null;
 
   const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-  if (!error && user) return { user };
+  if (!error && user) return { user, accessToken: token };
 
   // Access token expired — try to refresh using sb-refresh cookie
   const refreshToken = req.cookies.get('sb-refresh')?.value;
@@ -38,7 +40,7 @@ async function getUserWithRefresh(req: NextRequest): Promise<{ user: AuthContext
   const { data: refreshData, error: refreshErr } = await anonClient.auth.refreshSession({ refresh_token: refreshToken });
   if (refreshErr || !refreshData.user || !refreshData.session) return null;
 
-  return { user: refreshData.user, newAccessToken: refreshData.session.access_token };
+  return { user: refreshData.user, accessToken: refreshData.session.access_token, newAccessToken: refreshData.session.access_token };
 }
 
 export async function verifyAuth(req: NextRequest) {
@@ -50,7 +52,7 @@ export async function getAuthContext(req: NextRequest): Promise<AuthContext | nu
   const result = await getUserWithRefresh(req);
   if (!result) return null;
 
-  const { user, newAccessToken } = result;
+  const { user, accessToken, newAccessToken } = result;
 
   // ── Superadmin check FIRST — does not require a staff record ──
   const superadminEmail = (process.env.SUPERADMIN_EMAIL || '').toLowerCase().trim();
@@ -58,7 +60,7 @@ export async function getAuthContext(req: NextRequest): Promise<AuthContext | nu
     (user.email ?? '').toLowerCase().trim() === superadminEmail;
 
   if (is_superadmin) {
-    return { user, clinic_id: '', role: 'superadmin', is_superadmin: true, newAccessToken };
+    return { user, clinic_id: '', role: 'superadmin', is_superadmin: true, accessToken, newAccessToken };
   }
 
   // ── Regular staff lookup ──────────────────────────────────────
@@ -76,6 +78,7 @@ export async function getAuthContext(req: NextRequest): Promise<AuthContext | nu
     clinic_id: staff.clinic_id as string,
     role: staff.role as string,
     is_superadmin: false,
+    accessToken,
     newAccessToken,
   };
 }

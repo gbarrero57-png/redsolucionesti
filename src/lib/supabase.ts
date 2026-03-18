@@ -12,4 +12,13 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { persistSession: false },
 });
 
+/** Creates a Supabase client authenticated as a specific user (JWT with custom claims).
+ *  Use this for calling RPCs that validate auth.jwt() ->> 'clinic_id'. */
+export function createUserClient(accessToken: string) {
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    auth: { persistSession: false },
+  });
+}
+
 export const CLINIC_ID = process.env.CLINIC_ID ?? '';
