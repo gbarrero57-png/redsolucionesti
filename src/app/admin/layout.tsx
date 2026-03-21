@@ -5,12 +5,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   MessageSquare, Calendar, BarChart2, BookOpen, Bot,
-  LogOut, Users, Building2, AlertTriangle, Menu, X, ClipboardList,
+  LogOut, Users, Building2, AlertTriangle, Menu, X, ClipboardList, Stethoscope,
 } from 'lucide-react';
 
 const NAV = [
   { href: '/admin/inbox',        label: 'Conversaciones',       icon: MessageSquare },
   { href: '/admin/appointments', label: 'Citas',                icon: Calendar },
+  { href: '/admin/calendarios',  label: 'Calendarios',          icon: Stethoscope },
   { href: '/admin/patients',     label: 'Historial Clínico',    icon: ClipboardList },
   { href: '/admin/metrics',      label: 'Métricas',             icon: BarChart2 },
   { href: '/admin/knowledge',    label: 'Base de conocimiento', icon: BookOpen },
