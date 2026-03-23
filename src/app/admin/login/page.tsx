@@ -5,11 +5,11 @@ import { useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Loader2, Shield, Clock, Activity, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 
-/* ── Autofill override ─────────────────────────────────────────── */
+/* ── Styles ────────────────────────────────────────────────────── */
 const GLOBAL_CSS = `
   input:-webkit-autofill,
   input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px #0d1117 inset !important;
+    -webkit-box-shadow: 0 0 0 1000px #080c14 inset !important;
     -webkit-text-fill-color: #fff !important;
     transition: background-color 5000s ease-in-out 0s;
   }
@@ -19,6 +19,7 @@ const GLOBAL_CSS = `
     60%{transform:translateX(-5px)}80%{transform:translateX(5px)}
   }
   .card-shake { animation:shake .5s ease; }
+
   @keyframes gradShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
   .grad-btn {
     background: linear-gradient(135deg,#2563eb,#3b82f6);
@@ -27,6 +28,39 @@ const GLOBAL_CSS = `
   }
   .grad-btn:hover { filter:brightness(1.1); transform:translateY(-1px); }
   .grad-btn:disabled { filter:none; transform:none; }
+
+  /* ── Animated grid background ── */
+  @keyframes gridMove { from{transform:translateY(0)} to{transform:translateY(60px)} }
+  .bg-grid {
+    background-image:
+      linear-gradient(rgba(59,130,246,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    animation: gridMove 8s linear infinite;
+  }
+
+  /* ── Floating orbs ── */
+  @keyframes orbFloat1 { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(40px,-60px) scale(1.05)} 66%{transform:translate(-30px,40px) scale(.97)} }
+  @keyframes orbFloat2 { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(-50px,30px) scale(1.08)} 70%{transform:translate(30px,-40px) scale(.95)} }
+  @keyframes orbFloat3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(20px,50px)} }
+  .orb1 { animation: orbFloat1 18s ease-in-out infinite; }
+  .orb2 { animation: orbFloat2 22s ease-in-out infinite; }
+  .orb3 { animation: orbFloat3 14s ease-in-out infinite; }
+
+  /* ── Scanline on card ── */
+  @keyframes scanline { 0%{top:-100%} 100%{top:200%} }
+  .card-scan::after {
+    content:'';
+    position:absolute;
+    inset-x:0;
+    height:2px;
+    background:linear-gradient(90deg,transparent,rgba(59,130,246,.4),transparent);
+    animation:scanline 4s ease-in-out infinite;
+    pointer-events:none;
+  }
+
+  /* ── Dot pulse ── */
+  @keyframes dotPulse { 0%,100%{opacity:.15;transform:scale(1)} 50%{opacity:.45;transform:scale(1.3)} }
 `;
 
 /* ── Floating label input ──────────────────────────────────────── */
@@ -149,12 +183,12 @@ function LoginForm() {
   }
 
   return (
-    <div className={`w-full max-w-sm rounded-2xl p-8 ${shake ? 'card-shake' : ''}`}
+    <div className={`card-scan relative w-full max-w-sm overflow-hidden rounded-2xl p-8 ${shake ? 'card-shake' : ''}`}
       style={{
-        background: 'rgba(255,255,255,.04)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,.08)',
-        boxShadow: '0 40px 80px -20px rgba(0,0,0,.6)',
+        background: 'rgba(8,12,20,.75)',
+        backdropFilter: 'blur(24px)',
+        border: '1px solid rgba(59,130,246,.15)',
+        boxShadow: '0 0 0 1px rgba(255,255,255,.04) inset, 0 40px 80px -20px rgba(0,0,0,.8), 0 0 40px -10px rgba(37,99,235,.15)',
       }}
     >
       {/* Logo */}
@@ -241,12 +275,47 @@ export default function LoginPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: GLOBAL_CSS }} />
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#050505] px-4">
-        {/* Subtle background glow */}
-        <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          <div className="absolute left-1/2 top-1/2 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/5 blur-[120px]" />
-        </div>
 
+      {/* ── Full-screen background ── */}
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4"
+        style={{ background: 'radial-gradient(ellipse 120% 80% at 50% -10%, #0d1f3c 0%, #080c14 55%, #050507 100%)' }}>
+
+        {/* Animated grid */}
+        <div className="bg-grid pointer-events-none absolute inset-0 opacity-100" />
+
+        {/* Vignette edges */}
+        <div className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse 80% 80% at 50% 50%, transparent 40%, #050507 100%)' }} />
+
+        {/* Floating orbs */}
+        <div className="orb1 pointer-events-none absolute left-[10%] top-[20%] h-[420px] w-[420px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(37,99,235,.18) 0%, transparent 70%)' }} />
+        <div className="orb2 pointer-events-none absolute right-[8%] top-[35%] h-[320px] w-[320px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(124,58,237,.12) 0%, transparent 70%)' }} />
+        <div className="orb3 pointer-events-none absolute bottom-[10%] left-[30%] h-[280px] w-[280px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(14,165,233,.10) 0%, transparent 70%)' }} />
+
+        {/* Corner accent lines */}
+        <div className="pointer-events-none absolute left-0 top-0 h-px w-1/3"
+          style={{ background: 'linear-gradient(to right, rgba(59,130,246,.5), transparent)' }} />
+        <div className="pointer-events-none absolute left-0 top-0 h-1/4 w-px"
+          style={{ background: 'linear-gradient(to bottom, rgba(59,130,246,.5), transparent)' }} />
+        <div className="pointer-events-none absolute bottom-0 right-0 h-px w-1/3"
+          style={{ background: 'linear-gradient(to left, rgba(59,130,246,.3), transparent)' }} />
+        <div className="pointer-events-none absolute bottom-0 right-0 h-1/4 w-px"
+          style={{ background: 'linear-gradient(to top, rgba(59,130,246,.3), transparent)' }} />
+
+        {/* Scatter dots */}
+        {[
+          { top: '15%', left: '20%', delay: '0s' }, { top: '72%', left: '75%', delay: '.8s' },
+          { top: '40%', left: '88%', delay: '1.4s' }, { top: '60%', left: '12%', delay: '2s' },
+          { top: '25%', left: '60%', delay: '.4s' }, { top: '82%', left: '42%', delay: '1.8s' },
+        ].map((d, i) => (
+          <div key={i} className="pointer-events-none absolute h-1 w-1 rounded-full bg-blue-400"
+            style={{ top: d.top, left: d.left, animation: `dotPulse ${2 + i * 0.4}s ease-in-out ${d.delay} infinite` }} />
+        ))}
+
+        {/* ── Login card ── */}
         <Suspense fallback={
           <div className="flex h-10 items-center gap-2 text-sm text-slate-500">
             <Loader2 size={16} className="animate-spin" /> Cargando...
@@ -255,7 +324,7 @@ export default function LoginPage() {
           <LoginForm />
         </Suspense>
 
-        <p className="mt-6 text-xs text-slate-600">
+        <p className="relative mt-6 text-xs text-slate-600">
           ¿Necesitas ayuda?{' '}
           <a href="mailto:info@redsolucionesti.com" className="text-slate-400 hover:text-slate-200 transition-colors">
             info@redsolucionesti.com

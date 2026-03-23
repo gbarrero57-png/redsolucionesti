@@ -180,6 +180,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 
+  // Login page gets no chrome — just the page itself
+  if (pathname === '/admin/login') return <>{children}</>;
+
   return (
     <div className="flex h-screen bg-gray-950 text-gray-100 overflow-hidden">
 
