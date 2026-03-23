@@ -300,6 +300,12 @@ export default function SofiaLanding() {
               >
                 FAQ
               </a>
+              <a
+                href="/admin/login"
+                className="text-sm text-slate-400 transition-colors hover:text-slate-100"
+              >
+                Iniciar sesión
+              </a>
             </div>
             <a
               href="#contacto"
@@ -828,14 +834,18 @@ export default function SofiaLanding() {
               </p>
               <div className="flex gap-3">
                 <a
-                  href="#"
+                  href="https://www.instagram.com/redsolucionesti/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition-colors hover:border-blue-500/40 hover:text-blue-400"
                   aria-label="Instagram"
                 >
                   <Instagram className="h-4 w-4" />
                 </a>
                 <a
-                  href="#"
+                  href="https://www.facebook.com/profile.php?id=61577530556670"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition-colors hover:border-blue-500/40 hover:text-blue-400"
                   aria-label="Facebook"
                 >
@@ -871,7 +881,9 @@ export default function SofiaLanding() {
                 <ul className="flex flex-col gap-2.5">
                   <li>
                     <a
-                      href="#contacto"
+                      href="https://wa.me/51905858566"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-sm text-slate-400 transition-colors hover:text-slate-200"
                     >
                       Hablar con ventas
@@ -879,10 +891,18 @@ export default function SofiaLanding() {
                   </li>
                   <li>
                     <a
-                      href="mailto:onboarding@redsolucionesti.com"
+                      href="mailto:info@redsolucionesti.com"
                       className="text-sm text-slate-400 transition-colors hover:text-slate-200"
                     >
-                      onboarding@redsolucionesti.com
+                      info@redsolucionesti.com
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/admin/login"
+                      className="text-sm text-slate-400 transition-colors hover:text-slate-200"
+                    >
+                      Acceso clínicas
                     </a>
                   </li>
                 </ul>
@@ -903,18 +923,10 @@ export default function SofiaLanding() {
                 </li>
                 <li>
                   <a
-                    href="/terminos"
+                    href="mailto:info@redsolucionesti.com"
                     className="text-sm text-slate-400 transition-colors hover:text-slate-200"
                   >
-                    Términos de servicio
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="mailto:contacto@redsolucionesti.com"
-                    className="text-sm text-slate-400 transition-colors hover:text-slate-200"
-                  >
-                    contacto@redsolucionesti.com
+                    info@redsolucionesti.com
                   </a>
                 </li>
               </ul>
