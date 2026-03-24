@@ -312,7 +312,9 @@ export default function SofiaLanding() {
               </a>
             </div>
             <a
-              href="#contacto"
+              href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+              target="_blank"
+              rel="noopener noreferrer"
               className="cta-glow rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-blue-500"
             >
               Hablar con SofIA
@@ -361,12 +363,14 @@ export default function SofiaLanding() {
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 sm:flex-row">
-              <button
-                onClick={openChat}
+              <a
+                href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="cta-glow rounded-xl bg-blue-600 px-8 py-4 text-base font-bold text-white transition-all hover:bg-blue-500"
               >
                 Hablar con Sofía ahora
-              </button>
+              </a>
               <a
                 href="#como-funciona"
                 className="text-base font-medium text-slate-400 transition-colors hover:text-slate-200"
@@ -805,12 +809,14 @@ export default function SofiaLanding() {
               <p className="text-slate-400">
                 Sin tarjeta de crédito · Sin compromisos · Configura en 48h
               </p>
-              <button
-                onClick={openChat}
+              <a
+                href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="cta-glow rounded-xl bg-blue-600 px-10 py-4 text-base font-bold text-white transition-all hover:bg-blue-500"
               >
                 Hablar con Sofía ahora →
-              </button>
+              </a>
               <p className="text-sm font-medium text-blue-300">
                 ⚡ Solo para las primeras 30 clínicas — quedan 23 lugares disponibles
               </p>
