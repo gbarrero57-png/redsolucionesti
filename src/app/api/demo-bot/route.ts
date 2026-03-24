@@ -71,6 +71,40 @@ function extractDemoData(msgs: Message[]): DemoData {
   return data;
 }
 
+/* ── Telegram notification ── */
+async function notifyTelegram(data: DemoData): Promise<void> {
+  const token  = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+
+  const now = new Date().toLocaleString('es-PE', {
+    timeZone: 'America/Lima',
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+
+  const text = [
+    '🚀 <b>Nueva solicitud de demo — SofIA</b>',
+    '',
+    `👤 <b>Nombre:</b> ${data.name ?? '—'}`,
+    `🏥 <b>Clínica:</b> ${data.clinic ?? '—'}`,
+    `📧 <b>Email:</b> ${data.email ?? '—'}`,
+    `📱 <b>Teléfono:</b> ${data.phone || '—'}`,
+    `📅 <b>Disponibilidad:</b> ${data.preferred ?? '—'}`,
+    '',
+    `🕐 ${now} (Lima)`,
+  ].join('\n');
+
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch { /* non-blocking — don't fail the response */ }
+}
+
 /* ── Save demo to Supabase ── */
 async function saveDemoRequest(data: DemoData): Promise<boolean> {
   if (!SUPABASE_URL || !SUPABASE_KEY) return false;
@@ -237,6 +271,7 @@ async function buildResponse(
 
     if (updatedCollected.name && updatedCollected.email && updatedCollected.clinic && updatedCollected.preferred) {
       await saveDemoRequest(updatedCollected);
+      void notifyTelegram(updatedCollected);
       const first = updatedCollected.name.split(' ')[0];
       return {
         response: `¡Todo listo, **${first}**! 🎉\n\nHemos registrado tu solicitud:\n✅ **Nombre:** ${updatedCollected.name}\n✅ **Email:** ${updatedCollected.email}\n✅ **Clínica:** ${updatedCollected.clinic}\n✅ **Disponibilidad:** ${updatedCollected.preferred}\n\nUn especialista de SofIA te contactará en las próximas **2-4 horas hábiles** para confirmar el horario y enviarte el acceso. ¡Gracias!\n\n¿Tienes alguna pregunta mientras tanto?`,
