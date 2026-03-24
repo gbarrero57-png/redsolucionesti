@@ -271,7 +271,6 @@ async function buildResponse(
 
     if (updatedCollected.name && updatedCollected.email && updatedCollected.clinic && updatedCollected.preferred) {
       await saveDemoRequest(updatedCollected);
-      void notifyTelegram(updatedCollected);
       const first = updatedCollected.name.split(' ')[0];
       return {
         response: `¡Todo listo, **${first}**! 🎉\n\nHemos registrado tu solicitud:\n✅ **Nombre:** ${updatedCollected.name}\n✅ **Email:** ${updatedCollected.email}\n✅ **Clínica:** ${updatedCollected.clinic}\n✅ **Disponibilidad:** ${updatedCollected.preferred}\n\nUn especialista de SofIA te contactará en las próximas **2-4 horas hábiles** para confirmar el horario y enviarte el acceso. ¡Gracias!\n\n¿Tienes alguna pregunta mientras tanto?`,
@@ -324,7 +323,11 @@ export async function POST(req: NextRequest) {
     .slice(-20)
     .map(m => ({ role: m.role, content: String(m.content).slice(0, 500) }));
 
+  // Collect full conversation for demo extraction
+  const allMsgs = [...safeHistory, { role: 'user' as const, content: message }];
+
   // Try n8n first (AI-powered)
+  let result: { response: string; action: string } | null = null;
   try {
     const res = await fetch(N8N_WEBHOOK, {
       method: 'POST',
@@ -332,14 +335,20 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({ message: message.slice(0, 1000), history: safeHistory }),
       signal: AbortSignal.timeout(8000),
     });
-    if (res.ok) {
-      const data = await res.json();
-      return NextResponse.json(data, { headers: NO_CACHE });
-    }
+    if (res.ok) result = await res.json();
   } catch { /* fallback */ }
 
   // Rule-based fallback
-  await new Promise(r => setTimeout(r, 400));
-  const result = await buildResponse(message, history);
+  if (!result) {
+    await new Promise(r => setTimeout(r, 400));
+    result = await buildResponse(message, safeHistory);
+  }
+
+  // Fire Telegram notification when demo is complete (regardless of which path answered)
+  if (result.action === 'demo_saved') {
+    const demoData = extractDemoData(allMsgs);
+    void notifyTelegram(demoData);
+  }
+
   return NextResponse.json(result, { headers: NO_CACHE });
 }
