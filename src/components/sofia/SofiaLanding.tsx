@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import ChatWidget from '@/components/ChatWidget';
 import {
   MessageSquare,
   Calendar,
@@ -263,7 +264,10 @@ const pricingTiers = [
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function SofiaLanding() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [openFaq,      setOpenFaq]      = useState<number | null>(null);
+  const [chatTrigger,  setChatTrigger]  = useState(0);
+
+  const openChat = useCallback(() => setChatTrigger(n => n + 1), []);
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index);
@@ -357,12 +361,12 @@ export default function SofiaLanding() {
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 sm:flex-row">
-              <a
-                href="#contacto"
+              <button
+                onClick={openChat}
                 className="cta-glow rounded-xl bg-blue-600 px-8 py-4 text-base font-bold text-white transition-all hover:bg-blue-500"
               >
                 Hablar con Sofía ahora
-              </a>
+              </button>
               <a
                 href="#como-funciona"
                 className="text-base font-medium text-slate-400 transition-colors hover:text-slate-200"
@@ -801,14 +805,12 @@ export default function SofiaLanding() {
               <p className="text-slate-400">
                 Sin tarjeta de crédito · Sin compromisos · Configura en 48h
               </p>
-              <a
-                href="https://wa.me/51905858566"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={openChat}
                 className="cta-glow rounded-xl bg-blue-600 px-10 py-4 text-base font-bold text-white transition-all hover:bg-blue-500"
               >
                 Hablar con Sofía ahora →
-              </a>
+              </button>
               <p className="text-sm font-medium text-blue-300">
                 ⚡ Solo para las primeras 30 clínicas — quedan 23 lugares disponibles
               </p>
@@ -941,6 +943,12 @@ export default function SofiaLanding() {
           </div>
         </div>
       </footer>
+
+      {/* ── ChatWidget — abre con los CTAs "Hablar con Sofía" ── */}
+      <ChatWidget
+        initialMsg="Hola, me interesa probar SofIA en mi clínica 😊"
+        trigger={chatTrigger}
+      />
     </div>
   );
 }

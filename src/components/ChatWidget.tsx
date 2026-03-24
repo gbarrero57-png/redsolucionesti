@@ -72,7 +72,7 @@ function renderInline(text: string) {
 }
 
 /* ─── Main Widget ────────────────────────────────────────────── */
-export default function ChatWidget({ initialMsg }: { initialMsg: string | null }) {
+export default function ChatWidget({ initialMsg, trigger = 0 }: { initialMsg: string | null; trigger?: number }) {
   const [open, setOpen]           = useState(false);
   const [msgs, setMsgs]           = useState<ChatMsg[]>([GREETING]);
   const [input, setInput]         = useState('');
@@ -137,14 +137,14 @@ export default function ChatWidget({ initialMsg }: { initialMsg: string | null }
     }
   }, [input, msgs, loading]);
 
-  // Auto-open when triggered from CTA
+  // Auto-open when triggered from CTA (trigger counter allows re-opening after close)
   useEffect(() => {
-    if (initialMsg && !open) {
+    if (initialMsg && trigger > 0) {
       setOpen(true);
       setTimeout(() => send(initialMsg), 600);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMsg]);
+  }, [trigger]);
 
   const isFirstMsg = msgs.length === 1 && !loading;
 
