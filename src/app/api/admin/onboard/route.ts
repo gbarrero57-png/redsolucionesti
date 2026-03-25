@@ -281,7 +281,7 @@ export async function POST(req: NextRequest) {
     // Rollback
     if (staffUserId) await supabaseAdmin.auth.admin.deleteUser(staffUserId).catch(() => {});
     if (adminUserId) await supabaseAdmin.auth.admin.deleteUser(adminUserId).catch(() => {});
-    if (clinicRecord) await supabaseAdmin.from('clinics').delete().eq('id', clinicRecord.id).catch(() => {});
+    if (clinicRecord) { try { await supabaseAdmin.from('clinics').delete().eq('id', clinicRecord.id); } catch { /* ignore */ } }
     return NextResponse.json({ error: msg }, { status: 500, headers: NO_CACHE });
   }
 }
