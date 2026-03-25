@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Building2, Plus, RefreshCw, CheckCircle, XCircle, Copy,
   Eye, EyeOff, MessageSquare, Calendar, BookOpen, Users,
-  Wifi, WifiOff, ChevronDown, ChevronUp, UserPlus,
+  Wifi, WifiOff, ChevronDown, ChevronUp, UserPlus, Phone,
 } from 'lucide-react';
 
 interface ClinicRow {
@@ -15,6 +15,7 @@ interface ClinicRow {
   active: boolean;
   created_at: string;
   chatwoot_inbox_id: number | null;
+  chatwoot_account_id: number | null;
   staff_count: number;
   kb_count: number;
   conversations_count: number;
@@ -23,9 +24,15 @@ interface ClinicRow {
 
 interface OnboardResult {
   clinic: { id: string; name: string; subdomain: string };
-  admin: { email: string; user_id: string; password?: string };
+  users: {
+    admin: { email: string; password: string; role: string; user_id: string };
+    staff: { email: string; password: string; role: string; user_id: string } | null;
+  };
   kb_count: number;
+  chatwoot_account_id: number | null;
   chatwoot_inbox_id: number | null;
+  twilio_inbox_id: number | null;
+  twilio_webhook_url: string | null;
   panel_url: string;
 }
 
@@ -100,6 +107,17 @@ export default function OnboardingPage() {
     use_default_kb: true,
   });
 
+  // Staff user (optional)
+  const [staffPassword, setStaffPassword] = useState('');
+  const [showStaffPass, setShowStaffPass] = useState(false);
+  const [staffForm, setStaffForm] = useState({ email: '', full_name: '' });
+  const [includeStaff, setIncludeStaff] = useState(false);
+
+  // Twilio / WhatsApp (optional)
+  const [includeTwilio, setIncludeTwilio] = useState(false);
+  const [twilioForm, setTwilioForm] = useState({ account_sid: '', auth_token: '', phone_number: '' });
+  const [showTwilioToken, setShowTwilioToken] = useState(false);
+
   const fetchClinics = useCallback(async () => {
     setLoadingClinics(true);
     try {
@@ -155,15 +173,26 @@ export default function OnboardingPage() {
             password: adminPassword,
             full_name: form.admin_full_name || undefined,
           },
+          staff: (includeStaff && staffForm.email && staffPassword)
+            ? { email: staffForm.email, password: staffPassword, full_name: staffForm.full_name || undefined }
+            : undefined,
+          twilio: (includeTwilio && twilioForm.account_sid && twilioForm.auth_token && twilioForm.phone_number)
+            ? twilioForm
+            : undefined,
           use_default_kb: form.use_default_kb,
         }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Error al onboardear la clínica'); return; }
-      setResult({ ...data, admin: { ...data.admin, password: adminPassword } } as OnboardResult & { admin: { email: string; user_id: string; password: string } });
+      setResult(data as OnboardResult);
       setShowForm(false);
       setForm({ clinic_name: '', subdomain: '', phone: '', address: '', timezone: 'America/Lima', welcome_message: '', admin_email: '', admin_full_name: '', use_default_kb: true });
       setAdminPassword('');
+      setStaffForm({ email: '', full_name: '' });
+      setStaffPassword('');
+      setIncludeStaff(false);
+      setTwilioForm({ account_sid: '', auth_token: '', phone_number: '' });
+      setIncludeTwilio(false);
       await fetchClinics();
     } finally {
       setSaving(false);
@@ -248,47 +277,130 @@ export default function OnboardingPage() {
       {/* ── Success result ────────────────────────────────────────────── */}
       {result && (
         <div className="mb-6 bg-green-900/10 border border-green-700/30 rounded-xl p-5">
-          <div className="flex items-center gap-2 mb-4">
+          {/* Header */}
+          <div className="flex items-center gap-2 mb-1">
             <CheckCircle size={20} className="text-green-400" />
             <span className="font-semibold text-green-300">¡Clínica onboardeada exitosamente!</span>
-            {result.chatwoot_inbox_id && (
-              <span className="text-xs bg-blue-900/30 text-blue-300 border border-blue-700/30 px-2 py-0.5 rounded-full">
-                Inbox #{result.chatwoot_inbox_id} creado
+          </div>
+          <p className="text-xs text-gray-500 mb-4 pl-7">{result.clinic.name} · {result.clinic.subdomain}</p>
+
+          {/* Status badges */}
+          <div className="flex flex-wrap gap-2 mb-5">
+            <span className="flex items-center gap-1.5 text-xs bg-green-900/30 text-green-300 border border-green-700/30 px-2.5 py-1 rounded-full">
+              <CheckCircle size={11} /> Clínica creada
+            </span>
+            <span className="flex items-center gap-1.5 text-xs bg-green-900/30 text-green-300 border border-green-700/30 px-2.5 py-1 rounded-full">
+              <CheckCircle size={11} /> Admin creado
+            </span>
+            {result.users.staff && (
+              <span className="flex items-center gap-1.5 text-xs bg-green-900/30 text-green-300 border border-green-700/30 px-2.5 py-1 rounded-full">
+                <CheckCircle size={11} /> Staff creado
               </span>
             )}
             {result.kb_count > 0 && (
-              <span className="text-xs bg-violet-900/30 text-violet-300 border border-violet-700/30 px-2 py-0.5 rounded-full">
-                {result.kb_count} preguntas KB
+              <span className="flex items-center gap-1.5 text-xs bg-violet-900/30 text-violet-300 border border-violet-700/30 px-2.5 py-1 rounded-full">
+                <CheckCircle size={11} /> {result.kb_count} KB
               </span>
             )}
+            {result.chatwoot_account_id ? (
+              <span className="flex items-center gap-1.5 text-xs bg-cyan-900/30 text-cyan-300 border border-cyan-700/30 px-2.5 py-1 rounded-full">
+                <Wifi size={11} /> Chatwoot #{result.chatwoot_account_id}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-xs bg-amber-900/30 text-amber-400 border border-amber-700/30 px-2.5 py-1 rounded-full">
+                <WifiOff size={11} /> Chatwoot pendiente
+              </span>
+            )}
+            {result.twilio_inbox_id && (
+              <span className="flex items-center gap-1.5 text-xs bg-green-900/30 text-green-300 border border-green-700/30 px-2.5 py-1 rounded-full">
+                <Phone size={11} /> WhatsApp configurado
+              </span>
+            )}
+            <span className="flex items-center gap-1.5 text-xs bg-blue-900/30 text-blue-300 border border-blue-700/30 px-2.5 py-1 rounded-full">
+              <CheckCircle size={11} /> Email enviado
+            </span>
           </div>
 
+          {/* Users credentials */}
           <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Credenciales para entregar al cliente</p>
-          <div className="grid grid-cols-1 gap-2">
+
+          {/* Admin */}
+          <p className="text-xs text-violet-400 mb-1.5 flex items-center gap-1.5">👑 Administrador</p>
+          <div className="grid grid-cols-1 gap-2 mb-3">
             {[
-              { label: 'Panel de acceso', value: result.panel_url, field: 'url' },
-              { label: 'Email', value: result.admin.email, field: 'email' },
-              { label: 'Contraseña temporal', value: result.admin.password || '', field: 'pass' },
-              { label: 'Clinic ID (técnico)', value: result.clinic.id, field: 'clinic_id' },
+              { label: 'Panel SofIA', value: result.panel_url, field: 'url' },
+              { label: 'Email', value: result.users.admin.email, field: 'a-email' },
+              { label: 'Contraseña', value: result.users.admin.password, field: 'a-pass' },
+              ...(result.chatwoot_account_id ? [{
+                label: 'Chatwoot',
+                value: `https://chat.redsolucionesti.com/app/accounts/${result.chatwoot_account_id}/dashboard`,
+                field: 'chatwoot',
+              }] : []),
             ].map(({ label, value, field }) => (
               <div key={field} className="flex items-center gap-3 bg-gray-900 rounded-lg px-4 py-2.5 border border-gray-800">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-gray-500 mb-0.5">{label}</p>
                   <p className="text-sm text-gray-100 font-mono truncate">{value}</p>
                 </div>
-                <button
-                  onClick={() => copy(value, field)}
-                  className="text-gray-500 hover:text-violet-400 transition-colors flex-shrink-0"
-                  title="Copiar"
-                >
+                <button onClick={() => copy(value, field)} className="text-gray-500 hover:text-violet-400 flex-shrink-0">
                   {copiedField === field ? <CheckCircle size={15} className="text-green-400" /> : <Copy size={15} />}
                 </button>
               </div>
             ))}
           </div>
 
+          {/* Staff */}
+          {result.users.staff && (
+            <>
+              <p className="text-xs text-cyan-400 mb-1.5 flex items-center gap-1.5">👤 Recepcionista / Staff</p>
+              <div className="grid grid-cols-1 gap-2 mb-3">
+                {[
+                  { label: 'Email', value: result.users.staff.email, field: 's-email' },
+                  { label: 'Contraseña', value: result.users.staff.password, field: 's-pass' },
+                ].map(({ label, value, field }) => (
+                  <div key={field} className="flex items-center gap-3 bg-gray-900 rounded-lg px-4 py-2.5 border border-gray-800">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-gray-500 mb-0.5">{label}</p>
+                      <p className="text-sm text-gray-100 font-mono truncate">{value}</p>
+                    </div>
+                    <button onClick={() => copy(value, field)} className="text-gray-500 hover:text-cyan-400 flex-shrink-0">
+                      {copiedField === field ? <CheckCircle size={15} className="text-green-400" /> : <Copy size={15} />}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Twilio webhook */}
+          {result.twilio_webhook_url && (
+            <>
+              <p className="text-xs text-green-400 mb-1.5 flex items-center gap-1.5"><Phone size={11} /> Twilio — configurar en consola</p>
+              <div className="flex items-center gap-3 bg-gray-900 rounded-lg px-4 py-2.5 border border-gray-800 mb-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 mb-0.5">Webhook URL (pegar en Twilio)</p>
+                  <p className="text-sm text-gray-100 font-mono truncate">{result.twilio_webhook_url}</p>
+                </div>
+                <button onClick={() => copy(result.twilio_webhook_url!, 'twilio-wh')} className="text-gray-500 hover:text-green-400 flex-shrink-0">
+                  {copiedField === 'twilio-wh' ? <CheckCircle size={15} className="text-green-400" /> : <Copy size={15} />}
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Clinic ID */}
+          <div className="flex items-center gap-3 bg-gray-900 rounded-lg px-4 py-2.5 border border-gray-800">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-500 mb-0.5">Clinic ID (técnico)</p>
+              <p className="text-sm text-gray-100 font-mono truncate">{result.clinic.id}</p>
+            </div>
+            <button onClick={() => copy(result.clinic.id, 'clinic_id')} className="text-gray-500 hover:text-violet-400 flex-shrink-0">
+              {copiedField === 'clinic_id' ? <CheckCircle size={15} className="text-green-400" /> : <Copy size={15} />}
+            </button>
+          </div>
+
           <p className="text-xs text-amber-400 mt-3 flex items-center gap-1.5">
-            ⚠ Pide al admin que cambie su contraseña al primer ingreso
+            ⚠ Las credenciales también fueron enviadas por email al admin
           </p>
         </div>
       )}
@@ -420,6 +532,122 @@ export default function OnboardingPage() {
             </div>
           </div>
 
+          {/* Staff user (optional) */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setIncludeStaff(v => !v)}
+              className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg border transition-colors ${includeStaff ? 'bg-cyan-900/20 border-cyan-700/40 text-cyan-300' : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-gray-200'}`}
+            >
+              <UserPlus size={13} />
+              {includeStaff ? 'Recepcionista / Staff incluido' : '+ Crear usuario recepcionista (opcional)'}
+            </button>
+            {includeStaff && (
+              <div className="mt-3 pl-3 border-l-2 border-cyan-800 space-y-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Recepcionista / Staff</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Nombre completo</label>
+                    <input
+                      value={staffForm.full_name}
+                      onChange={e => setStaffForm(f => ({ ...f, full_name: e.target.value }))}
+                      placeholder="Recepcionista López"
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-cyan-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Email *</label>
+                    <input
+                      type="email"
+                      value={staffForm.email}
+                      onChange={e => setStaffForm(f => ({ ...f, email: e.target.value }))}
+                      placeholder="recepcion@clinica.com"
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-cyan-600"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-400 mb-1 block">Contraseña *</label>
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <input
+                          type={showStaffPass ? 'text' : 'password'}
+                          value={staffPassword}
+                          onChange={e => setStaffPassword(e.target.value)}
+                          placeholder="Mínimo 8 caracteres"
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 pr-8 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-cyan-600 font-mono"
+                        />
+                        <button type="button" onClick={() => setShowStaffPass(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                          {showStaffPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                      <button onClick={() => { setStaffPassword(generatePassword()); setShowStaffPass(true); }} className="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-lg transition-colors whitespace-nowrap">
+                        Generar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Twilio / WhatsApp (optional) */}
+          <div className="mb-4">
+            <button
+              type="button"
+              onClick={() => setIncludeTwilio(v => !v)}
+              className={`flex items-center gap-2 text-xs px-3 py-2 rounded-lg border transition-colors ${includeTwilio ? 'bg-green-900/20 border-green-700/40 text-green-300' : 'bg-gray-900 border-gray-700 text-gray-400 hover:text-gray-200'}`}
+            >
+              <Phone size={13} />
+              {includeTwilio ? 'WhatsApp / Twilio incluido' : '+ Configurar WhatsApp Twilio (opcional)'}
+            </button>
+            {includeTwilio && (
+              <div className="mt-3 pl-3 border-l-2 border-green-800 space-y-3">
+                <p className="text-xs text-gray-500 uppercase tracking-wider">Credenciales Twilio</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Account SID *</label>
+                    <input
+                      value={twilioForm.account_sid}
+                      onChange={e => setTwilioForm(f => ({ ...f, account_sid: e.target.value }))}
+                      placeholder="ACxxxxxxxxxxxxxxxx"
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-green-600 font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Número WhatsApp *</label>
+                    <input
+                      value={twilioForm.phone_number}
+                      onChange={e => setTwilioForm(f => ({ ...f, phone_number: e.target.value }))}
+                      placeholder="+14155238886"
+                      className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-green-600 font-mono"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-gray-400 mb-1 block">Auth Token *</label>
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <input
+                          type={showTwilioToken ? 'text' : 'password'}
+                          value={twilioForm.auth_token}
+                          onChange={e => setTwilioForm(f => ({ ...f, auth_token: e.target.value }))}
+                          placeholder="Auth token de Twilio"
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 pr-8 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-green-600 font-mono"
+                        />
+                        <button type="button" onClick={() => setShowTwilioToken(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                          {showTwilioToken ? <EyeOff size={14} /> : <Eye size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Twilio Console → Account Info → Account SID + Auth Token.<br/>
+                  Número: el número de WhatsApp de la clínica (formato internacional, ej. +51987654321).
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Options */}
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Opciones</p>
           <label className="flex items-center gap-3 cursor-pointer mb-5">
@@ -494,10 +722,14 @@ export default function OnboardingPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-medium text-gray-100">{clinic.name}</p>
                       <code className="text-xs bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">{clinic.subdomain}</code>
-                      {clinic.chatwoot_inbox_id ? (
-                        <span className="flex items-center gap-1 text-xs text-blue-400"><Wifi size={10} />Chatwoot #{clinic.chatwoot_inbox_id}</span>
+                      {clinic.chatwoot_account_id ? (
+                        <span className="flex items-center gap-1 text-xs text-cyan-400">
+                          <Wifi size={10} />
+                          Chatwoot #{clinic.chatwoot_account_id}
+                          {clinic.chatwoot_inbox_id && <span className="text-cyan-600">· inbox #{clinic.chatwoot_inbox_id}</span>}
+                        </span>
                       ) : (
-                        <span className="flex items-center gap-1 text-xs text-gray-600"><WifiOff size={10} />Sin inbox</span>
+                        <span className="flex items-center gap-1 text-xs text-gray-600"><WifiOff size={10} />Sin Chatwoot</span>
                       )}
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">
