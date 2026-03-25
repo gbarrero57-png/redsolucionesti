@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Building2, Plus, RefreshCw, CheckCircle, XCircle, Copy,
   Eye, EyeOff, MessageSquare, Calendar, BookOpen, Users,
-  Wifi, WifiOff, ChevronDown, ChevronUp,
+  Wifi, WifiOff, ChevronDown, ChevronUp, UserPlus,
 } from 'lucide-react';
 
 interface ClinicRow {
@@ -53,6 +53,21 @@ function StatBadge({ icon: Icon, value, label }: { icon: React.ElementType; valu
   );
 }
 
+interface NewUserForm {
+  email: string;
+  password: string;
+  full_name: string;
+  role: 'admin' | 'staff';
+}
+
+interface UserResult {
+  email: string;
+  full_name: string;
+  role: string;
+  clinic_name: string;
+  password: string;
+}
+
 export default function OnboardingPage() {
   const [clinics, setClinics] = useState<ClinicRow[]>([]);
   const [loadingClinics, setLoadingClinics] = useState(true);
@@ -64,6 +79,14 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [expandedClinic, setExpandedClinic] = useState<string | null>(null);
+
+  // User creation state (per-clinic)
+  const [userFormClinic, setUserFormClinic] = useState<string | null>(null);
+  const [userForm, setUserForm] = useState<NewUserForm>({ email: '', password: '', full_name: '', role: 'staff' });
+  const [showUserPass, setShowUserPass] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
+  const [userResult, setUserResult] = useState<UserResult | null>(null);
 
   const [form, setForm] = useState({
     clinic_name: '',
@@ -151,6 +174,41 @@ export default function OnboardingPage() {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
+  }
+
+  function openUserForm(clinicId: string) {
+    setUserFormClinic(clinicId);
+    setUserForm({ email: '', password: '', full_name: '', role: 'staff' });
+    setShowUserPass(false);
+    setUserError(null);
+    setUserResult(null);
+  }
+
+  function closeUserForm() {
+    setUserFormClinic(null);
+    setUserError(null);
+    setUserResult(null);
+  }
+
+  async function handleCreateUser(clinicId: string) {
+    if (!userForm.email || !userForm.password) return;
+    setSavingUser(true);
+    setUserError(null);
+    setUserResult(null);
+    try {
+      const res = await fetch('/api/admin/onboard/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clinic_id: clinicId, ...userForm }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setUserError(data.error || 'Error al crear usuario'); return; }
+      setUserResult({ ...data, password: userForm.password });
+      setUserForm({ email: '', password: '', full_name: '', role: 'staff' });
+      await fetchClinics();
+    } finally {
+      setSavingUser(false);
+    }
   }
 
   return (
@@ -459,13 +517,16 @@ export default function OnboardingPage() {
                 </button>
 
                 {expanded && (
-                  <div className="border-t border-gray-800 px-4 py-3 bg-gray-900/50">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-3">
+                  <div className="border-t border-gray-800 px-4 py-3 bg-gray-900/50 space-y-3">
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <StatBadge icon={Users} value={clinic.staff_count} label="usuarios activos" />
                       <StatBadge icon={BookOpen} value={clinic.kb_count} label="preguntas KB" />
                       <StatBadge icon={MessageSquare} value={clinic.conversations_count} label="conversaciones" />
                       <StatBadge icon={Calendar} value={clinic.appointments_count} label="citas" />
                     </div>
+
+                    {/* Clinic ID + phone */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs text-gray-500">clinic_id:</span>
                       <code className="text-xs text-gray-400 font-mono">{clinic.id}</code>
@@ -477,7 +538,130 @@ export default function OnboardingPage() {
                       </button>
                     </div>
                     {clinic.phone && (
-                      <p className="text-xs text-gray-500 mt-1">Tel: {clinic.phone}</p>
+                      <p className="text-xs text-gray-500">Tel: {clinic.phone}</p>
+                    )}
+
+                    {/* Create user button / form */}
+                    {userFormClinic !== clinic.id ? (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openUserForm(clinic.id); }}
+                        className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors mt-1"
+                      >
+                        <UserPlus size={13} /> Crear usuario para esta clínica
+                      </button>
+                    ) : (
+                      <div className="bg-gray-800 rounded-lg border border-violet-700/30 p-4 space-y-3">
+                        <p className="text-xs font-semibold text-violet-300 flex items-center gap-1.5">
+                          <UserPlus size={13} /> Nuevo usuario — {clinic.name}
+                        </p>
+
+                        {/* User result */}
+                        {userResult && (
+                          <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3 space-y-1.5">
+                            <p className="text-xs text-green-400 font-medium flex items-center gap-1.5">
+                              <CheckCircle size={12} /> Usuario creado
+                            </p>
+                            {[
+                              { label: 'Email', value: userResult.email, field: `u-email-${clinic.id}` },
+                              { label: 'Contraseña', value: userResult.password, field: `u-pass-${clinic.id}` },
+                              { label: 'Rol', value: userResult.role, field: null },
+                            ].map(({ label, value, field }) => (
+                              <div key={label} className="flex items-center gap-2">
+                                <span className="text-xs text-gray-500 w-20 flex-shrink-0">{label}:</span>
+                                <code className="text-xs text-gray-200 font-mono flex-1">{value}</code>
+                                {field && (
+                                  <button onClick={() => copy(value, field)} className="text-gray-600 hover:text-violet-400">
+                                    {copiedField === field ? <CheckCircle size={11} className="text-green-400" /> : <Copy size={11} />}
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {userError && (
+                          <p className="text-xs text-red-400 flex items-center gap-1.5">
+                            <XCircle size={12} /> {userError}
+                          </p>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Nombre completo</label>
+                            <input
+                              value={userForm.full_name}
+                              onChange={e => setUserForm(f => ({ ...f, full_name: e.target.value }))}
+                              placeholder="Dr. Ana Torres"
+                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-400 mb-1 block">Rol</label>
+                            <select
+                              value={userForm.role}
+                              onChange={e => setUserForm(f => ({ ...f, role: e.target.value as 'admin' | 'staff' }))}
+                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-violet-500"
+                            >
+                              <option value="staff">Staff (solo lectura)</option>
+                              <option value="admin">Admin (control total)</option>
+                            </select>
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-xs text-gray-400 mb-1 block">Email *</label>
+                            <input
+                              type="email"
+                              value={userForm.email}
+                              onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))}
+                              placeholder="usuario@clinica.com"
+                              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <label className="text-xs text-gray-400 mb-1 block">Contraseña *</label>
+                            <div className="flex gap-2">
+                              <div className="flex-1 relative">
+                                <input
+                                  type={showUserPass ? 'text' : 'password'}
+                                  value={userForm.password}
+                                  onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))}
+                                  placeholder="Mínimo 8 caracteres"
+                                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 pr-8 text-xs text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500 font-mono"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowUserPass(v => !v)}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                                >
+                                  {showUserPass ? <EyeOff size={12} /> : <Eye size={12} />}
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => { const p = generatePassword(); setUserForm(f => ({ ...f, password: p })); setShowUserPass(true); }}
+                                className="px-2.5 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-lg transition-colors whitespace-nowrap"
+                              >
+                                Generar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            onClick={() => handleCreateUser(clinic.id)}
+                            disabled={savingUser || !userForm.email || !userForm.password}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {savingUser ? <RefreshCw size={11} className="animate-spin" /> : <UserPlus size={11} />}
+                            {savingUser ? 'Creando...' : 'Crear usuario'}
+                          </button>
+                          <button
+                            onClick={closeUserForm}
+                            className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-lg transition-colors"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
