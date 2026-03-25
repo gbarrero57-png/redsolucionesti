@@ -7,8 +7,15 @@ import {
   Users, BookOpen, TrendingUp, Building2, Wifi, X, ChevronRight,
   Shield, UserCheck, Clock, Bot, Mail, Phone, MapPin,
   Globe, CheckCircle, XCircle, Loader2, FileText, Send, Download,
-  ChevronDown,
+  ChevronDown, UserPlus, Eye, EyeOff, Copy,
 } from 'lucide-react';
+
+function generatePassword() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+  let p = '';
+  for (let i = 0; i < 14; i++) p += chars[Math.floor(Math.random() * chars.length)];
+  return p;
+}
 
 /* ─── Types ──────────────────────────────────────────────────────── */
 interface ClinicMetric {
@@ -138,6 +145,45 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
   const [detail, setDetail] = useState<ClinicDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'staff' | 'kb' | 'convs' | 'appts'>('staff');
+
+  // Create user state
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [userForm, setUserForm] = useState({ email: '', full_name: '', password: '', role: 'staff' as 'admin' | 'staff' });
+  const [showPass, setShowPass] = useState(false);
+  const [savingUser, setSavingUser] = useState(false);
+  const [userError, setUserError] = useState<string | null>(null);
+  const [userCreated, setUserCreated] = useState<{ email: string; password: string; role: string } | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  function copyField(val: string, key: string) {
+    navigator.clipboard.writeText(val);
+    setCopiedField(key);
+    setTimeout(() => setCopiedField(null), 2000);
+  }
+
+  async function handleCreateUser() {
+    if (!userForm.email || !userForm.password) return;
+    setSavingUser(true);
+    setUserError(null);
+    setUserCreated(null);
+    try {
+      const res = await fetch('/api/admin/onboard/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clinic_id: clinicId, ...userForm }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setUserError(data.error || 'Error al crear usuario'); return; }
+      setUserCreated({ email: userForm.email, password: userForm.password, role: userForm.role });
+      setUserForm({ email: '', full_name: '', password: '', role: 'staff' });
+      setShowPass(false);
+      // Refresh detail to show new user
+      const detailRes = await fetch(`/api/admin/clinic-detail?clinic_id=${clinicId}`);
+      if (detailRes.ok) setDetail(await detailRes.json());
+    } finally {
+      setSavingUser(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -308,14 +354,15 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
               {/* ── Staff tab ── */}
               {tab === 'staff' && (
                 <div className="p-6 space-y-3">
-                  {detail.staff.length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-8">No hay usuarios registrados</p>
+
+                  {/* Users list */}
+                  {detail.staff.length === 0 && !showUserForm && (
+                    <p className="text-sm text-gray-500 text-center py-6">No hay usuarios registrados</p>
                   )}
                   {detail.staff.map(s => (
                     <div key={s.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          {/* Avatar */}
                           <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
                             style={{ background: s.role === 'admin' ? '#4f46e5' : '#374151' }}>
                             {(s.full_name ?? '?').charAt(0).toUpperCase()}
@@ -324,9 +371,7 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-gray-100">{s.full_name}</span>
                               <RoleBadge role={s.role} />
-                              {!s.active && (
-                                <span className="text-[10px] bg-red-900/20 text-red-400 border border-red-700/30 px-1.5 py-0.5 rounded-full">Inactivo</span>
-                              )}
+                              {!s.active && <span className="text-[10px] bg-red-900/20 text-red-400 border border-red-700/30 px-1.5 py-0.5 rounded-full">Inactivo</span>}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <Mail size={10} className="text-gray-600" />
@@ -347,6 +392,124 @@ function ClinicDrawer({ clinicId, clinicColor, onClose }: {
                       </div>
                     </div>
                   ))}
+
+                  {/* Create user — success */}
+                  {userCreated && (
+                    <div className="bg-green-900/15 border border-green-700/30 rounded-xl p-4 space-y-2">
+                      <p className="text-xs text-green-400 font-medium flex items-center gap-1.5">
+                        <CheckCircle size={13} /> Usuario creado exitosamente
+                      </p>
+                      {[
+                        { label: 'Email', value: userCreated.email, key: 'uc-email' },
+                        { label: 'Contraseña', value: userCreated.password, key: 'uc-pass' },
+                      ].map(({ label, value, key }) => (
+                        <div key={key} className="flex items-center gap-2 bg-gray-900 rounded-lg px-3 py-2 border border-gray-800">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[10px] text-gray-500">{label}</p>
+                            <p className="text-xs text-gray-100 font-mono truncate">{value}</p>
+                          </div>
+                          <button onClick={() => copyField(value, key)} className="text-gray-500 hover:text-violet-400 flex-shrink-0">
+                            {copiedField === key ? <CheckCircle size={13} className="text-green-400" /> : <Copy size={13} />}
+                          </button>
+                        </div>
+                      ))}
+                      <button onClick={() => setUserCreated(null)} className="text-[10px] text-gray-500 hover:text-gray-300 mt-1">
+                        Cerrar
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Create user — form */}
+                  {showUserForm ? (
+                    <div className="bg-gray-800 border border-violet-700/30 rounded-xl p-4 space-y-3">
+                      <p className="text-xs font-semibold text-violet-300 flex items-center gap-1.5">
+                        <UserPlus size={13} /> Nuevo usuario
+                      </p>
+                      {userError && (
+                        <p className="text-xs text-red-400 flex items-center gap-1.5">
+                          <XCircle size={12} /> {userError}
+                        </p>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] text-gray-400 mb-1 block">Nombre completo</label>
+                          <input
+                            value={userForm.full_name}
+                            onChange={e => setUserForm(f => ({ ...f, full_name: e.target.value }))}
+                            placeholder="Dr. Ana Torres"
+                            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-gray-400 mb-1 block">Rol</label>
+                          <select
+                            value={userForm.role}
+                            onChange={e => setUserForm(f => ({ ...f, role: e.target.value as 'admin' | 'staff' }))}
+                            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-violet-500"
+                          >
+                            <option value="staff">Staff / Recepcionista</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </div>
+                        <div className="col-span-2">
+                          <label className="text-[10px] text-gray-400 mb-1 block">Email *</label>
+                          <input
+                            type="email"
+                            value={userForm.email}
+                            onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))}
+                            placeholder="usuario@clinica.com"
+                            className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="text-[10px] text-gray-400 mb-1 block">Contraseña *</label>
+                          <div className="flex gap-2">
+                            <div className="flex-1 relative">
+                              <input
+                                type={showPass ? 'text' : 'password'}
+                                value={userForm.password}
+                                onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))}
+                                placeholder="Mínimo 8 caracteres"
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 pr-8 text-xs text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500 font-mono"
+                              />
+                              <button type="button" onClick={() => setShowPass(v => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300">
+                                {showPass ? <EyeOff size={12} /> : <Eye size={12} />}
+                              </button>
+                            </div>
+                            <button
+                              onClick={() => { setUserForm(f => ({ ...f, password: generatePassword() })); setShowPass(true); }}
+                              className="px-2.5 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-[10px] rounded-lg transition-colors whitespace-nowrap"
+                            >
+                              Generar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          onClick={handleCreateUser}
+                          disabled={savingUser || !userForm.email || !userForm.password}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {savingUser ? <Loader2 size={11} className="animate-spin" /> : <UserPlus size={11} />}
+                          {savingUser ? 'Creando...' : 'Crear usuario'}
+                        </button>
+                        <button
+                          onClick={() => { setShowUserForm(false); setUserError(null); }}
+                          className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded-lg transition-colors"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => { setShowUserForm(true); setUserCreated(null); setUserError(null); }}
+                      className="flex items-center gap-1.5 text-xs text-violet-400 hover:text-violet-300 transition-colors mt-1 border border-dashed border-violet-700/40 hover:border-violet-600/60 rounded-lg px-3 py-2 w-full justify-center"
+                    >
+                      <UserPlus size={13} /> Crear usuario para esta clínica
+                    </button>
+                  )}
                 </div>
               )}
 
