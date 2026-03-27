@@ -225,6 +225,17 @@ export async function POST(req: NextRequest) {
         const headers = { 'Content-Type': 'application/json', api_access_token: chatwootSuperToken };
         const accountBase = `${chatwootBase}/api/v1/accounts/${chatwoot_account_id}`;
 
+        // 6b-0. Add the clinic admin as agent in the new account (auto-confirms if user exists)
+        await fetch(`${accountBase}/agents`, {
+          method: 'POST', headers,
+          body: JSON.stringify({
+            name: admin.full_name || admin.email.split('@')[0],
+            email: admin.email,
+            role: 'administrator',
+            password: admin.password,
+          }),
+        }).catch(() => {});
+
         // 6b. Create API inbox (bot channel — always created)
         const apiInboxRes = await fetch(`${accountBase}/inboxes`, {
           method: 'POST', headers,
