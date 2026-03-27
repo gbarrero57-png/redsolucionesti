@@ -2,6 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { supabaseAdmin } from '@/lib/supabase';
 
+/* ── Cloudflare Turnstile verification ── */
+async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
+  const form = new FormData();
+  form.append('secret',   process.env.TURNSTILE_SECRET_KEY!);
+  form.append('response', token);
+  form.append('remoteip', ip);
+  const res  = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method:'POST', body:form });
+  const data = await res.json() as { success: boolean };
+  return data.success === true;
+}
+
 /* ── Brute-force protection: 5 attempts / IP / 15 min ── */
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 function checkLoginLimit(ip: string): { allowed: boolean; remaining: number } {
@@ -35,15 +46,27 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}));
-  const { email, password } = body;
+  const { email, password, captchaToken } = body;
+
+  // Verify Turnstile token before touching credentials
+  if (process.env.TURNSTILE_SECRET_KEY) {
+    const valid = captchaToken ? await verifyTurnstile(captchaToken, ip) : false;
+    if (!valid) {
+      return NextResponse.json(
+        { error: 'Verificación de seguridad fallida. Intenta de nuevo.' },
+        { status: 400 }
+      );
+    }
+  }
 
   if (!email || !password) {
     return NextResponse.json({ error: 'Email y contraseña requeridos' }, { status: 400 });
   }
 
+  // Use service key — legacy anon JWT keys disabled by Supabase on 2026-03-26
   const anonClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.SUPABASE_SERVICE_KEY!,
   );
 
   const { data, error } = await anonClient.auth.signInWithPassword({ email, password });
