@@ -164,7 +164,34 @@ export async function POST(req: NextRequest) {
       if (!kbErr) kb_count = kbEntries.length;
     }
 
-    // ── Step 6: Create Chatwoot account + inboxes + webhook ───────────────────
+    // ── Step 6: Create default doctor/schedule ────────────────────────────────
+    try {
+      const now = new Date().toISOString();
+      await supabaseAdmin.from('doctors').insert({
+        clinic_id:        newClinic.id,
+        first_name:       'General',
+        last_name:        clinic.name,
+        specialty:        'Odontología General',
+        display_name:     'Consultorio General',
+        bio:              `Horario general de atención de ${clinic.name}.`,
+        weekly_schedule: [
+          { dow: 1, start_hour: 9, end_hour: 18 },
+          { dow: 2, start_hour: 9, end_hour: 18 },
+          { dow: 3, start_hour: 9, end_hour: 18 },
+          { dow: 4, start_hour: 9, end_hour: 18 },
+          { dow: 5, start_hour: 9, end_hour: 18 },
+          { dow: 6, start_hour: 9, end_hour: 13 },
+        ],
+        slot_duration_min: 30,
+        active:           true,
+        created_at:       now,
+        updated_at:       now,
+      });
+    } catch (e) {
+      console.warn('[onboard] default doctor creation failed (non-fatal):', e);
+    }
+
+    // ── Step 7: Create Chatwoot account + inboxes + webhook ───────────────────
     let chatwoot_account_id: number | null = null;
     let chatwoot_inbox_id: number | null = null;
     let twilio_inbox_id: number | null = null;
@@ -176,12 +203,22 @@ export async function POST(req: NextRequest) {
 
     try {
       // 6a. Create dedicated Chatwoot account
-      const accountRes = await fetch(`${chatwootBase}/super_admin/api/v1/accounts`, {
+      // NOTE: /super_admin/api/v1/accounts returns 404 on this Chatwoot version.
+      // Use /api/v1/accounts instead — works with SuperAdmin token and also
+      // auto-adds the superadmin as administrator of the new account.
+      const accountRes = await fetch(`${chatwootBase}/api/v1/accounts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', api_access_token: chatwootSuperToken },
-        body: JSON.stringify({ name: clinic.name }),
+        body: JSON.stringify({
+          account_name: clinic.name,
+          email: admin.email,
+          password: admin.password,
+        }),
       });
-      const accountData = await accountRes.json();
+      const accountJson = await accountRes.json();
+      // Response: { data: { account_id: <newId>, accounts: [...] } }
+      const newAccountId = accountJson?.data?.account_id ?? accountJson?.id ?? null;
+      const accountData = newAccountId ? { id: newAccountId } : null;
 
       if (accountData?.id) {
         chatwoot_account_id = accountData.id;
@@ -243,7 +280,7 @@ export async function POST(req: NextRequest) {
       console.warn('[onboard] chatwoot setup failed (non-fatal):', e);
     }
 
-    // ── Step 7: Send welcome email (best-effort) ──────────────────────────────
+    // ── Step 8: Send welcome email (best-effort) ──────────────────────────────
     const panelUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sofia.redsolucionesti.com';
     sendWelcomeEmail({
       to: admin.email,
