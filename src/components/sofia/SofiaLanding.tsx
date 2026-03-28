@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import ChatWidget from '@/components/ChatWidget';
+import { trackEvent } from '@/lib/track';
 import {
   MessageSquare,
   Calendar,
@@ -72,9 +73,9 @@ const features = [
 const steps = [
   {
     number: '01',
-    title: 'Conecta tu WhatsApp',
+    title: 'Consigue tu número dedicado',
     description:
-      'Vinculamos tu número de WhatsApp Business. Sin cambiar tu número actual.',
+      'Obtén una SIM nueva o número virtual exclusivo para SofIA. Así el número queda para siempre en tu clínica, no atado a ningún celular personal.',
   },
   {
     number: '02',
@@ -178,9 +179,9 @@ const faqs = [
       'SofIA solo agenda citas y responde preguntas con la información que tú le configuras (precios, horarios, servicios). No da diagnósticos ni información médica. Puedes revisar cada conversación desde el dashboard y tomar el control en cualquier momento con un clic.',
   },
   {
-    question: '¿Necesito WhatsApp Business API?',
+    question: '¿Necesito un número de WhatsApp nuevo?',
     answer:
-      'Sí, necesitas un número de WhatsApp Business. Si aún no lo tienes, te ayudamos a configurarlo durante el onboarding — sin costo adicional. El proceso toma menos de 24 horas.',
+      'Sí, recomendamos usar un número dedicado exclusivamente para SofIA — una SIM nueva o número virtual de cualquier operador. Esto evita mezclar mensajes personales con los de la clínica y garantiza que el número quede como activo de tu negocio. Durante el onboarding te guiamos en la configuración completa, sin costo adicional.',
   },
   {
     question: '¿Mis pacientes van a saber que están hablando con una IA?',
@@ -190,7 +191,7 @@ const faqs = [
   {
     question: '¿Cuánto tiempo tarda la configuración?',
     answer:
-      'El onboarding completo toma menos de 48 horas. Nosotros hacemos el setup técnico — tú solo nos proporcionas tus horarios, servicios y el número de WhatsApp Business.',
+      'El onboarding completo toma menos de 48 horas. Solo necesitas llegar con tres cosas: tu SIM nueva (o número virtual), tus horarios de atención y la lista de servicios. Nosotros hacemos todo el setup técnico.',
   },
   {
     question: '¿Puedo cancelar cuando quiera?',
@@ -312,9 +313,10 @@ export default function SofiaLanding() {
               </a>
             </div>
             <a
-              href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+              href="https://wa.me/51992764457?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackEvent('cta_header_demo', { label: 'nav_hablar_sofia' })}
               className="cta-glow rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-blue-500"
             >
               Hablar con SofIA
@@ -364,9 +366,10 @@ export default function SofiaLanding() {
 
             <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 sm:flex-row">
               <a
-                href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+                href="https://wa.me/51992764457?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackEvent('cta_hero_demo', { label: 'hero_hablar_sofia' })}
                 className="cta-glow rounded-xl bg-blue-600 px-8 py-4 text-base font-bold text-white transition-all hover:bg-blue-500"
               >
                 Hablar con Sofía ahora
@@ -773,6 +776,10 @@ export default function SofiaLanding() {
 
                 <a
                   href="#contacto"
+                  onClick={() => trackEvent(
+                    tier.name === 'Enterprise' ? 'cta_pricing_enterprise' : 'cta_pricing_start',
+                    { label: tier.name }
+                  )}
                   className={`mt-auto block rounded-xl py-3 text-center text-sm font-semibold transition-all ${
                     tier.highlight
                       ? 'bg-blue-600 text-white hover:bg-blue-500'
@@ -810,9 +817,10 @@ export default function SofiaLanding() {
                 Sin tarjeta de crédito · Sin compromisos · Configura en 48h
               </p>
               <a
-                href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+                href="https://wa.me/51992764457?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackEvent('cta_footer_demo', { label: 'footer_hablar_sofia' })}
                 className="cta-glow rounded-xl bg-blue-600 px-10 py-4 text-base font-bold text-white transition-all hover:bg-blue-500"
               >
                 Hablar con Sofía ahora →
