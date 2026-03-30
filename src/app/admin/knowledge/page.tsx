@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BookOpen, Plus, Edit2, Trash2, Save, X, RefreshCw, Search, Tag } from 'lucide-react';
+import { BookOpen, Plus, Edit2, Trash2, Save, X, RefreshCw, Search, Tag, MessageSquare } from 'lucide-react';
 
 interface KnowledgeItem {
   id: string;
@@ -27,6 +27,12 @@ export default function KnowledgePage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState('');
 
+  // Bot config messages
+  const [welcomeMsg, setWelcomeMsg] = useState('');
+  const [escalationMsg, setEscalationMsg] = useState('');
+  const [savingMsg, setSavingMsg] = useState(false);
+  const [msgSaved, setMsgSaved] = useState(false);
+
   async function fetchItems() {
     setLoading(true);
     try {
@@ -40,7 +46,34 @@ export default function KnowledgePage() {
     }
   }
 
-  useEffect(() => { fetchItems(); }, []);
+  async function fetchBotConfig() {
+    try {
+      const res = await fetch('/api/admin/bot-config');
+      if (res.ok) {
+        const d = await res.json();
+        setWelcomeMsg(d.welcome_message || '');
+        setEscalationMsg(d.escalation_message || '');
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function saveBotConfig() {
+    setSavingMsg(true);
+    setMsgSaved(false);
+    try {
+      await fetch('/api/admin/bot-config', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ welcome_message: welcomeMsg, escalation_message: escalationMsg }),
+      });
+      setMsgSaved(true);
+      setTimeout(() => setMsgSaved(false), 3000);
+    } finally {
+      setSavingMsg(false);
+    }
+  }
+
+  useEffect(() => { fetchItems(); fetchBotConfig(); }, []);
 
   const categories = [...new Set(items.map(i => i.category).filter(Boolean))].sort();
 
@@ -127,12 +160,20 @@ export default function KnowledgePage() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-gray-400 mb-1 block">Categoría</label>
-            <input
+            <select
               value={form.category}
               onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-              placeholder="ej: horarios, precios, servicios"
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500"
-            />
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-violet-500"
+            >
+              <option value="general">general</option>
+              <option value="servicios">servicios</option>
+              <option value="precios">precios</option>
+              <option value="horarios">horarios</option>
+              <option value="ubicacion">ubicacion</option>
+              <option value="pagos">pagos</option>
+              <option value="seguros">seguros</option>
+              <option value="preparacion">preparacion</option>
+            </select>
           </div>
           <div>
             <label className="text-xs text-gray-400 mb-1 block">Tags (separados por coma)</label>
@@ -209,6 +250,52 @@ export default function KnowledgePage() {
             <Plus size={16} />
             Nuevo ítem
           </button>
+        </div>
+      </div>
+
+      {/* Bot messages config */}
+      <div className="bg-gray-900 rounded-xl border border-gray-800 p-5 mb-6">
+        <div className="flex items-center gap-2 mb-4">
+          <MessageSquare size={16} className="text-violet-400" />
+          <h2 className="text-sm font-semibold text-gray-100">Mensajes de SofIA</h2>
+          <span className="text-xs text-gray-500 ml-1">— editables sin tocar el workflow</span>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-xs text-gray-400 mb-1.5 block">
+              Saludo de bienvenida <span className="text-gray-600">(cuando el paciente escribe por primera vez)</span>
+            </label>
+            <textarea
+              value={welcomeMsg}
+              onChange={e => setWelcomeMsg(e.target.value)}
+              rows={2}
+              placeholder="ej: ¡Hola! Soy SofIA 🦷, asistente virtual de la clínica. ¿En qué puedo ayudarte?"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-gray-400 mb-1.5 block">
+              Mensaje de escalación <span className="text-gray-600">(cuando SofIA transfiere a un humano)</span>
+            </label>
+            <textarea
+              value={escalationMsg}
+              onChange={e => setEscalationMsg(e.target.value)}
+              rows={2}
+              placeholder="ej: Te conecto con nuestro equipo ahora mismo. ¡En breve te atendemos!"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={saveBotConfig}
+              disabled={savingMsg}
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Save size={14} />
+              {savingMsg ? 'Guardando...' : 'Guardar mensajes'}
+            </button>
+            {msgSaved && <span className="text-xs text-green-400">✓ Guardado</span>}
+          </div>
         </div>
       </div>
 
