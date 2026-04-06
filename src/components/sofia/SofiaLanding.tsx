@@ -203,45 +203,60 @@ const faqs = [
 const pricingTiers = [
   {
     name: 'Starter',
-    price: '$49',
+    price: 'S/ 290',
     period: '/mes',
-    description: '1 clínica · 500 conversaciones/mes · Soporte por email',
+    description: 'Consultorio unipersonal · 1 doctor · Hasta 200 pacientes activos',
     features: [
-      'Agendamiento automático',
-      'Respuestas IA en tiempo real',
-      'Dashboard básico',
-      'Recordatorios 24h',
+      '1 número WhatsApp',
+      'SofIA responde FAQs 24/7',
+      'Agendamiento automático de citas',
+      'Recordatorios 24h antes',
+      'Hasta 500 conversaciones/mes',
+    ],
+    notIncluded: [
+      'Sin reporte mensual',
+      'Sin multi-doctor',
+      'Sin personalización avanzada',
     ],
     badge: null,
     highlight: false,
   },
   {
-    name: 'Clínica',
-    price: '$99',
+    name: 'Pro',
+    price: 'S/ 490',
     period: '/mes',
-    description: '1 clínica · Conversaciones ilimitadas · Recordatorios incluidos',
+    description: 'Clínica con 2–4 doctores · 200–600 pacientes activos',
     features: [
-      'Todo lo del Starter',
-      'Conversaciones ilimitadas',
-      'Base de conocimiento personalizada',
-      'Soporte prioritario',
-      'Recordatorios automáticos 24h',
+      '1 número WhatsApp',
+      'SofIA completa con IA (GPT-4o)',
+      'Agendamiento multi-doctor',
+      'Recordatorios automáticos',
+      'Reporte mensual PDF con métricas',
+      'Hasta 1,500 conversaciones/mes',
+      'Integración calendario por doctor',
+      'Soporte por WhatsApp (respuesta <24h)',
+      'Panel de estadísticas',
     ],
-    badge: 'MÁS POPULAR',
+    notIncluded: [],
+    badge: '⭐ PRINCIPAL',
     highlight: true,
   },
   {
-    name: 'Pro',
-    price: '$149',
+    name: 'Clínica',
+    price: 'S/ 790',
     period: '/mes',
-    description: 'Hasta 5 clínicas · Ilimitadas · Dashboard multi-sede',
+    description: 'Clínica grande · +4 doctores · Volumen alto',
     features: [
-      'Todo lo de Clínica',
-      'Hasta 5 clínicas',
-      'Dashboard multi-sede',
-      'Métricas avanzadas',
-      'Onboarding personalizado',
+      '2 números WhatsApp',
+      'Todo lo del Pro',
+      'Multi-sucursal (hasta 2 sedes)',
+      'Hasta 5,000 conversaciones/mes',
+      'WhatsApp Flows nativos (cuando disponible)',
+      'Soporte prioritario (respuesta <4h)',
+      'Onboarding personalizado (1 sesión Zoom)',
+      'Personalización de respuestas SofIA',
     ],
+    notIncluded: [],
     badge: null,
     highlight: false,
   },
@@ -251,12 +266,15 @@ const pricingTiers = [
     period: '',
     description: 'Para redes de clínicas con necesidades específicas',
     features: [
-      'Clínicas ilimitadas',
+      'Clínicas y sedes ilimitadas',
+      'Todo lo del Plan Clínica',
       'SLA garantizado',
-      'Integración con tu sistema',
+      'Integración con tu sistema (API)',
       'Soporte dedicado 24/7',
       'Onboarding completo para tu equipo',
+      'Conversaciones ilimitadas',
     ],
+    notIncluded: [],
     badge: null,
     highlight: false,
   },
@@ -602,56 +620,6 @@ export default function SofiaLanding() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section className="px-4 py-20 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            className="mb-14 text-center"
-          >
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
-              Lo que dicen nuestros clientes
-            </h2>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {testimonials.map((testimonial) => (
-              <motion.div
-                key={testimonial.name}
-                variants={fadeUp}
-                className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6"
-              >
-                <p className="flex-1 text-sm leading-relaxed text-slate-300">
-                  &ldquo;{testimonial.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-3">
-                  <img
-                    src={testimonial.avatarUrl}
-                    alt={testimonial.name}
-                    width={40}
-                    height={40}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
-                  <div>
-                    <div className="text-sm font-semibold text-white">{testimonial.name}</div>
-                    <div className="text-xs text-slate-400">{testimonial.role}</div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
       {/* ── FAQ ── */}
       <section id="faq" className="px-4 py-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
@@ -770,6 +738,12 @@ export default function SofiaLanding() {
                     <li key={feature} className="flex items-start gap-2.5">
                       <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-400" />
                       <span className="text-sm text-slate-300">{feature}</span>
+                    </li>
+                  ))}
+                  {tier.notIncluded && tier.notIncluded.map((item) => (
+                    <li key={item} className="flex items-start gap-2.5 opacity-50">
+                      <span className="mt-0.5 h-4 w-4 flex-shrink-0 text-center text-xs text-slate-500">✕</span>
+                      <span className="text-sm text-slate-500">{item}</span>
                     </li>
                   ))}
                 </ul>
