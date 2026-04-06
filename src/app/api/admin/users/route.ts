@@ -5,10 +5,11 @@ import { getAuthContext } from '@/lib/auth';
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
 const VALID_ROLES = ['admin', 'staff'];
 
-// List all staff members for this clinic
+// List all staff members for this clinic (admin only)
 export async function GET(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: NO_CACHE });
 
   try {
     const { data: staffRows, error: staffErr } = await supabaseAdmin

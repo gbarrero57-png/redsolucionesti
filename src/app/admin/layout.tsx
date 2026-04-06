@@ -8,7 +8,7 @@ import {
   LogOut, Users, Building2, AlertTriangle, Menu, X, ClipboardList, Stethoscope,
 } from 'lucide-react';
 
-const NAV = [
+const ADMIN_NAV = [
   { href: '/admin/inbox',        label: 'Conversaciones',       icon: MessageSquare },
   { href: '/admin/appointments', label: 'Citas',                icon: Calendar },
   { href: '/admin/calendarios',  label: 'Calendarios',          icon: Stethoscope },
@@ -16,6 +16,13 @@ const NAV = [
   { href: '/admin/metrics',      label: 'Métricas',             icon: BarChart2 },
   { href: '/admin/knowledge',    label: 'Base de conocimiento', icon: BookOpen },
   { href: '/admin/users',        label: 'Usuarios',             icon: Users },
+];
+
+const STAFF_NAV = [
+  { href: '/admin/inbox',        label: 'Conversaciones',       icon: MessageSquare },
+  { href: '/admin/appointments', label: 'Citas',                icon: Calendar },
+  { href: '/admin/patients',     label: 'Historial Clínico',    icon: ClipboardList },
+  { href: '/admin/metrics',      label: 'Métricas',             icon: BarChart2 },
 ];
 
 const SUPERADMIN_NAV = [
@@ -36,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const pathImpliesSA = SA_PATHS.some(p => pathname.startsWith(p));
   const [isSuperadmin, setIsSuperadmin] = useState(pathImpliesSA);
+  const [role,         setRole]         = useState<'admin' | 'staff'>('admin');
   const [showWarning,  setShowWarning]  = useState(false);
   const [countdown,    setCountdown]    = useState(120);
   const [sidebarOpen,  setSidebarOpen]  = useState(false);
@@ -88,7 +96,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   useEffect(() => {
     fetch('/api/auth/me')
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d) setIsSuperadmin(d.is_superadmin === true); })
+      .then(d => {
+        if (d) {
+          setIsSuperadmin(d.is_superadmin === true);
+          if (d.role === 'staff') setRole('staff');
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -104,11 +117,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [isSuperadmin, pathname, router]);
 
-  const visibleNav = isSuperadmin ? SUPERADMIN_NAV : NAV;
+  const visibleNav = isSuperadmin ? SUPERADMIN_NAV : role === 'staff' ? STAFF_NAV : ADMIN_NAV;
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   // Nombre de la página actual para el header móvil y el título del tab
-  const currentPage = [...NAV, ...SUPERADMIN_NAV].find(n => pathname.startsWith(n.href))?.label ?? 'SofIA Admin';
+  const currentPage = [...ADMIN_NAV, ...SUPERADMIN_NAV].find(n => pathname.startsWith(n.href))?.label ?? 'SofIA Admin';
 
   useEffect(() => {
     document.title = `${currentPage} — SofIA Admin`;
@@ -125,7 +138,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div>
             <p className="text-sm font-semibold text-white">SofIA Admin</p>
-            <p className="text-xs text-gray-400">{isSuperadmin ? 'Super Admin' : 'Panel de Control'}</p>
+            <p className="text-xs text-gray-400">{isSuperadmin ? 'Super Admin' : role === 'staff' ? 'Staff' : 'Administrador'}</p>
           </div>
           {isSuperadmin && (
             <span className="ml-2 text-[10px] bg-amber-600/20 text-amber-400 border border-amber-600/30 px-1.5 py-0.5 rounded-full font-medium">SA</span>

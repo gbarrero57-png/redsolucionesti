@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: NO_CACHE });
 
   const body = await req.json();
   const { first_name, last_name, specialty, display_name, bio, weekly_schedule, slot_duration_min } = body;

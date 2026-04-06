@@ -24,10 +24,11 @@ export async function GET(req: NextRequest) {
   }, { headers: NO_CACHE });
 }
 
-// PATCH: permite editar welcome_message y escalation_message
+// PATCH: permite editar welcome_message y escalation_message (solo admin)
 export async function PATCH(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: NO_CACHE });
 
   const body = await req.json();
   const allowed = ['welcome_message', 'escalation_message'] as const;

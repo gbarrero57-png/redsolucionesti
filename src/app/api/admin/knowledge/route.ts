@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: NO_CACHE });
 
   const body = await req.json();
   const { question, answer, category, tags, active } = body;
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: NO_CACHE });
 
   const body = await req.json();
   const { id, question, answer, category, tags, active } = body;
@@ -93,6 +95,7 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
+  if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403, headers: NO_CACHE });
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
