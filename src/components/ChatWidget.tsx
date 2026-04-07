@@ -9,16 +9,16 @@ interface ChatMsg { role: 'user' | 'bot'; content: string; ts: number; }
 const GREETING: ChatMsg = {
   role: 'bot',
   ts: Date.now(),
-  content: '¡Hola! 👋 Soy **SofIA**, tu asistente de IA.\n\nPuedo responder tus preguntas sobre la plataforma, contarte sobre los **recordatorios automáticos** o ayudarte a agendar tu **demo gratuita de 7 días**. ¿En qué te ayudo?',
+  content: '¡Hola! 👋 Soy **SofIA**, tu asistente de IA para clínicas dentales.\n\nPuedo responder tus preguntas sobre la plataforma o ayudarte a solicitar tu **demo gratuita**. ¿En qué te ayudo?',
 };
 
 const QUICK_CHIPS = [
-  { label: '¿Qué es SofIA?',              msg: '¿Qué es SofIA?' },
-  { label: '🚀 Demo gratis 7 días',        msg: 'Demo gratis 7 días' },
-  { label: '¿Cómo funcionan los recordatorios?', msg: '¿Cómo funcionan los recordatorios?' },
-  { label: '💰 ¿Cuánto cuesta?',           msg: '¿Cuánto cuesta?' },
-  { label: '📅 ¿Cómo se agenda una cita?', msg: '¿Cómo se agenda una cita?' },
-  { label: '🔒 Seguridad y privacidad',     msg: '¿Qué tan segura es la plataforma?' },
+  { label: '¿Qué es SofIA?',                    msg: '¿Qué es SofIA?' },
+  { label: '🚀 Solicitar demo gratuita',         msg: 'Quiero solicitar la demo gratuita' },
+  { label: '💰 ¿Cuánto cuesta?',                 msg: '¿Cuánto cuesta?' },
+  { label: '📅 ¿Cómo se agenda una cita?',       msg: '¿Cómo se agenda una cita?' },
+  { label: '🔔 ¿Cómo funcionan los recordatorios?', msg: '¿Cómo funcionan los recordatorios?' },
+  { label: '🔒 Seguridad y privacidad',           msg: '¿Qué tan segura es la plataforma?' },
 ];
 
 /* ─── Markdown renderer ──────────────────────────────────────── */
