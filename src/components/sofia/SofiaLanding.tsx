@@ -73,9 +73,9 @@ const features = [
 const steps = [
   {
     number: '01',
-    title: 'Consigue tu número dedicado',
+    title: 'Te damos tu número de WhatsApp',
     description:
-      'Obtén una SIM nueva o número virtual exclusivo para SofIA. Así el número queda para siempre en tu clínica, no atado a ningún celular personal.',
+      'Activamos un número de WhatsApp exclusivo para tu clínica. Sin tocar tu número personal ni tu WhatsApp actual.',
   },
   {
     number: '02',
@@ -331,7 +331,7 @@ export default function SofiaLanding() {
               </a>
             </div>
             <a
-              href="https://wa.me/51992764457?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+              href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackEvent('cta_header_demo', { label: 'nav_hablar_sofia' })}
@@ -384,7 +384,7 @@ export default function SofiaLanding() {
 
             <motion.div variants={fadeUp} className="flex flex-col items-center gap-4 sm:flex-row">
               <a
-                href="https://wa.me/51992764457?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+                href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackEvent('cta_hero_demo', { label: 'hero_hablar_sofia' })}
@@ -791,7 +791,7 @@ export default function SofiaLanding() {
                 Sin tarjeta de crédito · Sin compromisos · Configura en 48h
               </p>
               <a
-                href="https://wa.me/51992764457?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
+                href="https://wa.me/51977588512?text=Hola%2C%20quiero%20ver%20c%C3%B3mo%20funciona%20SofIA"
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => trackEvent('cta_footer_demo', { label: 'footer_hablar_sofia' })}
