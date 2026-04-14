@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Analytics from "@/components/Analytics";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,12 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <head>
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png" />
-      </head>
+      <head />
       <body className={`${inter.variable} antialiased`}>
+        <Analytics />
         {children}
         {/* Force removal of common floating widget toggles and dev overlays */}
         <style dangerouslySetInnerHTML={{
