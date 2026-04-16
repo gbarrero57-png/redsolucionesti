@@ -43,7 +43,7 @@ interface LeadFull extends Lead {
 const STATUSES: Record<string, { label: string; color: string; bg: string }> = {
   nuevo:              { label: 'Nuevo',           color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/30' },
   sin_email:          { label: 'Sin email',        color: 'text-gray-400',   bg: 'bg-gray-500/10 border-gray-500/30' },
-  enviado:            { label: 'Email enviado',    color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/30' },
+  enviado:            { label: 'Enviado',          color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/30' },
   email_enviado:      { label: 'Email enviado',    color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/30' },
   follow_up_enviado:  { label: 'Follow-up',        color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/30' },
   respondio:          { label: 'Respondió',        color: 'text-emerald-400',bg: 'bg-emerald-500/10 border-emerald-500/30' },
