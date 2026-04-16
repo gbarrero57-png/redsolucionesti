@@ -16,12 +16,13 @@ const securityHeaders = [
       "default-src 'self'",
       // Remove unsafe-eval in production (only needed for Next.js HMR in dev)
       IS_PROD
-        ? "script-src 'self' 'unsafe-inline'"
-        : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        ? "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com"
+        : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https:",
       "font-src 'self'",
-      "connect-src 'self' https://inhyrrjidhzrbqecnptn.supabase.co wss://inhyrrjidhzrbqecnptn.supabase.co https://workflows.n8n.redsolucionesti.com https://chat.redsolucionesti.com https://api.brevo.com",
+      "frame-src https://challenges.cloudflare.com",
+      "connect-src 'self' https://inhyrrjidhzrbqecnptn.supabase.co wss://inhyrrjidhzrbqecnptn.supabase.co https://workflows.n8n.redsolucionesti.com https://chat.redsolucionesti.com https://api.brevo.com https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
     ].join('; '),
   },

@@ -27,10 +27,12 @@ const STAFF_NAV = [
 
 const SUPERADMIN_NAV = [
   { href: '/admin/global-metrics', label: 'Métricas Globales', icon: BarChart2 },
+  { href: '/admin/leads',          label: 'Leads CRM',         icon: Users },
+  { href: '/admin/leads-metrics',  label: 'Leads Métricas',    icon: BarChart2 },
   { href: '/admin/onboarding',     label: 'Clínicas',          icon: Building2 },
 ];
 
-const SA_PATHS = ['/admin/global-metrics', '/admin/onboarding'];
+const SA_PATHS = ['/admin/global-metrics', '/admin/leads', '/admin/leads-metrics', '/admin/onboarding'];
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 const WARN_BEFORE_MS  =  2 * 60 * 1000;
