@@ -654,7 +654,7 @@ export default function LeadsPage() {
               {leads.map(lead => (
                 <tr
                   key={lead.id}
-                  onClick={e => { if ((e.target as HTMLElement).type !== 'checkbox') setSelected(lead.id); }}
+                  onClick={e => { if ((e.target as HTMLInputElement).type !== 'checkbox') setSelected(lead.id); }}
                   className={`border-b border-gray-800/50 hover:bg-gray-900 cursor-pointer transition-colors group ${checkedIds.has(lead.id) ? 'bg-violet-950/20' : ''}`}
                 >
                   {/* Checkbox */}
