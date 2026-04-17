@@ -128,48 +128,29 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
     setWaToggling(false);
   };
 
-  const cp = (...pts: number[]) => String.fromCodePoint(...pts);
-  const E = {
-    wave:     cp(0x1F44B),
-    clock:    cp(0x1F550),
-    cal:      cp(0x1F4C5),
-    lock:     cp(0x1F512),
-    brain:    cp(0x1F9E0),
-    list:     cp(0x1F4CB),
-    doctor:   cp(0x1F468, 0x200D, 0x2695, 0xFE0F),
-    folder:   cp(0x1F4C2),
-    bell:     cp(0x1F514),
-    cycle:    cp(0x1F504),
-    chart:    cp(0x1F4CA),
-    hospital: cp(0x1F3E5),
-    globe:    cp(0x1F310),
-    phone:    cp(0x1F4F2),
-    thumbs:   cp(0x1F44D),
-  };
-
   const FEATURES = [
-    E.clock   + ' Atenci\u00f3n 24/7 a tus pacientes',
-    E.cal     + ' Agenda citas autom\u00e1ticamente',
-    E.lock    + ' Sin dobles reservas',
-    E.brain   + ' Responde preguntas (precios, servicios, horarios)',
-    E.list    + ' Men\u00fa interactivo en WhatsApp',
-    E.doctor  + ' Derivaci\u00f3n a humano cuando lo necesites',
-    E.folder  + ' Historial cl\u00ednico por paciente',
-    E.bell    + ' Recordatorios autom\u00e1ticos',
-    E.cycle   + ' Recuperaci\u00f3n de pacientes',
-    E.chart   + ' Reportes de gesti\u00f3n',
-    E.hospital + ' Funciona para una o varias sedes',
+    '* Atencion 24/7 a tus pacientes',
+    '* Agenda citas automaticamente',
+    '* Sin dobles reservas',
+    '* Responde preguntas (precios, servicios, horarios)',
+    '* Menu interactivo en WhatsApp',
+    '* Derivacion a humano cuando lo necesites',
+    '* Historial clinico por paciente',
+    '* Recordatorios automaticos',
+    '* Recuperacion de pacientes',
+    '* Reportes de gestion',
+    '* Funciona para una o varias sedes',
   ].join('\n');
 
   const buildWaMessage = (l: LeadFull) => {
     const emailSent = EMAIL_SENT_STATUSES.has(l.status);
-    const footer = '\n\n' + E.globe + ' M\u00e1s info: https://sofia.redsolucionesti.com'
-      + '\n' + E.phone + ' Pru\u00e9balo: https://wa.me/51977588512'
-      + '\n\nSi te interesa coordinamos una demo r\u00e1pida de 10-15 min ' + E.thumbs;
+    const footer = '\n\nMas info: https://sofia.redsolucionesti.com'
+      + '\nPruebalo: https://wa.me/51977588512'
+      + '\n\nSi te interesa coordinamos una demo rapida de 10-15 min.';
     if (emailSent) {
-      return 'Hola ' + E.wave + ', te escribo por aqu\u00ed tambi\u00e9n (intentamos contactarte por correo) para presentarte SofIA, asistente de WhatsApp con IA para cl\u00ednicas dentales:\n\n' + FEATURES + footer;
+      return 'Hola, te escribo por aqui tambien (intentamos contactarte por correo) para presentarte SofIA, asistente de WhatsApp con IA para clinicas dentales:\n\n' + FEATURES + footer;
     }
-    return 'Hola ' + E.wave + ', soy Gabriel de RedSoluciones TI. Me pongo en contacto porque ' + l.nombre + ' tiene gran presencia y quer\u00eda presentarles SofIA, asistente de WhatsApp con IA para cl\u00ednicas dentales:\n\n' + FEATURES + footer;
+    return 'Hola, soy Gabriel de RedSoluciones TI. Me pongo en contacto porque ' + l.nombre + ' tiene gran presencia y queria presentarles SofIA, asistente de WhatsApp con IA para clinicas dentales:\n\n' + FEATURES + footer;
   };
 
   const sendWa = async () => {
