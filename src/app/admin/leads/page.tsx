@@ -358,18 +358,26 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
 export default function LeadsPage() {
   const router = useRouter();
 
-  const [leads,    setLeads]    = useState<Lead[]>([]);
-  const [total,    setTotal]    = useState(0);
-  const [page,     setPage]     = useState(1);
-  const [loading,  setLoading]  = useState(true);
-  const [search,   setSearch]   = useState('');
-  const [status,   setStatus]   = useState('');
-  const [ciudad,   setCiudad]   = useState('');
-  const [fuente,   setFuente]   = useState('');
-  const [sort,     setSort]     = useState('created_at');
-  const [dir,      setDir]      = useState<'desc' | 'asc'>('desc');
-  const [selected, setSelected] = useState<string | null>(null);
+  const [leads,       setLeads]       = useState<Lead[]>([]);
+  const [total,       setTotal]       = useState(0);
+  const [page,        setPage]        = useState(1);
+  const [loading,     setLoading]     = useState(true);
+  const [search,      setSearch]      = useState('');
+  const [status,      setStatus]      = useState('');
+  const [ciudad,      setCiudad]      = useState('');
+  const [fuente,      setFuente]      = useState('');
+  const [sort,        setSort]        = useState('created_at');
+  const [dir,         setDir]         = useState<'desc' | 'asc'>('desc');
+  const [selected,    setSelected]    = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+
+  // Bulk selection
+  const [checkedIds,  setCheckedIds]  = useState<Set<string>>(new Set());
+  const [bulkStatus,  setBulkStatus]  = useState('');
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  // Pipeline stats
+  const [stats, setStats] = useState<Record<string, number>>({});
 
   const searchRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const LIMIT = 50;
@@ -388,16 +396,23 @@ export default function LeadsPage() {
     setLoading(false);
   }, []);
 
+  // Fetch pipeline stats once on mount
+  useEffect(() => {
+    fetch('/api/admin/leads/stats').then(r => r.json()).then(setStats).catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (searchRef.current) clearTimeout(searchRef.current);
     searchRef.current = setTimeout(() => {
       setPage(1);
+      setCheckedIds(new Set());
       load(1, search, status, ciudad, sort, dir, fuente);
     }, 300);
     return () => { if (searchRef.current) clearTimeout(searchRef.current); };
   }, [search, status, ciudad, sort, dir, fuente, load]);
 
   useEffect(() => {
+    setCheckedIds(new Set());
     load(page, search, status, ciudad, sort, dir, fuente);
   }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -409,6 +424,51 @@ export default function LeadsPage() {
   };
 
   const activeFilters = [status, ciudad, fuente].filter(Boolean).length;
+
+  // Bulk helpers
+  const allPageChecked = leads.length > 0 && leads.every(l => checkedIds.has(l.id));
+  const toggleCheck = (id: string) => setCheckedIds(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const toggleAll = () => setCheckedIds(
+    allPageChecked ? new Set() : new Set(leads.map(l => l.id))
+  );
+
+  const bulkUpdate = async (updates: Record<string, unknown>) => {
+    if (checkedIds.size === 0) return;
+    setBulkLoading(true);
+    await fetch('/api/admin/leads/bulk', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [...checkedIds], updates }),
+    });
+    setCheckedIds(new Set());
+    setBulkStatus('');
+    await load(page, search, status, ciudad, sort, dir, fuente);
+    const newStats = await fetch('/api/admin/leads/stats').then(r => r.json());
+    setStats(newStats);
+    setBulkLoading(false);
+  };
+
+  const exportCSV = () => {
+    const rows = leads.filter(l => checkedIds.has(l.id));
+    const headers = ['nombre','email','telefono','ciudad','distrito','status','score_relevancia','rating','total_resenas','fuente','fecha_envio','created_at','notas'];
+    const csv = [
+      headers.join(','),
+      ...rows.map(r => headers.map(h => {
+        const v = r[h as keyof Lead];
+        const s = Array.isArray(v) ? v.join('|') : String(v ?? '');
+        return `"${s.replace(/"/g, '""')}"`;
+      }).join(','))
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `leads_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  };
 
   const fmt = (s: string | null) => s
     ? new Date(s).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })
@@ -520,6 +580,29 @@ export default function LeadsPage() {
         )}
       </div>
 
+      {/* ── Pipeline stats bar ── */}
+      {Object.keys(stats).length > 0 && (
+        <div className="flex-shrink-0 px-6 py-2 border-b border-gray-800 flex gap-2 overflow-x-auto">
+          {Object.entries(STATUSES).map(([key, meta]) => {
+            const count = stats[key] ?? 0;
+            if (!count) return null;
+            const active = status === key;
+            return (
+              <button
+                key={key}
+                onClick={() => { setStatus(active ? '' : key); setPage(1); }}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all ${
+                  active ? `${meta.bg} ${meta.color} scale-105` : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-200'
+                }`}
+              >
+                {meta.label}
+                <span className={`font-bold tabular-nums ${active ? '' : 'text-gray-500'}`}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* ── Table ── */}
       <div className="flex-1 overflow-auto">
         {loading && leads.length === 0 ? (
@@ -535,6 +618,14 @@ export default function LeadsPage() {
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-gray-900 z-10">
               <tr className="border-b border-gray-800">
+                <th className="px-3 py-3 w-8">
+                  <input
+                    type="checkbox"
+                    checked={allPageChecked}
+                    onChange={toggleAll}
+                    className="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 accent-violet-500 cursor-pointer"
+                  />
+                </th>
                 <th className="text-left px-4 py-3 text-[11px] font-medium text-gray-500 uppercase tracking-wide">
                   <button onClick={() => toggleSort('nombre')} className="flex items-center gap-1 hover:text-gray-300 transition-colors">
                     Nombre <ArrowUpDown size={10} className={sort === 'nombre' ? 'text-violet-400' : ''} />
@@ -563,9 +654,18 @@ export default function LeadsPage() {
               {leads.map(lead => (
                 <tr
                   key={lead.id}
-                  onClick={() => setSelected(lead.id)}
-                  className="border-b border-gray-800/50 hover:bg-gray-900 cursor-pointer transition-colors group"
+                  onClick={e => { if ((e.target as HTMLElement).type !== 'checkbox') setSelected(lead.id); }}
+                  className={`border-b border-gray-800/50 hover:bg-gray-900 cursor-pointer transition-colors group ${checkedIds.has(lead.id) ? 'bg-violet-950/20' : ''}`}
                 >
+                  {/* Checkbox */}
+                  <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={checkedIds.has(lead.id)}
+                      onChange={() => toggleCheck(lead.id)}
+                      className="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 accent-violet-500 cursor-pointer"
+                    />
+                  </td>
                   {/* Nombre */}
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-200 group-hover:text-white transition-colors line-clamp-1">
@@ -616,6 +716,59 @@ export default function LeadsPage() {
           </table>
         )}
       </div>
+
+      {/* ── Bulk action toolbar ── */}
+      {checkedIds.size > 0 && (
+        <div className="flex-shrink-0 flex items-center gap-3 px-6 py-3 border-t border-amber-600/30 bg-amber-950/20">
+          <span className="text-sm font-medium text-amber-400">
+            {checkedIds.size} seleccionado{checkedIds.size > 1 ? 's' : ''}
+          </span>
+          <div className="flex gap-2 ml-auto flex-wrap">
+            {/* Change status */}
+            <div className="flex gap-1">
+              <select
+                value={bulkStatus}
+                onChange={e => setBulkStatus(e.target.value)}
+                className="appearance-none bg-gray-800 border border-gray-700 rounded-lg pl-2 pr-6 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-violet-500 cursor-pointer"
+              >
+                <option value="">Cambiar estado...</option>
+                {Object.entries(STATUSES).map(([k, v]) => (
+                  <option key={k} value={k}>{v.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => bulkStatus && bulkUpdate({ status: bulkStatus })}
+                disabled={!bulkStatus || bulkLoading}
+                className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-colors"
+              >
+                {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : 'Aplicar'}
+              </button>
+            </div>
+            {/* Mark WA sent */}
+            <button
+              onClick={() => bulkUpdate({ whatsapp_enviado: true })}
+              disabled={bulkLoading}
+              className="px-3 py-1.5 bg-emerald-700/30 border border-emerald-600/40 text-emerald-400 text-xs font-medium rounded-lg hover:bg-emerald-700/50 disabled:opacity-40 transition-colors"
+            >
+              Marcar WA enviado
+            </button>
+            {/* Export CSV */}
+            <button
+              onClick={exportCSV}
+              className="px-3 py-1.5 bg-gray-800 border border-gray-700 text-gray-300 text-xs font-medium rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Exportar CSV
+            </button>
+            {/* Clear selection */}
+            <button
+              onClick={() => setCheckedIds(new Set())}
+              className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Pagination ── */}
       {totalPages > 1 && (
