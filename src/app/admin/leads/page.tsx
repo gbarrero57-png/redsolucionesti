@@ -155,7 +155,9 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
 
   const sendWa = async () => {
     if (!lead?.telefono) return;
-    const phone = lead.telefono.replace(/\D/g, '');
+    const digits = lead.telefono.replace(/\D/g, '');
+    // Add Peru +51 if no country code (numbers < 11 digits have no country code)
+    const phone = digits.length <= 9 ? '51' + digits : digits;
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildWaMessage(lead))}`;
     window.open(url, '_blank');
     setCopied(true);
