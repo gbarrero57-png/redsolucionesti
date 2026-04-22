@@ -23,6 +23,7 @@ interface Lead {
   total_resenas:    number;
   fuente:           string[] | null;
   fecha_envio:      string | null;
+  ultima_actividad: string | null;
   created_at:       string;
   notas:            string | null;
 }
@@ -61,6 +62,40 @@ const CITIES = [
   'Lima','Arequipa','Trujillo','Chiclayo','Cusco','Piura',
 ];
 
+const EMAIL_SENT_STATUSES = new Set(['enviado','email_enviado','follow_up_enviado','respondio','cerrado','interesado','demo_agendada']);
+const STALE_ACTIVE = new Set(['nuevo','enviado','email_enviado','follow_up_enviado','respondio','interesado']);
+
+const WA_FEATURES = [
+  '* Atencion 24/7 a tus pacientes',
+  '* Agenda citas automaticamente',
+  '* Sin dobles reservas',
+  '* Responde preguntas (precios, servicios, horarios)',
+  '* Menu interactivo en WhatsApp',
+  '* Derivacion a humano cuando lo necesites',
+  '* Historial clinico por paciente',
+  '* Recordatorios automaticos',
+  '* Recuperacion de pacientes',
+  '* Reportes de gestion',
+  '* Funciona para una o varias sedes',
+].join('\n');
+
+const WA_FOOTER = '\n\nMas info: https://sofia.redsolucionesti.com'
+  + '\nPruebalo: https://wa.me/51977588512'
+  + '\n\nSi te interesa coordinamos una demo rapida de 10-15 min.';
+
+function buildWaText(nombre: string, status: string) {
+  if (EMAIL_SENT_STATUSES.has(status)) {
+    return 'Hola, te escribo por aqui tambien (intentamos contactarte por correo) para presentarte SofIA, asistente de WhatsApp con IA para clinicas dentales:\n\n' + WA_FEATURES + WA_FOOTER;
+  }
+  return 'Hola, soy Gabriel de RedSoluciones TI. Me pongo en contacto porque ' + nombre + ' tiene gran presencia y queria presentarles SofIA, asistente de WhatsApp con IA para clinicas dentales:\n\n' + WA_FEATURES + WA_FOOTER;
+}
+
+function getDaysStale(lead: Lead): number | null {
+  if (!STALE_ACTIVE.has(lead.status)) return null;
+  const ref = lead.ultima_actividad || lead.fecha_envio || lead.created_at;
+  return Math.floor((Date.now() - new Date(ref).getTime()) / 86400000);
+}
+
 /* ─── StatusBadge ─────────────────────────────────────────────────── */
 function StatusBadge({ status }: { status: string }) {
   const s = STATUSES[status] ?? { label: status, color: 'text-gray-400', bg: 'bg-gray-500/10 border-gray-500/30' };
@@ -86,7 +121,6 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
   const [waTogggling,  setWaToggling]   = useState(false);
   const [copied,       setCopied]       = useState(false);
 
-  const EMAIL_SENT_STATUSES = new Set(['enviado','email_enviado','follow_up_enviado','respondio','cerrado','interesado','demo_agendada']);
 
   useEffect(() => {
     fetch(`/api/admin/leads/${leadId}`)
@@ -128,30 +162,7 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
     setWaToggling(false);
   };
 
-  const FEATURES = [
-    '* Atencion 24/7 a tus pacientes',
-    '* Agenda citas automaticamente',
-    '* Sin dobles reservas',
-    '* Responde preguntas (precios, servicios, horarios)',
-    '* Menu interactivo en WhatsApp',
-    '* Derivacion a humano cuando lo necesites',
-    '* Historial clinico por paciente',
-    '* Recordatorios automaticos',
-    '* Recuperacion de pacientes',
-    '* Reportes de gestion',
-    '* Funciona para una o varias sedes',
-  ].join('\n');
-
-  const buildWaMessage = (l: LeadFull) => {
-    const emailSent = EMAIL_SENT_STATUSES.has(l.status);
-    const footer = '\n\nMas info: https://sofia.redsolucionesti.com'
-      + '\nPruebalo: https://wa.me/51977588512'
-      + '\n\nSi te interesa coordinamos una demo rapida de 10-15 min.';
-    if (emailSent) {
-      return 'Hola, te escribo por aqui tambien (intentamos contactarte por correo) para presentarte SofIA, asistente de WhatsApp con IA para clinicas dentales:\n\n' + FEATURES + footer;
-    }
-    return 'Hola, soy Gabriel de RedSoluciones TI. Me pongo en contacto porque ' + l.nombre + ' tiene gran presencia y queria presentarles SofIA, asistente de WhatsApp con IA para clinicas dentales:\n\n' + FEATURES + footer;
-  };
+  const buildWaMessage = (l: LeadFull) => buildWaText(l.nombre, l.status);
 
   const sendWa = async () => {
     if (!lead?.telefono) return;
@@ -377,6 +388,17 @@ export default function LeadsPage() {
   const [checkedIds,  setCheckedIds]  = useState<Set<string>>(new Set());
   const [bulkStatus,  setBulkStatus]  = useState('');
   const [bulkLoading, setBulkLoading] = useState(false);
+
+  // Row hover for quick actions
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  const quickSendWa = (lead: Lead, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!lead.telefono) return;
+    const digits = lead.telefono.replace(/\D/g, '');
+    const phone = digits.length <= 9 ? '51' + digits : digits;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(buildWaText(lead.nombre, lead.status))}`, '_blank');
+  };
 
   // Pipeline stats
   const [stats, setStats] = useState<Record<string, number>>({});
@@ -650,14 +672,22 @@ export default function LeadsPage() {
                     Fecha <ArrowUpDown size={10} className={sort === 'created_at' ? 'text-violet-400' : ''} />
                   </button>
                 </th>
+                <th className="text-right px-4 py-3 text-[11px] font-medium text-gray-500 uppercase tracking-wide hidden xl:table-cell">
+                  Sin tocar
+                </th>
               </tr>
             </thead>
             <tbody className={loading ? 'opacity-50' : ''}>
-              {leads.map(lead => (
+              {leads.map(lead => {
+                const days = getDaysStale(lead);
+                const staleClass = days === null ? '' : days > 14 ? 'bg-red-950/20' : days > 7 ? 'bg-amber-950/10' : '';
+                return (
                 <tr
                   key={lead.id}
                   onClick={e => { if ((e.target as HTMLInputElement).type !== 'checkbox') setSelected(lead.id); }}
-                  className={`border-b border-gray-800/50 hover:bg-gray-900 cursor-pointer transition-colors group ${checkedIds.has(lead.id) ? 'bg-violet-950/20' : ''}`}
+                  onMouseEnter={() => setHoveredId(lead.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  className={`border-b border-gray-800/50 cursor-pointer transition-colors group ${checkedIds.has(lead.id) ? 'bg-violet-950/20' : staleClass} hover:bg-gray-900`}
                 >
                   {/* Checkbox */}
                   <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
@@ -670,12 +700,25 @@ export default function LeadsPage() {
                   </td>
                   {/* Nombre */}
                   <td className="px-4 py-3">
-                    <p className="font-medium text-gray-200 group-hover:text-white transition-colors line-clamp-1">
-                      {lead.nombre}
-                    </p>
-                    {lead.email && (
-                      <p className="text-[11px] text-gray-600 truncate max-w-[180px]">{lead.email}</p>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-200 group-hover:text-white transition-colors line-clamp-1">
+                          {lead.nombre}
+                        </p>
+                        {lead.email && (
+                          <p className="text-[11px] text-gray-600 truncate max-w-[180px]">{lead.email}</p>
+                        )}
+                      </div>
+                      {hoveredId === lead.id && lead.telefono && (
+                        <button
+                          onClick={e => quickSendWa(lead, e)}
+                          title="Abrir WhatsApp"
+                          className="flex-shrink-0 w-7 h-7 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-600/40 transition-colors"
+                        >
+                          <MessageSquare size={13} />
+                        </button>
+                      )}
+                    </div>
                   </td>
                   {/* Ciudad */}
                   <td className="px-4 py-3 hidden md:table-cell">
@@ -712,8 +755,19 @@ export default function LeadsPage() {
                   <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-gray-600">
                     {fmt(lead.fecha_envio || lead.created_at)}
                   </td>
+                  {/* Días sin tocar */}
+                  <td className="px-4 py-3 hidden xl:table-cell text-right">
+                    {days !== null && (
+                      <span className={`text-xs tabular-nums font-medium ${
+                        days > 14 ? 'text-red-400' : days > 7 ? 'text-amber-400' : 'text-gray-600'
+                      }`}>
+                        {days === 0 ? 'hoy' : `${days}d`}
+                      </span>
+                    )}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

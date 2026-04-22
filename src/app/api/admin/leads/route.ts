@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from('leads')
-    .select('id,nombre,email,telefono,ciudad,distrito,status,score_relevancia,rating,total_resenas,fuente,fecha_envio,created_at,notas', { count: 'exact' });
+    .select('id,nombre,email,telefono,ciudad,distrito,status,score_relevancia,rating,total_resenas,fuente,fecha_envio,ultima_actividad,created_at,notas', { count: 'exact' });
 
   if (search) {
     query = query.or(
