@@ -204,116 +204,137 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
             <Loader2 size={24} className="text-violet-400 animate-spin" />
           </div>
         ) : lead ? (
-          <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          <>
+          <div className="flex-1 overflow-y-auto">
 
-            {/* Identity */}
-            <div>
-              <p className="text-lg font-semibold text-white leading-tight">{lead.nombre}</p>
+            {/* ── Identity + stats ── */}
+            <div className="px-5 pt-4 pb-3 border-b border-gray-800">
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <p className="text-base font-semibold text-white leading-snug">{lead.nombre}</p>
+                <StatusBadge status={lead.status} />
+              </div>
               {lead.ciudad && (
-                <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-1">
-                  <MapPin size={12} /> {lead.distrito ? `${lead.distrito}, ` : ''}{lead.ciudad}
+                <p className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+                  <MapPin size={11} /> {lead.distrito ? `${lead.distrito}, ` : ''}{lead.ciudad}
                 </p>
               )}
-            </div>
-
-            {/* Score & rating */}
-            <div className="flex gap-3">
-              <div className="flex-1 bg-gray-800 rounded-lg px-3 py-2.5 text-center">
-                <p className="text-[11px] text-gray-500 mb-0.5">Score</p>
-                <p className="text-lg font-bold text-violet-400">{lead.score_relevancia}</p>
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                {lead.score_relevancia > 0 && (
+                  <span className="text-violet-400 font-medium">Score {lead.score_relevancia}</span>
+                )}
+                {lead.rating && (
+                  <span className="flex items-center gap-0.5 text-amber-400">
+                    <Star size={10} fill="currentColor" /> {lead.rating}
+                  </span>
+                )}
+                {lead.total_resenas > 0 && (
+                  <span className="text-gray-500">{lead.total_resenas} reseñas</span>
+                )}
+                {lead.fuente && lead.fuente.length > 0 && (
+                  <span className="ml-auto text-[10px] bg-gray-800 border border-gray-700 px-1.5 py-0.5 rounded-full">
+                    {lead.fuente[0] === 'meta_ads' ? 'Meta Ads' : 'Google Maps'}
+                  </span>
+                )}
               </div>
-              {lead.rating && (
-                <div className="flex-1 bg-gray-800 rounded-lg px-3 py-2.5 text-center">
-                  <p className="text-[11px] text-gray-500 mb-0.5">Rating</p>
-                  <p className="text-lg font-bold text-amber-400 flex items-center justify-center gap-1">
-                    <Star size={14} fill="currentColor" /> {lead.rating}
-                  </p>
-                </div>
-              )}
-              {lead.total_resenas > 0 && (
-                <div className="flex-1 bg-gray-800 rounded-lg px-3 py-2.5 text-center">
-                  <p className="text-[11px] text-gray-500 mb-0.5">Reseñas</p>
-                  <p className="text-lg font-bold text-emerald-400">{lead.total_resenas}</p>
-                </div>
-              )}
             </div>
 
-            {/* Contact info */}
-            <div className="space-y-2">
-              {lead.email && (
-                <a href={`mailto:${lead.email}`}
-                  className="flex items-center gap-2.5 text-sm text-gray-300 hover:text-violet-400 transition-colors">
-                  <Mail size={14} className="text-gray-500 flex-shrink-0" />
-                  <span className="truncate">{lead.email}</span>
+            {/* ── Primary action buttons ── */}
+            <div className="px-5 py-3 flex gap-2 border-b border-gray-800">
+              {lead.email ? (
+                <a
+                  href={`mailto:${lead.email}`}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-violet-600/20 border border-violet-500/30 text-violet-400 text-sm font-medium rounded-xl hover:bg-violet-600/30 transition-colors"
+                >
+                  <Mail size={15} /> Email
                 </a>
+              ) : (
+                <div className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-800 border border-gray-700 text-gray-600 text-sm rounded-xl cursor-not-allowed">
+                  <Mail size={15} /> Sin email
+                </div>
               )}
-              {lead.telefono && (
+              {lead.telefono ? (
                 <button
                   onClick={sendWa}
-                  className="flex items-center gap-2.5 text-sm text-gray-300 hover:text-emerald-400 transition-colors w-full text-left"
+                  disabled={waTogggling}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-sm font-medium rounded-xl hover:bg-emerald-600/30 transition-colors disabled:opacity-60"
                 >
-                  <MessageSquare size={14} className="text-gray-500 flex-shrink-0" />
-                  {lead.telefono}
-                  <span className={`text-[10px] ml-auto transition-colors ${copied ? 'text-amber-400' : 'text-emerald-500'}`}>
-                    {copied ? 'Msg copiado — pega en WA' : 'WhatsApp'}
-                  </span>
+                  {waTogggling
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <MessageSquare size={15} />}
+                  WhatsApp
+                  {lead.whatsapp_enviado && <Check size={12} className="text-emerald-300" />}
                 </button>
+              ) : (
+                <div className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-800 border border-gray-700 text-gray-600 text-sm rounded-xl cursor-not-allowed">
+                  <MessageSquare size={15} /> Sin tel.
+                </div>
+              )}
+            </div>
+
+            {/* ── Contact info ── */}
+            <div className="px-5 py-3 space-y-2 border-b border-gray-800">
+              {lead.email && (
+                <p className="flex items-center gap-2 text-xs text-gray-400">
+                  <Mail size={12} className="text-gray-600 flex-shrink-0" />
+                  <span className="truncate">{lead.email}</span>
+                </p>
+              )}
+              {lead.telefono && (
+                <p className="flex items-center gap-2 text-xs text-gray-400">
+                  <Phone size={12} className="text-gray-600 flex-shrink-0" />
+                  {lead.telefono}
+                </p>
               )}
               {lead.website && (
                 <a href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 text-sm text-gray-300 hover:text-blue-400 transition-colors">
-                  <Globe size={14} className="text-gray-500 flex-shrink-0" />
+                  className="flex items-center gap-2 text-xs text-gray-400 hover:text-blue-400 transition-colors">
+                  <Globe size={12} className="text-gray-600 flex-shrink-0" />
                   <span className="truncate">{lead.website}</span>
-                  <ExternalLink size={10} className="text-gray-600 flex-shrink-0" />
+                  <ExternalLink size={9} className="text-gray-700 flex-shrink-0 ml-auto" />
                 </a>
               )}
               {lead.direccion && (
-                <p className="flex items-center gap-2.5 text-sm text-gray-400">
-                  <MapPin size={14} className="text-gray-500 flex-shrink-0" />
-                  <span className="text-xs">{lead.direccion}</span>
+                <p className="flex items-start gap-2 text-xs text-gray-500">
+                  <MapPin size={12} className="text-gray-600 flex-shrink-0 mt-0.5" />
+                  <span>{lead.direccion}</span>
                 </p>
               )}
             </div>
 
-            {/* Outreach status */}
-            <div className="grid grid-cols-3 gap-2 text-[11px]">
-              {/* Email */}
-              {[
-                { label: 'Email',     sent: EMAIL_SENT_STATUSES.has(lead.status) },
-                { label: 'Follow-up', sent: ['follow_up_enviado','respondio','cerrado','interesado','demo_agendada'].includes(lead.status) },
-              ].map(({ label, sent }) => (
-                <div key={label} className={`rounded-lg px-2 py-2 text-center border ${sent ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-gray-800 border-gray-700 text-gray-500'}`}>
-                  {sent ? <Check size={12} className="mx-auto mb-0.5" /> : <span className="block text-lg leading-none mb-0.5">—</span>}
-                  {label}
-                </div>
-              ))}
-              {/* WhatsApp — clickable toggle */}
-              <button
-                onClick={toggleWa}
-                disabled={waTogggling}
-                title={lead.whatsapp_enviado ? 'Marcar como no enviado' : 'Marcar WhatsApp como enviado'}
-                className={`rounded-lg px-2 py-2 text-center border transition-all cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-60 ${
-                  lead.whatsapp_enviado
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
-                    : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-emerald-600/40 hover:text-emerald-600'
-                }`}
-              >
-                {waTogggling
-                  ? <Loader2 size={12} className="mx-auto mb-0.5 animate-spin" />
-                  : lead.whatsapp_enviado
-                    ? <Check size={12} className="mx-auto mb-0.5" />
-                    : <span className="block text-lg leading-none mb-0.5">—</span>
-                }
-                WhatsApp
-              </button>
+            {/* ── Outreach tracking ── */}
+            <div className="px-5 py-3 border-b border-gray-800">
+              <p className="text-[10px] text-gray-600 uppercase tracking-wide font-medium mb-2">Outreach</p>
+              <div className="flex gap-2">
+                {[
+                  { label: 'Email',     sent: EMAIL_SENT_STATUSES.has(lead.status) },
+                  { label: 'Follow-up', sent: ['follow_up_enviado','respondio','cerrado','interesado','demo_agendada'].includes(lead.status) },
+                ].map(({ label, sent }) => (
+                  <div key={label} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border ${
+                    sent ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-gray-800 border-gray-700 text-gray-600'
+                  }`}>
+                    {sent ? <Check size={10} /> : <span className="w-2.5 h-px bg-gray-600 inline-block" />}
+                    {label}
+                  </div>
+                ))}
+                <button
+                  onClick={toggleWa}
+                  disabled={waTogggling}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] border transition-colors ${
+                    lead.whatsapp_enviado
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      : 'bg-gray-800 border-gray-700 text-gray-600 hover:border-emerald-700 hover:text-emerald-600'
+                  }`}
+                >
+                  {waTogggling ? <Loader2 size={10} className="animate-spin" /> : lead.whatsapp_enviado ? <Check size={10} /> : <span className="w-2.5 h-px bg-gray-600 inline-block" />}
+                  WhatsApp
+                </button>
+              </div>
             </div>
 
-            {/* Pipeline status selector */}
-            <div>
-              <label className="text-[11px] text-gray-500 uppercase tracking-wide font-medium block mb-2">
-                Estado pipeline
-              </label>
+            {/* ── Pipeline ── */}
+            <div className="px-5 py-3 border-b border-gray-800">
+              <p className="text-[10px] text-gray-600 uppercase tracking-wide font-medium mb-2">Pipeline</p>
               <div className="flex flex-wrap gap-1.5">
                 {PIPELINE_ORDER.map(s => {
                   const meta = STATUSES[s];
@@ -323,7 +344,7 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
                       key={s}
                       onClick={() => { setStatus(s); setDirty(true); }}
                       className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${
-                        active ? `${meta.bg} ${meta.color} scale-105` : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-600'
+                        active ? `${meta.bg} ${meta.color}` : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-600 hover:text-gray-300'
                       }`}
                     >
                       {meta?.label ?? s}
@@ -333,43 +354,42 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
               </div>
             </div>
 
-            {/* Notes */}
-            <div>
-              <label className="text-[11px] text-gray-500 uppercase tracking-wide font-medium block mb-2">
-                Notas
-              </label>
+            {/* ── Notes ── */}
+            <div className="px-5 py-3">
+              <p className="text-[10px] text-gray-600 uppercase tracking-wide font-medium mb-2">Notas</p>
               <textarea
                 value={notes}
                 onChange={e => { setNotes(e.target.value); setDirty(true); }}
-                rows={4}
-                placeholder="Agregar notas sobre este lead..."
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"
+                rows={3}
+                placeholder="Agregar notas..."
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"
               />
             </div>
 
-            {/* Timestamps */}
-            <div className="text-[11px] text-gray-600 space-y-1 pt-2 border-t border-gray-800">
-              <p>Agregado: {new Date(lead.created_at).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-              {lead.fecha_envio && <p>Email enviado: {new Date(lead.fecha_envio).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })}</p>}
-              {lead.citas_semana && <p>Citas/semana: {lead.citas_semana}</p>}
+            {/* ── Timestamps ── */}
+            <div className="px-5 pb-4 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-gray-700">
+              <span>Agregado {new Date(lead.created_at).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+              {lead.fecha_envio && <span>Email {new Date(lead.fecha_envio).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>}
+              {lead.ultima_actividad && <span>Activo {new Date(lead.ultima_actividad).toLocaleDateString('es-PE', { day: '2-digit', month: 'short' })}</span>}
             </div>
           </div>
+
+          {/* ── Save footer ── */}
+          {dirty && (
+            <div className="flex-shrink-0 px-5 py-3 border-t border-gray-800 bg-gray-900/80 backdrop-blur-sm">
+              <button
+                onClick={save}
+                disabled={saving}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60"
+              >
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Guardar cambios
+              </button>
+            </div>
+          )}
+          </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500 text-sm">Lead no encontrado</div>
-        )}
-
-        {/* save footer */}
-        {dirty && (
-          <div className="px-5 py-4 border-t border-gray-800 bg-gray-900">
-            <button
-              onClick={save}
-              disabled={saving}
-              className="w-full flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-60"
-            >
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              Guardar cambios
-            </button>
-          </div>
         )}
       </div>
     </div>
