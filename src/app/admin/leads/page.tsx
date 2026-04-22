@@ -167,12 +167,21 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
   const sendWa = async () => {
     if (!lead?.telefono) return;
     const digits = lead.telefono.replace(/\D/g, '');
-    // Add Peru +51 if no country code (numbers < 11 digits have no country code)
     const phone = digits.length <= 9 ? '51' + digits : digits;
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(buildWaMessage(lead))}`;
-    window.open(url, '_blank');
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(buildWaMessage(lead))}`, '_blank');
+    // Auto-mark whatsapp_enviado if not already set
+    if (!lead.whatsapp_enviado) {
+      setWaToggling(true);
+      const res = await fetch(`/api/admin/leads/${leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ whatsapp_enviado: true }),
+      });
+      const updated = await res.json();
+      setLead(prev => prev ? { ...prev, whatsapp_enviado: true } : prev);
+      onUpdated(updated);
+      setWaToggling(false);
+    }
   };
 
   return (
