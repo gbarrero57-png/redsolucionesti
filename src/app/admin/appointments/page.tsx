@@ -24,6 +24,18 @@ interface Appointment {
   payment_amount?: number | null;
   payment_currency?: string;
   payment_reminder_sent?: boolean;
+  doctor_id?: string | null;
+  doctor_name?: string | null;
+}
+
+interface Doctor {
+  id: string;
+  first_name: string;
+  last_name: string;
+  specialty: string;
+  display_name: string | null;
+  slot_duration_min: number;
+  active: boolean;
 }
 
 /* ── Status config ── */
@@ -65,7 +77,7 @@ const MONTHS   = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agos
 function startOfMonth(y: number, m: number) { return new Date(y, m, 1); }
 function daysInMonth(y: number, m: number)  { return new Date(y, m + 1, 0).getDate(); }
 function dow(d: Date) { return (d.getDay() + 6) % 7; }
-function isoDate(d: Date) { return d.toISOString().slice(0, 10); }
+function isoDate(d: Date) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function sameDay(a: Date, b: Date) { return isoDate(a) === isoDate(b); }
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
@@ -78,14 +90,19 @@ function fmtAmount(amount?: number | null, currency = 'PEN') {
   if (!amount) return null;
   return `${currency === 'PEN' ? 'S/' : '$'} ${Number(amount).toFixed(2)}`;
 }
+function isoToLocalDatetime(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 /* ── Form state ── */
 interface FormState {
   patient_name: string; phone: string; service: string;
-  start: string; duration: number; notes: string;
+  start: string; duration: number; notes: string; doctor_id: string;
 }
 function defaultForm(date: Date): FormState {
-  return { patient_name: '', phone: '', service: '', start: localDatetimeValue(date, 9, 0), duration: 30, notes: '' };
+  return { patient_name: '', phone: '', service: '', start: localDatetimeValue(date, 9, 0), duration: 30, notes: '', doctor_id: '' };
 }
 
 type ViewTab = 'all' | 'pending_payment';
@@ -104,6 +121,9 @@ export default function AppointmentsPage() {
   const [saving, setSaving] = useState(false);
   const [formErr, setFormErr] = useState<string | null>(null);
   const [tab, setTab] = useState<ViewTab>('all');
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [editingAppt, setEditingAppt] = useState<Appointment | null>(null);
 
   // Payment panel state
   const [payModal, setPayModal]   = useState<Appointment | null>(null);
@@ -186,8 +206,29 @@ export default function AppointmentsPage() {
     setPayNote('');
   }
 
-  /* ── New appointment ── */
-  function openModal() { setForm(defaultForm(selected)); setFormErr(null); setShowModal(true); }
+  /* ── New / Edit appointment ── */
+  async function openModal(appt?: Appointment) {
+    if (appt) {
+      const dur = Math.round((new Date(appt.end_time).getTime() - new Date(appt.start_time).getTime()) / 60000);
+      setForm({
+        patient_name: appt.patient_name, phone: appt.phone || '',
+        service: appt.service || '', start: isoToLocalDatetime(appt.start_time),
+        duration: dur, notes: appt.notes || '', doctor_id: appt.doctor_id || '',
+      });
+      setEditingAppt(appt);
+    } else {
+      setForm(defaultForm(selected));
+      setEditingAppt(null);
+    }
+    setFormErr(null); setShowModal(true);
+    setLoadingDoctors(true);
+    try {
+      const res = await fetch('/api/admin/doctors');
+      const data = await res.json();
+      setDoctors(Array.isArray(data) ? data.filter((d: Doctor) => d.active) : []);
+    } catch { setDoctors([]); }
+    finally { setLoadingDoctors(false); }
+  }
 
   async function saveAppointment() {
     if (!form.patient_name.trim()) { setFormErr('El nombre del paciente es obligatorio'); return; }
@@ -196,15 +237,21 @@ export default function AppointmentsPage() {
     try {
       const startDt = new Date(form.start);
       const endDt   = new Date(startDt.getTime() + form.duration * 60000);
-      const res = await fetch('/api/admin/appointments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          patient_name: form.patient_name, phone: form.phone || null,
-          service: form.service || null, start_time: startDt.toISOString(),
-          end_time: endDt.toISOString(), notes: form.notes || null,
-        }),
-      });
+      const payload = {
+        patient_name: form.patient_name, phone: form.phone || null,
+        service: form.service || null, start_time: startDt.toISOString(),
+        end_time: endDt.toISOString(), notes: form.notes || null,
+        doctor_id: form.doctor_id || null,
+      };
+      const res = editingAppt
+        ? await fetch('/api/admin/appointments', {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: editingAppt.id, ...payload }),
+          })
+        : await fetch('/api/admin/appointments', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
       if (!res.ok) { const d = await res.json(); setFormErr(d.error || 'Error al guardar'); return; }
       setShowModal(false);
       await fetchMonth(year, month);
@@ -458,7 +505,7 @@ export default function AppointmentsPage() {
               </p>
             </div>
             <button
-              onClick={openModal}
+              onClick={() => openModal()}
               className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white transition-colors text-xs font-semibold whitespace-nowrap shadow-lg shadow-violet-900/30"
             >
               <Plus size={14} /> Nueva Cita
@@ -507,7 +554,7 @@ export default function AppointmentsPage() {
                     <CalendarDays size={32} className="mb-3 opacity-20" />
                     <p className="text-sm font-medium text-gray-500">No hay citas este día</p>
                     <button
-                      onClick={openModal}
+                      onClick={() => openModal()}
                       className="mt-3 text-xs text-violet-400 hover:text-violet-300 transition-colors font-medium"
                     >
                       + Crear cita manual
@@ -525,6 +572,7 @@ export default function AppointmentsPage() {
                     onUpdateStatus={updateStatus}
                     onQuickPay={quickPay}
                     onOpenPayModal={openPayModal}
+                    onEdit={openModal}
                   />
                 ))}
               </div>
@@ -633,7 +681,7 @@ export default function AppointmentsPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
               <div className="flex items-center gap-2">
                 <Pencil size={16} className="text-violet-400" />
-                <h2 className="text-base font-semibold text-white">Nueva Cita Manual</h2>
+                <h2 className="text-base font-semibold text-white">{editingAppt ? 'Editar Cita' : 'Nueva Cita Manual'}</h2>
               </div>
               <button onClick={() => setShowModal(false)} className="p-1 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors">
                 <X size={18} />
@@ -660,6 +708,28 @@ export default function AppointmentsPage() {
                   className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/60 transition-colors">
                   <option value="">— Seleccionar —</option>
                   {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-1.5">
+                  Doctor{loadingDoctors ? <span className="ml-1 text-gray-600">cargando...</span> : null}
+                </label>
+                <select
+                  value={form.doctor_id}
+                  onChange={e => {
+                    const docId = e.target.value;
+                    const doc = doctors.find(d => d.id === docId);
+                    setForm(f => ({ ...f, doctor_id: docId, duration: doc ? doc.slot_duration_min : f.duration }));
+                  }}
+                  disabled={loadingDoctors}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/60 transition-colors disabled:opacity-50"
+                >
+                  <option value="">— Sin asignar —</option>
+                  {doctors.map(d => (
+                    <option key={d.id} value={d.id}>
+                      {d.display_name || `${d.first_name} ${d.last_name}`} · {d.specialty} ({d.slot_duration_min} min)
+                    </option>
+                  ))}
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -713,12 +783,14 @@ function AppointmentCard({
   onUpdateStatus,
   onQuickPay,
   onOpenPayModal,
+  onEdit,
 }: {
   appt: Appointment;
   isUpdating: boolean;
   onUpdateStatus: (id: string, status: string) => void;
   onQuickPay: (id: string, payment_status: string) => void;
   onOpenPayModal: (appt: Appointment) => void;
+  onEdit: (appt: Appointment) => void;
 }) {
   const cfg      = STATUS[appt.status] || STATUS.scheduled;
   const payCfg   = PAYMENT[appt.payment_status || 'not_required'];
@@ -752,11 +824,24 @@ function AppointmentCard({
           <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${cfg.badge}`}>
             <Icon size={11} /> {cfg.label}
           </span>
+          <button
+            onClick={() => onEdit(appt)}
+            title="Editar cita"
+            className="p-1.5 rounded-lg text-gray-500 hover:text-violet-400 hover:bg-violet-500/10 transition-colors"
+          >
+            <Pencil size={12} />
+          </button>
         </div>
       </div>
 
       {/* Details row */}
       <div className="space-y-1 mb-3">
+        {appt.doctor_name && (
+          <p className="text-xs text-violet-300 flex items-center gap-1.5 font-medium">
+            <User size={11} className="text-violet-400 flex-shrink-0" />
+            {appt.doctor_name}
+          </p>
+        )}
         {appt.service && (
           <p className="text-xs text-gray-400 flex items-center gap-1.5">
             <Stethoscope size={11} className="text-gray-500 flex-shrink-0" />
