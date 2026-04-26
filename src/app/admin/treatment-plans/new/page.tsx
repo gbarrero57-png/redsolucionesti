@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft, Plus, Trash2, Save, RefreshCw, AlertTriangle, ClipboardList,
@@ -47,7 +47,7 @@ function itemSubtotal(item: PlanItem): number {
   return price * qty;
 }
 
-export default function NewTreatmentPlanPage() {
+function NewTreatmentPlanPage() {
   const router       = useRouter();
   const searchParams = useSearchParams();
 
@@ -306,5 +306,13 @@ export default function NewTreatmentPlanPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function NewTreatmentPlanPageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-12 text-gray-500 text-sm">Cargando...</div>}>
+      <NewTreatmentPlanPage />
+    </Suspense>
   );
 }

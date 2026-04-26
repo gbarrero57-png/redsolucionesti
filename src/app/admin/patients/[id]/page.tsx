@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft, User, Phone, Mail, MapPin, Heart, AlertTriangle,
@@ -212,7 +212,7 @@ function QuickPaymentForm({ patientId, onSaved }: { patientId: string; onSaved: 
   );
 }
 
-export default function PatientDetailPage() {
+function PatientDetailPage() {
   const { id }      = useParams<{ id: string }>();
   const router      = useRouter();
   const searchParams = useSearchParams();
@@ -881,5 +881,13 @@ export default function PatientDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PatientDetailPageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-12 text-gray-500 text-sm">Cargando...</div>}>
+      <PatientDetailPage />
+    </Suspense>
   );
 }
