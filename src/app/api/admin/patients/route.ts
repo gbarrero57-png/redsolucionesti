@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     // Fallback: direct query by patient id
     const { data: patient, error: err2 } = await supabaseAdmin
       .from('patients')
-      .select('id, dni, full_name, birth_date, gender, phone, email, address, blood_type, emergency_contact_name, emergency_contact_phone, created_at, patient_allergies(id, allergen, severity, reaction, confirmed)')
+      .select('id, clinic_id, dni, full_name, birth_date, gender, phone, email, address, blood_type, emergency_contact_name, emergency_contact_phone, created_at, patient_allergies(id, allergen, severity, reaction, confirmed)')
       .eq('id', id)
       .eq('clinic_id', ctx.clinic_id)
       .is('deleted_at', null)
@@ -92,4 +92,43 @@ export async function POST(req: NextRequest) {
   const row = Array.isArray(data) ? data[0] : data;
   const res = NextResponse.json({ patient_id: row?.patient_id }, { status: 201, headers: NO_CACHE });
   return applyRefreshedToken(res, ctx);
+}
+
+export async function PATCH(req: NextRequest) {
+  const ctx = await getAuthContext(req);
+  if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
+
+  const body = await req.json();
+  const { id, full_name, dni, birth_date, gender, phone, email, address,
+          blood_type, emergency_contact_name, emergency_contact_phone } = body;
+
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+  if (full_name !== undefined && !full_name?.trim())
+    return NextResponse.json({ error: 'Nombre no puede estar vacío' }, { status: 400 });
+  if (dni !== undefined && !/^[0-9]{8}$/.test(dni))
+    return NextResponse.json({ error: 'DNI debe tener 8 dígitos numéricos' }, { status: 400 });
+
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (full_name   !== undefined) updates.full_name   = full_name.trim();
+  if (dni         !== undefined) updates.dni         = dni;
+  if (birth_date  !== undefined) updates.birth_date  = birth_date || null;
+  if (gender      !== undefined) updates.gender      = gender || null;
+  if (phone       !== undefined) updates.phone       = phone?.trim() || null;
+  if (email       !== undefined) updates.email       = email?.trim() || null;
+  if (address     !== undefined) updates.address     = address?.trim() || null;
+  if (blood_type  !== undefined) updates.blood_type  = blood_type || 'desconocido';
+  if (emergency_contact_name  !== undefined) updates.emergency_contact_name  = emergency_contact_name?.trim() || null;
+  if (emergency_contact_phone !== undefined) updates.emergency_contact_phone = emergency_contact_phone?.trim() || null;
+
+  const { data, error } = await supabaseAdmin
+    .from('patients')
+    .update(updates)
+    .eq('id', id)
+    .eq('clinic_id', ctx.clinic_id)
+    .is('deleted_at', null)
+    .select()
+    .single();
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE });
+  return NextResponse.json(data, { headers: NO_CACHE });
 }

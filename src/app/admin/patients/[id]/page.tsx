@@ -6,12 +6,13 @@ import {
   ArrowLeft, User, Phone, Mail, MapPin, Heart, AlertTriangle,
   Plus, ChevronDown, ChevronUp, Stethoscope, Pill, FileText,
   Calendar, Activity, Trash2, RefreshCw, Pencil, X, Save,
-  DollarSign, CheckCircle2, Clock, ClipboardList, CreditCard,
+  DollarSign, CheckCircle2, Clock, ClipboardList, CreditCard, Scan,
 } from 'lucide-react';
+import Odontogram from '@/components/Odontogram';
 
 interface Allergy { id: string; allergen: string; severity: string; reaction: string | null; confirmed: boolean; }
 interface Patient {
-  id: string; dni: string; full_name: string; birth_date: string | null;
+  id: string; clinic_id: string; dni: string; full_name: string; birth_date: string | null;
   gender: string | null; phone: string | null; email: string | null;
   address: string | null; blood_type: string;
   emergency_contact_name: string | null; emergency_contact_phone: string | null;
@@ -217,8 +218,8 @@ function PatientDetailPage() {
   const router      = useRouter();
   const searchParams = useSearchParams();
 
-  const initialTab = (searchParams.get('tab') as 'consultas' | 'cobros' | 'presupuestos' | null) ?? 'consultas';
-  const [tab, setTab] = useState<'consultas' | 'cobros' | 'presupuestos'>(initialTab);
+  const initialTab = (searchParams.get('tab') as 'consultas' | 'cobros' | 'presupuestos' | 'odontograma' | null) ?? 'consultas';
+  const [tab, setTab] = useState<'consultas' | 'cobros' | 'presupuestos' | 'odontograma'>(initialTab);
 
   const [patient, setPatient]   = useState<Patient | null>(null);
   const [records, setRecords]   = useState<ClinicalRecord[]>([]);
@@ -577,6 +578,7 @@ function PatientDetailPage() {
               { key: 'consultas',    label: 'Consultas',    icon: Stethoscope },
               { key: 'cobros',       label: 'Cobros',       icon: DollarSign },
               { key: 'presupuestos', label: 'Presupuestos', icon: ClipboardList },
+              { key: 'odontograma',  label: 'Odontograma',  icon: Scan },
             ] as const).map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
@@ -876,6 +878,11 @@ function PatientDetailPage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ── Tab: Odontograma ── */}
+          {tab === 'odontograma' && (
+            <Odontogram patientId={id} clinicId={patient.clinic_id} />
           )}
 
         </div>
