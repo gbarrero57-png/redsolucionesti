@@ -15,7 +15,7 @@ function notifyAdmin(appt: Record<string, unknown>, clinicId: string) {
     doctor_name:    appt.doctor_name ?? null,
     source:         'manual',
   };
-  fetch('https://workflows.n8n.redsolucionesti.com/webhook/appt-notify', {
+  fetch('https://workflows.n8n.redsolucionesti.com/webhook/sofia-appt-notify', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify(payload),
