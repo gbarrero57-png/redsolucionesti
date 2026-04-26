@@ -3,6 +3,24 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { getAuthContext } from '@/lib/auth';
 
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
+
+function notifyAdmin(appt: Record<string, unknown>, clinicId: string) {
+  const payload = {
+    appointment_id: appt.id,
+    clinic_id:      clinicId,
+    patient_name:   appt.patient_name,
+    patient_phone:  appt.phone,
+    start_time:     appt.start_time,
+    service:        appt.service,
+    doctor_name:    appt.doctor_name ?? null,
+    source:         'manual',
+  };
+  fetch('https://workflows.n8n.redsolucionesti.com/webhook/appt-notify', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+  }).catch(() => {});
+}
 const VALID_STATUSES       = ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'];
 const VALID_PAYMENT_STATUS = ['not_required', 'pending', 'paid', 'partial', 'waived'];
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]+)?$/;
@@ -25,7 +43,7 @@ export async function GET(req: NextRequest) {
 
   let query = supabaseAdmin
     .from('appointments')
-    .select('*')
+    .select('*, doctors(first_name, last_name, display_name)')
     .eq('clinic_id', ctx.clinic_id)
     .order('start_time', { ascending: true })
     .limit(limit);
@@ -36,7 +54,16 @@ export async function GET(req: NextRequest) {
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: 'Error al obtener citas' }, { status: 500, headers: NO_CACHE });
-  return NextResponse.json(data || [], { headers: NO_CACHE });
+  // Flatten doctor name into the appointment object
+  const flat = (data || []).map((a: Record<string, unknown>) => {
+    const doc = a.doctors as { first_name?: string; last_name?: string; display_name?: string } | null;
+    return {
+      ...a,
+      doctors: undefined,
+      doctor_name: doc ? (doc.display_name || `${doc.first_name} ${doc.last_name}`) : null,
+    };
+  });
+  return NextResponse.json(flat, { headers: NO_CACHE });
 }
 
 export async function POST(req: NextRequest) {
@@ -44,7 +71,7 @@ export async function POST(req: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
 
   const body = await req.json();
-  const { patient_name, phone, service, start_time, end_time, notes } = body;
+  const { patient_name, phone, service, start_time, end_time, notes, doctor_id } = body;
 
   if (!patient_name?.trim()) return NextResponse.json({ error: 'patient_name required' }, { status: 400 });
   if (!start_time)           return NextResponse.json({ error: 'start_time required' }, { status: 400 });
@@ -64,6 +91,7 @@ export async function POST(req: NextRequest) {
       status:       'scheduled',
       source:       'manual',
       reminder_sent: false,
+      doctor_id:    doctor_id || null,
       created_at:   now,
       updated_at:   now,
     })
@@ -85,17 +113,20 @@ export async function POST(req: NextRequest) {
           notes:        notes?.trim() || null,
           status:       'scheduled',
           reminder_sent: false,
+          doctor_id:    doctor_id || null,
           created_at:   now,
           updated_at:   now,
         })
         .select()
         .single();
       if (e2) return NextResponse.json({ error: 'Error al crear cita' }, { status: 500, headers: NO_CACHE });
+      notifyAdmin({ ...d2, source: 'manual' }, ctx.clinic_id);
       return NextResponse.json({ ...d2, source: 'manual' }, { status: 201, headers: NO_CACHE });
     }
     return NextResponse.json({ error: 'Error al crear cita' }, { status: 500, headers: NO_CACHE });
   }
 
+  notifyAdmin(data, ctx.clinic_id);
   return NextResponse.json(data, { status: 201, headers: NO_CACHE });
 }
 
@@ -104,11 +135,12 @@ export async function PATCH(req: NextRequest) {
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
 
   const body = await req.json();
-  const { id, status, payment_status, payment_amount } = body;
+  const { id, status, payment_status, payment_amount,
+          patient_name, phone, service, start_time, end_time, notes, doctor_id } = body;
 
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
 
-  // Build update payload — supports status update, payment update, or both
+  // Build update payload — supports status update, payment update, or field edit
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
 
   if (status !== undefined) {
@@ -121,7 +153,6 @@ export async function PATCH(req: NextRequest) {
     if (!VALID_PAYMENT_STATUS.includes(payment_status))
       return NextResponse.json({ error: `payment_status must be one of: ${VALID_PAYMENT_STATUS.join(', ')}` }, { status: 400 });
     updates.payment_status = payment_status;
-    // Reset reminder flag when payment is resolved
     if (payment_status === 'paid' || payment_status === 'waived') {
       updates.payment_reminder_sent = false;
     }
@@ -130,6 +161,21 @@ export async function PATCH(req: NextRequest) {
   if (payment_amount !== undefined) {
     updates.payment_amount = payment_amount === null ? null : Number(payment_amount);
   }
+
+  // Field edits
+  if (patient_name !== undefined) updates.patient_name = patient_name?.trim() || null;
+  if (phone        !== undefined) updates.phone        = phone?.trim() || null;
+  if (service      !== undefined) updates.service      = service?.trim() || null;
+  if (start_time   !== undefined) {
+    if (!ISO_DATE_RE.test(start_time)) return NextResponse.json({ error: 'Invalid start_time' }, { status: 400 });
+    updates.start_time = start_time;
+  }
+  if (end_time !== undefined) {
+    if (!ISO_DATE_RE.test(end_time)) return NextResponse.json({ error: 'Invalid end_time' }, { status: 400 });
+    updates.end_time = end_time;
+  }
+  if (notes     !== undefined) updates.notes     = notes?.trim() || null;
+  if ('doctor_id' in body)     updates.doctor_id = doctor_id || null;
 
   const { data, error } = await supabaseAdmin
     .from('appointments')
