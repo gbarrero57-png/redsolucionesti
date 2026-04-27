@@ -9,6 +9,24 @@ export async function GET(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: NO_CACHE });
 
+  const { searchParams } = new URL(req.url);
+  const patient_id = searchParams.get('patient_id');
+
+  // Per-patient reminder history
+  if (patient_id) {
+    const { data, error } = await supabaseAdmin
+      .from('debt_reminders')
+      .select('id, amount_reminded, status, sent_at, twilio_message_sid, error_message')
+      .eq('clinic_id', ctx.clinic_id)
+      .eq('patient_id', patient_id)
+      .order('sent_at', { ascending: false })
+      .limit(20);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE });
+    const res = NextResponse.json(data ?? [], { headers: NO_CACHE });
+    return applyRefreshedToken(res, ctx);
+  }
+
+  // Clinic-wide stats
   const { data, error } = await supabaseAdmin.rpc('get_clinic_reminder_stats', {
     p_clinic_id: ctx.clinic_id,
   });

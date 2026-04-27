@@ -28,6 +28,19 @@ export async function GET(req: NextRequest) {
     return applyRefreshedToken(res, ctx);
   }
 
+  // Per-patient balance (includes installments via fixed SQL function)
+  const balance = searchParams.get('balance');
+  if (balance === '1' && patient_id) {
+    const { data, error } = await supabaseAdmin.rpc('get_patient_balance', {
+      p_patient_id: patient_id,
+      p_clinic_id:  ctx.clinic_id,
+    });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500, headers: NO_CACHE });
+    const row = Array.isArray(data) ? data[0] : data;
+    const res = NextResponse.json(row ?? { total_debt: 0, overdue_debt: 0, pending_payments: 0 }, { headers: NO_CACHE });
+    return applyRefreshedToken(res, ctx);
+  }
+
   let query = supabaseAdmin
     .from('payments')
     .select(`

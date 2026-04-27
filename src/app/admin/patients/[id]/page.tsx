@@ -6,7 +6,7 @@ import {
   ArrowLeft, User, Phone, Mail, MapPin, Heart, AlertTriangle,
   Plus, ChevronDown, ChevronUp, Stethoscope, Pill, FileText,
   Calendar, Activity, Trash2, RefreshCw, Pencil, X, Save,
-  DollarSign, CheckCircle2, Clock, ClipboardList, CreditCard, Scan,
+  DollarSign, CheckCircle2, Clock, ClipboardList, CreditCard, Scan, Bell,
 } from 'lucide-react';
 import Odontogram from '@/components/Odontogram';
 
@@ -44,6 +44,10 @@ interface PaymentPlan {
   installments_total: number; installments_paid: number; start_date: string;
   next_due_date: string | null; status: string; notes: string | null; created_at: string;
   payment_installments?: PaymentInstallment[];
+}
+interface DebtReminder {
+  id: string; amount_reminded: number | null; status: string;
+  sent_at: string; twilio_message_sid: string | null; error_message: string | null;
 }
 
 const SEV_CFG: Record<string, { label: string; cls: string }> = {
@@ -229,14 +233,15 @@ function PatientDetailPage() {
   const [recLoading, setRecLoading] = useState(true);
 
   // CRM state
-  const [balance,      setBalance]      = useState<PatientBalance | null>(null);
-  const [payments,     setPayments]     = useState<Payment[]>([]);
-  const [plans,        setPlans]        = useState<TreatmentPlan[]>([]);
-  const [paymentPlans, setPaymentPlans] = useState<PaymentPlan[]>([]);
-  const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
-  const [planInstalls, setPlanInstalls] = useState<Record<string, PaymentInstallment[]>>({});
-  const [showNewPlan,  setShowNewPlan]  = useState(false);
-  const [crmLoading,   setCrmLoading]   = useState(false);
+  const [balance,       setBalance]       = useState<PatientBalance | null>(null);
+  const [payments,      setPayments]      = useState<Payment[]>([]);
+  const [plans,         setPlans]         = useState<TreatmentPlan[]>([]);
+  const [paymentPlans,  setPaymentPlans]  = useState<PaymentPlan[]>([]);
+  const [debtReminders, setDebtReminders] = useState<DebtReminder[]>([]);
+  const [expandedPlan,  setExpandedPlan]  = useState<string | null>(null);
+  const [planInstalls,  setPlanInstalls]  = useState<Record<string, PaymentInstallment[]>>({});
+  const [showNewPlan,   setShowNewPlan]   = useState(false);
+  const [crmLoading,    setCrmLoading]    = useState(false);
 
   // New payment plan form
   const [ppForm, setPpForm] = useState({
@@ -276,22 +281,26 @@ function PatientDetailPage() {
 
   const loadCrm = useCallback(async () => {
     setCrmLoading(true);
-    const [payRes, planRes, ppRes] = await Promise.all([
+    const [payRes, planRes, ppRes, balRes, remRes] = await Promise.all([
       fetch(`/api/admin/payments?patient_id=${id}&limit=50`),
       fetch(`/api/admin/treatment-plans?patient_id=${id}`),
       fetch(`/api/admin/payment-plans?patient_id=${id}`),
+      fetch(`/api/admin/payments?patient_id=${id}&balance=1`),
+      fetch(`/api/admin/debt-reminders?patient_id=${id}`),
     ]);
-    const [payData, planData, ppData] = await Promise.all([payRes.json(), planRes.json(), ppRes.json()]);
-    const pendingList = Array.isArray(payData) ? payData.filter((p: Payment) => p.status === 'pending' || p.status === 'partial') : [];
-    const overdueList = pendingList.filter((p: Payment) => p.due_date && new Date(p.due_date) < new Date());
+    const [payData, planData, ppData, balData, remData] = await Promise.all([
+      payRes.json(), planRes.json(), ppRes.json(), balRes.json(), remRes.json(),
+    ]);
+    // Balance comes from SQL RPC (includes installments via migration 045)
     setBalance({
-      total_debt:       pendingList.reduce((s: number, p: Payment) => s + Number(p.amount), 0),
-      overdue_debt:     overdueList.reduce((s: number, p: Payment) => s + Number(p.amount), 0),
-      pending_payments: pendingList.length,
+      total_debt:       Number(balData.total_debt ?? 0),
+      overdue_debt:     Number(balData.overdue_debt ?? 0),
+      pending_payments: Number(balData.pending_payments ?? 0),
     });
     setPayments(Array.isArray(payData) ? payData : []);
     setPlans(Array.isArray(planData) ? planData : []);
     setPaymentPlans(Array.isArray(ppData) ? ppData : []);
+    setDebtReminders(Array.isArray(remData) ? remData : []);
     setCrmLoading(false);
   }, [id]);
 
@@ -826,6 +835,41 @@ function PatientDetailPage() {
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* ── Recordatorios de cobranza (dentro de tab Cobros) ── */}
+          {tab === 'cobros' && debtReminders.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-gray-800">
+              <p className="text-sm font-semibold text-white flex items-center gap-2">
+                <Bell size={14} className="text-violet-400" /> Recordatorios enviados
+                <span className="text-xs text-gray-400 font-normal">({debtReminders.length})</span>
+              </p>
+              <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-800">
+                {debtReminders.map(r => (
+                  <div key={r.id} className="flex items-center justify-between px-4 py-2.5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${
+                          r.status === 'sent'    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                          r.status === 'failed'  ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                          'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                        }`}>
+                          {r.status === 'sent' ? 'Enviado' : r.status === 'failed' ? 'Fallido' : 'Omitido'}
+                        </span>
+                        {r.amount_reminded != null && (
+                          <span className="text-xs text-gray-300">{fmtAmount(r.amount_reminded)}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        SofIA · {new Date(r.sent_at).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {r.error_message && <p className="text-xs text-red-400 mt-0.5">{r.error_message}</p>}
+                    </div>
+                    <Bell size={14} className="text-gray-600 flex-shrink-0" />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
