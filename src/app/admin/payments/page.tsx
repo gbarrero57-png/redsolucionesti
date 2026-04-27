@@ -260,15 +260,19 @@ export default function PaymentsPage() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const [sumRes, payRes, remRes] = await Promise.all([
-      fetch('/api/admin/payments?summary=1'),
-      fetch('/api/admin/payments?limit=200'),
-      fetch('/api/admin/debt-reminders'),
-    ]);
-    const [sumData, payData, remData] = await Promise.all([sumRes.json(), payRes.json(), remRes.json()]);
-    setSummary(sumData);
-    setPayments(Array.isArray(payData) ? payData : []);
-    setReminderStats(remData);
+    try {
+      const [sumRes, payRes, remRes] = await Promise.all([
+        fetch('/api/admin/payments?summary=1'),
+        fetch('/api/admin/payments?limit=200'),
+        fetch('/api/admin/debt-reminders'),
+      ]);
+      const [sumData, payData, remData] = await Promise.all([sumRes.json(), payRes.json(), remRes.json()]);
+      setSummary(sumRes.ok ? sumData : null);
+      setPayments(Array.isArray(payData) ? payData : []);
+      setReminderStats(remRes.ok ? remData : null);
+    } catch {
+      // network error — leave state as-is
+    }
     setLoading(false);
   }, []);
 
@@ -389,7 +393,7 @@ export default function PaymentsPage() {
         />
         <SummaryCard
           label="Deuda total"
-          value={summary ? fmtAmount(Number(summary.total_debt)) : '—'}
+          value={summary ? fmtAmount(Number(summary.total_debt ?? 0)) : '—'}
           icon={<DollarSign size={18} className="text-violet-400" />}
           color="violet"
           loading={loading}
@@ -403,7 +407,7 @@ export default function PaymentsPage() {
         />
         <SummaryCard
           label="Deuda vencida"
-          value={summary ? fmtAmount(Number(summary.total_overdue)) : '—'}
+          value={summary ? fmtAmount(Number(summary.total_overdue ?? 0)) : '—'}
           icon={<ArrowUpCircle size={18} className="text-red-400" />}
           color="red"
           loading={loading}

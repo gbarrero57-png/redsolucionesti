@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   MessageSquare, Calendar, BarChart2, BookOpen, Bot,
-  LogOut, Users, Building2, AlertTriangle, Menu, X, ClipboardList, Stethoscope, DollarSign,
+  LogOut, Users, Building2, AlertTriangle, Menu, X, ClipboardList, Stethoscope, DollarSign, UserSearch,
 } from 'lucide-react';
 
 const ADMIN_NAV = [
@@ -13,6 +13,7 @@ const ADMIN_NAV = [
   { href: '/admin/appointments', label: 'Citas',                icon: Calendar },
   { href: '/admin/calendarios',  label: 'Calendarios',          icon: Stethoscope },
   { href: '/admin/patients',     label: 'Historial Clínico',    icon: ClipboardList },
+  { href: '/admin/prospectos',   label: 'Prospectos',           icon: UserSearch },
   { href: '/admin/payments',     label: 'Cobros & CRM',         icon: DollarSign },
   { href: '/admin/metrics',      label: 'Métricas',             icon: BarChart2 },
   { href: '/admin/knowledge',    label: 'Base de conocimiento', icon: BookOpen },
@@ -23,6 +24,7 @@ const STAFF_NAV = [
   { href: '/admin/inbox',        label: 'Conversaciones',       icon: MessageSquare },
   { href: '/admin/appointments', label: 'Citas',                icon: Calendar },
   { href: '/admin/patients',     label: 'Historial Clínico',    icon: ClipboardList },
+  { href: '/admin/prospectos',   label: 'Prospectos',           icon: UserSearch },
   { href: '/admin/payments',     label: 'Cobros & CRM',         icon: DollarSign },
   { href: '/admin/metrics',      label: 'Métricas',             icon: BarChart2 },
 ];
