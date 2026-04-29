@@ -66,8 +66,7 @@ export async function PATCH(req: NextRequest) {
   }
 
   // Activate lead → active patient
-  const userClient = createUserClient(ctx.accessToken);
-  const { data, error } = await userClient.rpc('activate_patient', {
+  const { data, error } = await supabaseAdmin.rpc('activate_patient', {
     p_patient_id: patient_id,
     p_clinic_id:  ctx.clinic_id,
   });

@@ -7,9 +7,12 @@ import {
   Plus, ChevronDown, ChevronUp, Stethoscope, Pill, FileText,
   Calendar, Activity, Trash2, RefreshCw, Pencil, X, Save,
   DollarSign, CheckCircle2, Clock, ClipboardList, CreditCard, Scan, Bell,
+  Star, Shield, MessageSquare, StickyNote, AlarmClock, TrendingUp,
+  RotateCcw, ThumbsUp, ThumbsDown, Minus, ExternalLink,
 } from 'lucide-react';
 import Odontogram from '@/components/Odontogram';
 
+/* ── Interfaces ── */
 interface Allergy { id: string; allergen: string; severity: string; reaction: string | null; confirmed: boolean; }
 interface Patient {
   id: string; clinic_id: string; dni: string; full_name: string; birth_date: string | null;
@@ -17,6 +20,7 @@ interface Patient {
   address: string | null; blood_type: string;
   emergency_contact_name: string | null; emergency_contact_phone: string | null;
   patient_allergies: Allergy[];
+  status?: string;
 }
 interface ClinicalRecord {
   id: string; consultation_date: string; reason: string; diagnosis: string;
@@ -49,14 +53,38 @@ interface DebtReminder {
   id: string; amount_reminded: number | null; status: string;
   sent_at: string; twilio_message_sid: string | null; error_message: string | null;
 }
+interface PatientNote {
+  id: string; content: string; created_by_name: string | null; created_at: string; updated_at: string;
+}
+interface PatientReminder {
+  id: string; title: string; due_date: string; completed: boolean;
+  completed_at: string | null; created_by_name: string | null; created_at: string;
+}
+interface NpsResponse { score: number; created_at: string; }
+interface PatientProfile {
+  ltv: number;
+  nps_avg: number | null;
+  nps_total: number;
+  nps_responses: NpsResponse[];
+  tags: string[];
+  is_vip: boolean;
+  insurance_company: string | null;
+  insurance_policy: string | null;
+  insurance_expiry: string | null;
+  chronic_conditions: string | null;
+  current_medications: string | null;
+  recall_interval_months: number;
+  next_recall_due: string | null;
+  last_recall_sent_at: string | null;
+}
 
+/* ── Styling constants ── */
 const SEV_CFG: Record<string, { label: string; cls: string }> = {
   anafilaxis: { label: 'Anafilaxis', cls: 'bg-red-500/20 text-red-300 border-red-500/30' },
   severa:     { label: 'Severa',     cls: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
   moderada:   { label: 'Moderada',   cls: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
   leve:       { label: 'Leve',       cls: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
 };
-
 const METHOD_LABELS: Record<string, string> = {
   cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia',
   yape: 'Yape', plin: 'Plin', other: 'Otro',
@@ -69,8 +97,8 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
 };
 const PLAN_STATUS_COLORS: Record<string, string> = {
-  draft:     'bg-gray-500/10 text-gray-400 border-gray-500/20',
-  active:    'bg-violet-500/10 text-violet-400 border-violet-500/20',
+  draft: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
+  active: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
   completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
 };
@@ -78,6 +106,7 @@ const PLAN_STATUS_LABELS: Record<string, string> = {
   draft: 'Borrador', active: 'Activo', completed: 'Completado', cancelled: 'Cancelado',
 };
 
+/* ── Helpers ── */
 function fmtAmount(n: number) {
   return new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(n);
 }
@@ -88,7 +117,17 @@ function fmtDate(d: string | null) {
 function fmtDateTime(iso: string) {
   return new Date(iso).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
 }
+function npsColor(score: number) {
+  if (score >= 4) return 'text-emerald-400';
+  if (score === 3) return 'text-amber-400';
+  return 'text-red-400';
+}
+function npsLabel(score: number) {
+  const labels: Record<number, string> = { 1: 'Muy malo', 2: 'Malo', 3: 'Regular', 4: 'Bueno', 5: 'Excelente' };
+  return labels[score] ?? '';
+}
 
+/* ── Sub-components ── */
 function ConsultCard({ r }: { r: ClinicalRecord }) {
   const [open, setOpen] = useState(false);
   return (
@@ -120,8 +159,8 @@ function ConsultCard({ r }: { r: ClinicalRecord }) {
           </div>}
           {(r.weight_kg || r.height_cm || r.blood_pressure || r.temperature_c) && (
             <div className="grid grid-cols-4 gap-2 mt-2">
-              {r.weight_kg    && <div className="bg-gray-900 rounded-lg p-2 text-center"><p className="text-xs text-gray-400">Peso</p><p className="text-sm font-bold text-white">{r.weight_kg} kg</p></div>}
-              {r.height_cm    && <div className="bg-gray-900 rounded-lg p-2 text-center"><p className="text-xs text-gray-400">Talla</p><p className="text-sm font-bold text-white">{r.height_cm} cm</p></div>}
+              {r.weight_kg     && <div className="bg-gray-900 rounded-lg p-2 text-center"><p className="text-xs text-gray-400">Peso</p><p className="text-sm font-bold text-white">{r.weight_kg} kg</p></div>}
+              {r.height_cm     && <div className="bg-gray-900 rounded-lg p-2 text-center"><p className="text-xs text-gray-400">Talla</p><p className="text-sm font-bold text-white">{r.height_cm} cm</p></div>}
               {r.blood_pressure && <div className="bg-gray-900 rounded-lg p-2 text-center"><p className="text-xs text-gray-400">Presión</p><p className="text-sm font-bold text-white">{r.blood_pressure}</p></div>}
               {r.temperature_c  && <div className="bg-gray-900 rounded-lg p-2 text-center"><p className="text-xs text-gray-400">Temp.</p><p className="text-sm font-bold text-white">{r.temperature_c}°C</p></div>}
             </div>
@@ -136,16 +175,15 @@ function ConsultCard({ r }: { r: ClinicalRecord }) {
   );
 }
 
-/* ── Inline quick-payment form ── */
 function QuickPaymentForm({ patientId, onSaved }: { patientId: string; onSaved: () => void }) {
-  const [open,   setOpen]   = useState(false);
+  const [open, setOpen]     = useState(false);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('cash');
   const [status, setStatus] = useState('paid');
-  const [notes,  setNotes]  = useState('');
+  const [notes, setNotes]   = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [saving, setSaving]  = useState(false);
-  const [error,  setError]   = useState('');
+  const [saving, setSaving]   = useState(false);
+  const [error, setError]     = useState('');
 
   async function save() {
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) { setError('Monto inválido'); return; }
@@ -177,8 +215,7 @@ function QuickPaymentForm({ patientId, onSaved }: { patientId: string; onSaved: 
         <div>
           <label className="block text-xs text-gray-400 mb-1">Monto (S/)</label>
           <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
-            placeholder="0.00"
-            className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+            placeholder="0.00" className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
         </div>
         <div>
           <label className="block text-xs text-gray-400 mb-1">Estado</label>
@@ -217,33 +254,436 @@ function QuickPaymentForm({ patientId, onSaved }: { patientId: string; onSaved: 
   );
 }
 
+/* ── Notes tab ── */
+function NotesTab({ patientId }: { patientId: string }) {
+  const [notes, setNotes]     = useState<PatientNote[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [text, setText]       = useState('');
+  const [saving, setSaving]   = useState(false);
+  const [editId, setEditId]   = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const r = await fetch(`/api/admin/patients/${patientId}/notes`);
+    if (r.ok) setNotes(await r.json());
+    setLoading(false);
+  }, [patientId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function addNote() {
+    if (!text.trim()) return;
+    setSaving(true);
+    await fetch(`/api/admin/patients/${patientId}/notes`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: text }),
+    });
+    setText(''); setSaving(false); load();
+  }
+
+  async function saveEdit(noteId: string) {
+    if (!editText.trim()) return;
+    await fetch(`/api/admin/patients/${patientId}/notes`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note_id: noteId, content: editText }),
+    });
+    setEditId(null); load();
+  }
+
+  async function deleteNote(noteId: string) {
+    await fetch(`/api/admin/patients/${patientId}/notes?note_id=${noteId}`, { method: 'DELETE' });
+    load();
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Add note */}
+      <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 space-y-2">
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="Agregar nota interna sobre el paciente… (solo visible para el staff)"
+          rows={3}
+          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500/50 resize-none"
+        />
+        <div className="flex justify-end">
+          <button
+            onClick={addNote}
+            disabled={saving || !text.trim()}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition-colors"
+          >
+            {saving ? <RefreshCw size={11} className="animate-spin" /> : <Plus size={11} />}
+            Guardar nota
+          </button>
+        </div>
+      </div>
+
+      {/* Notes list */}
+      {loading ? (
+        <div className="flex justify-center py-6"><RefreshCw size={18} className="text-gray-500 animate-spin" /></div>
+      ) : notes.length === 0 ? (
+        <div className="text-center py-8">
+          <StickyNote size={28} className="mx-auto text-gray-700 mb-2" />
+          <p className="text-xs text-gray-500">Sin notas internas</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {notes.map(n => (
+            <div key={n.id} className="bg-gray-800 border border-gray-700 rounded-xl p-3">
+              {editId === n.id ? (
+                <div className="space-y-2">
+                  <textarea
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 bg-gray-900 border border-violet-500/40 rounded-lg text-sm text-white focus:outline-none resize-none"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => saveEdit(n.id)} className="flex items-center gap-1 px-2.5 py-1 bg-violet-600 hover:bg-violet-500 text-white text-xs rounded-lg transition-colors"><Save size={11} /> Guardar</button>
+                    <button onClick={() => setEditId(null)} className="px-2.5 py-1 text-gray-400 hover:text-white text-xs rounded-lg transition-colors">Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{n.content}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-[11px] text-gray-500">
+                      {n.created_by_name && <span>{n.created_by_name} · </span>}
+                      {new Date(n.created_at).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <button onClick={() => { setEditId(n.id); setEditText(n.content); }} className="p-1 rounded text-gray-500 hover:text-violet-400 transition-colors"><Pencil size={12} /></button>
+                      <button onClick={() => deleteNote(n.id)} className="p-1 rounded text-gray-500 hover:text-red-400 transition-colors"><Trash2 size={12} /></button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Reminders tab ── */
+function RemindersTab({ patientId }: { patientId: string }) {
+  const [reminders, setReminders] = useState<PatientReminder[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [showDone, setShowDone]   = useState(false);
+  const [title, setTitle]         = useState('');
+  const [dueDate, setDueDate]     = useState('');
+  const [saving, setSaving]       = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const r = await fetch(`/api/admin/patients/${patientId}/reminders${showDone ? '?include_done=1' : ''}`);
+    if (r.ok) setReminders(await r.json());
+    setLoading(false);
+  }, [patientId, showDone]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function addReminder() {
+    if (!title.trim() || !dueDate) return;
+    setSaving(true);
+    await fetch(`/api/admin/patients/${patientId}/reminders`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, due_date: dueDate }),
+    });
+    setTitle(''); setDueDate(''); setSaving(false); load();
+  }
+
+  async function toggleDone(reminderId: string, completed: boolean) {
+    await fetch(`/api/admin/patients/${patientId}/reminders`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reminder_id: reminderId, completed }),
+    });
+    load();
+  }
+
+  async function deleteReminder(reminderId: string) {
+    await fetch(`/api/admin/patients/${patientId}/reminders?reminder_id=${reminderId}`, { method: 'DELETE' });
+    load();
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  return (
+    <div className="space-y-4">
+      {/* Add reminder */}
+      <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 space-y-2">
+        <p className="text-xs font-medium text-gray-400">Nuevo recordatorio para el staff</p>
+        <input
+          value={title} onChange={e => setTitle(e.target.value)}
+          placeholder="Ej: Llamar para confirmar próxima cita"
+          className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+        />
+        <div className="flex gap-2">
+          <input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} min={today}
+            className="flex-1 px-3 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+          <button onClick={addReminder} disabled={saving || !title.trim() || !dueDate}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition-colors">
+            {saving ? <RefreshCw size={11} className="animate-spin" /> : <Plus size={11} />}
+            Agregar
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-white">Recordatorios pendientes</p>
+        <button onClick={() => setShowDone(v => !v)} className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+          {showDone ? 'Ocultar completados' : 'Ver completados'}
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-6"><RefreshCw size={18} className="text-gray-500 animate-spin" /></div>
+      ) : reminders.length === 0 ? (
+        <div className="text-center py-8">
+          <AlarmClock size={28} className="mx-auto text-gray-700 mb-2" />
+          <p className="text-xs text-gray-500">Sin recordatorios</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {reminders.map(r => {
+            const isOverdue = !r.completed && r.due_date < today;
+            return (
+              <div key={r.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-colors ${r.completed ? 'bg-gray-900/40 border-gray-800 opacity-60' : isOverdue ? 'bg-red-500/5 border-red-500/20' : 'bg-gray-800 border-gray-700'}`}>
+                <button onClick={() => toggleDone(r.id, !r.completed)}
+                  className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${r.completed ? 'bg-emerald-500 border-emerald-500' : isOverdue ? 'border-red-400 hover:border-red-300' : 'border-gray-500 hover:border-violet-400'}`}>
+                  {r.completed && <CheckCircle2 size={12} className="text-white" />}
+                </button>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm ${r.completed ? 'line-through text-gray-500' : 'text-white'}`}>{r.title}</p>
+                  <p className={`text-[11px] mt-0.5 ${isOverdue ? 'text-red-400' : 'text-gray-500'}`}>
+                    {isOverdue ? '⚠ Vencido · ' : ''}{fmtDate(r.due_date)}
+                    {r.created_by_name && <span className="ml-1 opacity-60">· {r.created_by_name}</span>}
+                  </p>
+                </div>
+                <button onClick={() => deleteReminder(r.id)} className="p-1 text-gray-600 hover:text-red-400 transition-colors flex-shrink-0">
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Profile sidebar extras (tags, VIP, LTV, insurance, recall, NPS) ── */
+function ProfileExtras({ patientId, phone }: { patientId: string; phone: string | null }) {
+  const [profile, setProfile]     = useState<PatientProfile | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [tagInput, setTagInput]   = useState('');
+  const [savingTag, setSavingTag] = useState(false);
+  const [savingVip, setSavingVip] = useState(false);
+  const [editRecall, setEditRecall] = useState(false);
+  const [recallVal, setRecallVal] = useState(6);
+
+  useEffect(() => {
+    fetch(`/api/admin/patients/${patientId}/profile`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setProfile(d); setLoading(false); });
+  }, [patientId]);
+
+  async function patchProfile(updates: Record<string, unknown>) {
+    const r = await fetch(`/api/admin/patients/${patientId}/profile`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    if (r.ok) setProfile(prev => prev ? { ...prev, ...(updates as Partial<PatientProfile>) } : prev);
+    return r.ok;
+  }
+
+  async function addTag() {
+    if (!tagInput.trim() || !profile) return;
+    const newTags = [...(profile.tags || []), tagInput.trim()];
+    setSavingTag(true);
+    await patchProfile({ tags: newTags });
+    setTagInput(''); setSavingTag(false);
+  }
+
+  async function removeTag(tag: string) {
+    if (!profile) return;
+    await patchProfile({ tags: profile.tags.filter(t => t !== tag) });
+  }
+
+  async function toggleVip() {
+    if (!profile) return;
+    setSavingVip(true);
+    await patchProfile({ is_vip: !profile.is_vip });
+    setSavingVip(false);
+  }
+
+  async function saveRecall() {
+    await patchProfile({ recall_interval_months: recallVal });
+    setEditRecall(false);
+  }
+
+  if (loading) return <div className="h-24 bg-gray-900 border border-gray-800 rounded-xl animate-pulse" />;
+  if (!profile) return null;
+
+  const recallOverdue = profile.next_recall_due && profile.next_recall_due < new Date().toISOString().slice(0, 10);
+
+  return (
+    <div className="space-y-3">
+      {/* LTV + VIP row */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+            <TrendingUp size={12} className="text-violet-400" /> Valor del paciente
+          </h3>
+          <button
+            onClick={toggleVip}
+            disabled={savingVip}
+            title={profile.is_vip ? 'Quitar VIP' : 'Marcar como VIP'}
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-colors ${
+              profile.is_vip
+                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
+                : 'bg-gray-800 text-gray-500 border-gray-700 hover:text-amber-400 hover:border-amber-500/30'
+            }`}
+          >
+            <Star size={11} fill={profile.is_vip ? 'currentColor' : 'none'} />
+            VIP
+          </button>
+        </div>
+        <p className="text-2xl font-bold text-white">{fmtAmount(profile.ltv)}</p>
+        <p className="text-xs text-gray-500 mt-0.5">Total pagado históricamente</p>
+        {profile.nps_total > 0 && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-800">
+            <span className={`text-lg font-bold ${npsColor(profile.nps_avg ?? 0)}`}>
+              {'★'.repeat(Math.round(profile.nps_avg ?? 0))}{'☆'.repeat(5 - Math.round(profile.nps_avg ?? 0))}
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-white">{profile.nps_avg}/5</p>
+              <p className="text-[11px] text-gray-500">{profile.nps_total} evaluación{profile.nps_total !== 1 ? 'es' : ''}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Tags */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Etiquetas</h3>
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {(profile.tags || []).map(tag => (
+            <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-500/10 text-violet-300 border border-violet-500/20 rounded-full text-xs">
+              {tag}
+              <button onClick={() => removeTag(tag)} className="hover:text-red-400 transition-colors"><X size={10} /></button>
+            </span>
+          ))}
+          {(profile.tags || []).length === 0 && <p className="text-xs text-gray-600">Sin etiquetas</p>}
+        </div>
+        <div className="flex gap-1.5">
+          <input
+            value={tagInput}
+            onChange={e => setTagInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addTag()}
+            placeholder="Nueva etiqueta…"
+            className="flex-1 px-2 py-1 bg-gray-800 border border-gray-700 rounded-lg text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+          />
+          <button onClick={addTag} disabled={savingTag || !tagInput.trim()}
+            className="px-2 py-1 bg-violet-600/30 hover:bg-violet-600/50 text-violet-300 rounded-lg text-xs disabled:opacity-40 transition-colors">
+            <Plus size={12} />
+          </button>
+        </div>
+      </div>
+
+      {/* Recall */}
+      <div className={`bg-gray-900 border rounded-xl p-4 ${recallOverdue ? 'border-amber-500/30' : 'border-gray-800'}`}>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+            <RotateCcw size={12} className={recallOverdue ? 'text-amber-400' : 'text-violet-400'} /> Recall
+          </h3>
+          <button onClick={() => { setEditRecall(v => !v); setRecallVal(profile.recall_interval_months); }}
+            className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+            {editRecall ? 'Cancelar' : 'Cambiar'}
+          </button>
+        </div>
+        {editRecall ? (
+          <div className="flex gap-2 items-center">
+            <select value={recallVal} onChange={e => setRecallVal(Number(e.target.value))}
+              className="flex-1 px-2 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-xs text-white focus:outline-none">
+              {[1,2,3,4,6,12].map(m => <option key={m} value={m}>{m} {m === 1 ? 'mes' : 'meses'}</option>)}
+            </select>
+            <button onClick={saveRecall} className="px-2.5 py-1.5 bg-violet-600 hover:bg-violet-500 text-white text-xs rounded-lg transition-colors">
+              <Save size={12} />
+            </button>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-white">Cada {profile.recall_interval_months} meses</p>
+            {profile.next_recall_due && (
+              <p className={`text-xs mt-0.5 ${recallOverdue ? 'text-amber-400 font-medium' : 'text-gray-500'}`}>
+                {recallOverdue ? '⚠ Vencido · ' : 'Próximo: '}
+                {fmtDate(profile.next_recall_due)}
+              </p>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Insurance */}
+      {(profile.insurance_company || profile.insurance_policy) && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+            <Shield size={12} className="text-violet-400" /> Seguro médico
+          </h3>
+          {profile.insurance_company && <p className="text-sm text-white">{profile.insurance_company}</p>}
+          {profile.insurance_policy  && <p className="text-xs text-gray-400">Póliza: {profile.insurance_policy}</p>}
+          {profile.insurance_expiry  && <p className="text-xs text-gray-500">Vence: {fmtDate(profile.insurance_expiry)}</p>}
+        </div>
+      )}
+
+      {/* WhatsApp quick action */}
+      {phone && (
+        <a
+          href={`https://wa.me/${phone.replace(/\D/g, '')}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-sm font-medium transition-colors"
+        >
+          <MessageSquare size={15} />
+          Enviar WhatsApp
+          <ExternalLink size={12} className="opacity-60" />
+        </a>
+      )}
+    </div>
+  );
+}
+
+/* ── Main page component ── */
+type TabKey = 'consultas' | 'cobros' | 'presupuestos' | 'odontograma' | 'notas' | 'recordatorios';
+
 function PatientDetailPage() {
-  const { id }      = useParams<{ id: string }>();
-  const router      = useRouter();
+  const { id }       = useParams<{ id: string }>();
+  const router       = useRouter();
   const searchParams = useSearchParams();
 
-  const initialTab = (searchParams.get('tab') as 'consultas' | 'cobros' | 'presupuestos' | 'odontograma' | null) ?? 'consultas';
-  const [tab, setTab] = useState<'consultas' | 'cobros' | 'presupuestos' | 'odontograma'>(initialTab);
+  const initialTab = (searchParams.get('tab') as TabKey | null) ?? 'consultas';
+  const [tab, setTab] = useState<TabKey>(initialTab);
 
-  const [patient, setPatient]   = useState<Patient | null>(null);
-  const [records, setRecords]   = useState<ClinicalRecord[]>([]);
-  const [total,   setTotal]     = useState(0);
-  const [page,    setPage]      = useState(1);
-  const [loading, setLoading]   = useState(true);
+  const [patient,    setPatient]    = useState<Patient | null>(null);
+  const [records,    setRecords]    = useState<ClinicalRecord[]>([]);
+  const [total,      setTotal]      = useState(0);
+  const [page,       setPage]       = useState(1);
+  const [loading,    setLoading]    = useState(true);
   const [recLoading, setRecLoading] = useState(true);
 
-  // CRM state
-  const [balance,       setBalance]       = useState<PatientBalance | null>(null);
-  const [payments,      setPayments]      = useState<Payment[]>([]);
-  const [plans,         setPlans]         = useState<TreatmentPlan[]>([]);
-  const [paymentPlans,  setPaymentPlans]  = useState<PaymentPlan[]>([]);
+  const [balance,      setBalance]      = useState<PatientBalance | null>(null);
+  const [payments,     setPayments]     = useState<Payment[]>([]);
+  const [plans,        setPlans]        = useState<TreatmentPlan[]>([]);
+  const [paymentPlans, setPaymentPlans] = useState<PaymentPlan[]>([]);
   const [debtReminders, setDebtReminders] = useState<DebtReminder[]>([]);
   const [expandedPlan,  setExpandedPlan]  = useState<string | null>(null);
   const [planInstalls,  setPlanInstalls]  = useState<Record<string, PaymentInstallment[]>>({});
   const [showNewPlan,   setShowNewPlan]   = useState(false);
   const [crmLoading,    setCrmLoading]    = useState(false);
 
-  // New payment plan form
   const [ppForm, setPpForm] = useState({
     total_amount: '', installment_amount: '', frequency: 'monthly',
     installments_total: '', start_date: '', notes: '',
@@ -251,11 +691,10 @@ function PatientDetailPage() {
   const [ppSaving, setPpSaving] = useState(false);
   const [ppError,  setPpError]  = useState('');
 
-  // Patient edit state
   const [showAddAllergy, setShowAddAllergy] = useState(false);
   const [allergyForm, setAllergyForm] = useState({ allergen: '', severity: 'leve', reaction: '' });
   const [savingAllergy, setSavingAllergy] = useState(false);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing]   = useState(false);
   const [editForm, setEditForm] = useState({
     full_name: '', dni: '', birth_date: '', gender: '', phone: '', email: '',
     address: '', blood_type: 'desconocido', emergency_contact_name: '', emergency_contact_phone: '',
@@ -291,7 +730,6 @@ function PatientDetailPage() {
     const [payData, planData, ppData, balData, remData] = await Promise.all([
       payRes.json(), planRes.json(), ppRes.json(), balRes.json(), remRes.json(),
     ]);
-    // Balance comes from SQL RPC (includes installments via migration 045)
     setBalance({
       total_debt:       Number(balData.total_debt ?? 0),
       overdue_debt:     Number(balData.overdue_debt ?? 0),
@@ -308,20 +746,17 @@ function PatientDetailPage() {
     if (planInstalls[planId]) { setExpandedPlan(expandedPlan === planId ? null : planId); return; }
     const r = await fetch(`/api/admin/payment-plans?plan_id=${planId}`);
     const d = await r.json();
-    const installs = d.payment_installments || [];
-    setPlanInstalls(prev => ({ ...prev, [planId]: installs }));
+    setPlanInstalls(prev => ({ ...prev, [planId]: d.payment_installments || [] }));
     setExpandedPlan(planId);
   }
 
   async function markInstallmentPaid(installmentId: string) {
     await fetch('/api/admin/payment-plans', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ installment_id: installmentId }),
     });
-    // Refresh installments for the expanded plan
     if (expandedPlan) {
-      setPlanInstalls(prev => ({ ...prev, [expandedPlan]: [] })); // force reload
+      setPlanInstalls(prev => ({ ...prev, [expandedPlan]: [] }));
       const r = await fetch(`/api/admin/payment-plans?plan_id=${expandedPlan}`);
       const d = await r.json();
       setPlanInstalls(prev => ({ ...prev, [expandedPlan]: d.payment_installments || [] }));
@@ -335,8 +770,7 @@ function PatientDetailPage() {
     }
     setPpSaving(true); setPpError('');
     const r = await fetch('/api/admin/payment-plans', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ patient_id: id, ...ppForm, total_amount: Number(ppForm.total_amount), installment_amount: Number(ppForm.installment_amount), installments_total: Number(ppForm.installments_total) }),
     });
     setPpSaving(false);
@@ -359,8 +793,7 @@ function PatientDetailPage() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ patient_id: id, ...allergyForm }),
     });
-    setSavingAllergy(false);
-    setShowAddAllergy(false);
+    setSavingAllergy(false); setShowAddAllergy(false);
     setAllergyForm({ allergen: '', severity: 'leve', reaction: '' });
     loadPatient();
   }
@@ -373,19 +806,14 @@ function PatientDetailPage() {
   function openEdit() {
     if (!patient) return;
     setEditForm({
-      full_name: patient.full_name,
-      dni: patient.dni,
-      birth_date: patient.birth_date || '',
-      gender: patient.gender || '',
-      phone: patient.phone || '',
-      email: patient.email || '',
-      address: patient.address || '',
-      blood_type: patient.blood_type || 'desconocido',
+      full_name: patient.full_name, dni: patient.dni,
+      birth_date: patient.birth_date || '', gender: patient.gender || '',
+      phone: patient.phone || '', email: patient.email || '',
+      address: patient.address || '', blood_type: patient.blood_type || 'desconocido',
       emergency_contact_name: patient.emergency_contact_name || '',
       emergency_contact_phone: patient.emergency_contact_phone || '',
     });
-    setEditErr(null);
-    setEditing(true);
+    setEditErr(null); setEditing(true);
   }
 
   async function saveEdit() {
@@ -394,21 +822,18 @@ function PatientDetailPage() {
     setSavingEdit(true); setEditErr(null);
     try {
       const res = await fetch('/api/admin/patients', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...editForm }),
       });
       if (!res.ok) { const d = await res.json(); setEditErr(d.error || 'Error al guardar'); return; }
-      setEditing(false);
-      await loadPatient();
+      setEditing(false); await loadPatient();
     } catch { setEditErr('Error de conexión'); }
     finally { setSavingEdit(false); }
   }
 
   async function markPaid(paymentId: string) {
     await fetch('/api/admin/payments', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: paymentId, status: 'paid' }),
     });
     loadCrm();
@@ -423,6 +848,15 @@ function PatientDetailPage() {
 
   const severeAllergies = patient.patient_allergies.filter(a => a.severity === 'anafilaxis' || a.severity === 'severa');
 
+  const TABS: { key: TabKey; label: string; icon: React.ElementType }[] = [
+    { key: 'consultas',      label: 'Consultas',      icon: Stethoscope },
+    { key: 'cobros',         label: 'Cobros',         icon: DollarSign },
+    { key: 'presupuestos',   label: 'Presupuestos',   icon: ClipboardList },
+    { key: 'odontograma',    label: 'Odontograma',    icon: Scan },
+    { key: 'notas',          label: 'Notas',          icon: StickyNote },
+    { key: 'recordatorios',  label: 'Recordatorios',  icon: AlarmClock },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -430,21 +864,22 @@ function PatientDetailPage() {
         <button onClick={() => router.push('/admin/patients')} className="text-gray-400 hover:text-white transition-colors">
           <ArrowLeft size={20} />
         </button>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-white">{patient.full_name}</h1>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-white truncate">{patient.full_name}</h1>
+            {patient.status === 'lead' && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex-shrink-0">Lead</span>
+            )}
+          </div>
           <p className="text-xs text-gray-400">DNI: {patient.dni}</p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={openEdit}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg border border-gray-700 transition-colors"
-          >
+          <button onClick={openEdit}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm font-medium rounded-lg border border-gray-700 transition-colors">
             <Pencil size={14} /> Editar
           </button>
-          <button
-            onClick={() => router.push(`/admin/patients/${id}/records/new`)}
-            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-lg transition-colors"
-          >
+          <button onClick={() => router.push(`/admin/patients/${id}/records/new`)}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-lg transition-colors">
             <Plus size={16} /> Nueva consulta
           </button>
         </div>
@@ -528,7 +963,7 @@ function PatientDetailPage() {
               {(patient.emergency_contact_name || patient.emergency_contact_phone) && (
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-1">
                   <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Contacto de emergencia</p>
-                  {patient.emergency_contact_name && <p className="text-sm text-white">{patient.emergency_contact_name}</p>}
+                  {patient.emergency_contact_name  && <p className="text-sm text-white">{patient.emergency_contact_name}</p>}
                   {patient.emergency_contact_phone && <p className="text-sm text-gray-400 flex items-center gap-1"><Phone size={12} /> {patient.emergency_contact_phone}</p>}
                 </div>
               )}
@@ -539,9 +974,7 @@ function PatientDetailPage() {
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-white flex items-center gap-2"><Heart size={14} className="text-red-400" /> Alergias</h2>
-              <button onClick={() => setShowAddAllergy(v => !v)} className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1">
-                <Plus size={12} /> Agregar
-              </button>
+              <button onClick={() => setShowAddAllergy(v => !v)} className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"><Plus size={12} /> Agregar</button>
             </div>
             {showAddAllergy && (
               <div className="space-y-2">
@@ -576,31 +1009,28 @@ function PatientDetailPage() {
               ))
             }
           </div>
+
+          {/* Profile extras: LTV, Tags, Recall, Insurance, WhatsApp */}
+          <ProfileExtras patientId={id} phone={patient.phone} />
         </div>
 
         {/* Right: tabbed panel */}
         <div className="lg:col-span-2 space-y-4">
-
-          {/* Tab switcher */}
-          <div className="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit">
-            {([
-              { key: 'consultas',    label: 'Consultas',    icon: Stethoscope },
-              { key: 'cobros',       label: 'Cobros',       icon: DollarSign },
-              { key: 'presupuestos', label: 'Presupuestos', icon: ClipboardList },
-              { key: 'odontograma',  label: 'Odontograma',  icon: Scan },
-            ] as const).map(({ key, label, icon: Icon }) => (
-              <button
-                key={key}
-                onClick={() => setTab(key)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                  tab === key
-                    ? 'bg-violet-600 text-white'
-                    : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'
-                }`}
-              >
-                <Icon size={13} /> {label}
-              </button>
-            ))}
+          {/* Tab switcher — scrollable on mobile */}
+          <div className="overflow-x-auto pb-1">
+            <div className="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1 w-fit min-w-full sm:min-w-0">
+              {TABS.map(({ key, label, icon: Icon }) => (
+                <button
+                  key={key}
+                  onClick={() => setTab(key)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
+                    tab === key ? 'bg-violet-600 text-white' : 'text-gray-400 hover:text-gray-100 hover:bg-gray-800'
+                  }`}
+                >
+                  <Icon size={13} /> {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* ── Tab: Consultas ── */}
@@ -612,7 +1042,6 @@ function PatientDetailPage() {
                   <span className="text-xs text-gray-400 font-normal">({total} total)</span>
                 </p>
               </div>
-
               {recLoading ? (
                 <div className="flex justify-center py-8"><RefreshCw size={20} className="text-gray-500 animate-spin" /></div>
               ) : records.length === 0 ? (
@@ -626,20 +1055,14 @@ function PatientDetailPage() {
                 </div>
               ) : (
                 <>
-                  <div className="space-y-3">
-                    {records.map(r => <ConsultCard key={r.id} r={r} />)}
-                  </div>
+                  <div className="space-y-3">{records.map(r => <ConsultCard key={r.id} r={r} />)}</div>
                   {total > 10 && (
                     <div className="flex items-center justify-center gap-3">
                       <button disabled={page === 1} onClick={() => setPage(p => p - 1)}
-                        className="px-3 py-1.5 text-xs text-gray-400 border border-gray-700 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors">
-                        ← Anterior
-                      </button>
+                        className="px-3 py-1.5 text-xs text-gray-400 border border-gray-700 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors">← Anterior</button>
                       <span className="text-xs text-gray-400">Página {page} de {Math.ceil(total / 10)}</span>
                       <button disabled={page >= Math.ceil(total / 10)} onClick={() => setPage(p => p + 1)}
-                        className="px-3 py-1.5 text-xs text-gray-400 border border-gray-700 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors">
-                        Siguiente →
-                      </button>
+                        className="px-3 py-1.5 text-xs text-gray-400 border border-gray-700 rounded-lg hover:bg-gray-800 disabled:opacity-40 transition-colors">Siguiente →</button>
                     </div>
                   )}
                 </>
@@ -650,7 +1073,6 @@ function PatientDetailPage() {
           {/* ── Tab: Cobros ── */}
           {tab === 'cobros' && (
             <div className="space-y-4">
-              {/* Balance summary */}
               {balance && (
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center">
@@ -662,19 +1084,14 @@ function PatientDetailPage() {
                     <p className={`text-lg font-bold ${balance.overdue_debt > 0 ? 'text-red-400' : 'text-white'}`}>{fmtAmount(balance.overdue_debt)}</p>
                   </div>
                   <div className="bg-gray-800 border border-gray-700 rounded-xl p-3 text-center">
-                    <div className="flex items-center justify-center gap-1 mb-1">
-                      <Clock size={11} className="text-gray-400" />
-                      <p className="text-xs text-gray-400">Pendientes</p>
-                    </div>
+                    <div className="flex items-center justify-center gap-1 mb-1"><Clock size={11} className="text-gray-400" /><p className="text-xs text-gray-400">Pendientes</p></div>
                     <p className="text-lg font-bold text-white">{balance.pending_payments}</p>
                   </div>
                 </div>
               )}
 
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-white flex items-center gap-2">
-                  <DollarSign size={14} className="text-violet-400" /> Historial de cobros
-                </p>
+                <p className="text-sm font-semibold text-white flex items-center gap-2"><DollarSign size={14} className="text-violet-400" /> Historial de cobros</p>
                 <QuickPaymentForm patientId={id} onSaved={loadCrm} />
               </div>
 
@@ -703,11 +1120,8 @@ function PatientDetailPage() {
                         {p.notes && <p className="text-xs text-gray-500 truncate mt-0.5">{p.notes}</p>}
                       </div>
                       {(p.status === 'pending' || p.status === 'partial') && (
-                        <button
-                          onClick={() => markPaid(p.id)}
-                          title="Marcar como pagado"
-                          className="ml-3 p-1.5 rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 transition-colors flex-shrink-0"
-                        >
+                        <button onClick={() => markPaid(p.id)} title="Marcar como pagado"
+                          className="ml-3 p-1.5 rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 transition-colors flex-shrink-0">
                           <CheckCircle2 size={14} />
                         </button>
                       )}
@@ -715,161 +1129,139 @@ function PatientDetailPage() {
                   ))}
                 </div>
               )}
-            </div>
-          )}
 
-          {/* ── Planes de cuotas (dentro de tab Cobros) ── */}
-          {tab === 'cobros' && (
-            <div className="space-y-3 pt-2 border-t border-gray-800">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-white flex items-center gap-2">
-                  <CreditCard size={14} className="text-violet-400" /> Planes de cuotas
-                  {paymentPlans.length > 0 && <span className="text-xs text-gray-400 font-normal">({paymentPlans.length})</span>}
-                </p>
-                <button
-                  onClick={() => setShowNewPlan(v => !v)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600/20 hover:bg-violet-600/40 text-violet-300 border border-violet-500/30 rounded-lg text-xs font-medium transition-colors"
-                >
-                  <Plus size={12} /> {showNewPlan ? 'Cancelar' : 'Nuevo plan'}
-                </button>
-              </div>
-
-              {/* New payment plan form */}
-              {showNewPlan && (
-                <div className="bg-gray-800 border border-violet-500/30 rounded-xl p-4 space-y-3">
-                  <p className="text-xs font-semibold text-violet-300">Configurar plan de cuotas</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Total a financiar (S/)*</label>
-                      <input type="number" min="0" step="0.01" value={ppForm.total_amount} onChange={e => setPpForm(f => ({ ...f, total_amount: e.target.value }))}
-                        placeholder="0.00" className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Cuota (S/)*</label>
-                      <input type="number" min="0" step="0.01" value={ppForm.installment_amount} onChange={e => setPpForm(f => ({ ...f, installment_amount: e.target.value }))}
-                        placeholder="0.00" className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Frecuencia*</label>
-                      <select value={ppForm.frequency} onChange={e => setPpForm(f => ({ ...f, frequency: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50">
-                        <option value="weekly">Semanal</option>
-                        <option value="biweekly">Quincenal</option>
-                        <option value="monthly">Mensual</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-400 mb-1">Nro. cuotas*</label>
-                      <input type="number" min="1" max="60" value={ppForm.installments_total} onChange={e => setPpForm(f => ({ ...f, installments_total: e.target.value }))}
-                        placeholder="12" className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="block text-xs text-gray-400 mb-1">Fecha de inicio*</label>
-                      <input type="date" value={ppForm.start_date} onChange={e => setPpForm(f => ({ ...f, start_date: e.target.value }))}
-                        className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
-                    </div>
-                  </div>
-                  {ppError && <p className="text-xs text-red-400">{ppError}</p>}
-                  <button onClick={savePaymentPlan} disabled={ppSaving}
-                    className="w-full py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
-                    {ppSaving ? 'Guardando...' : 'Crear plan de cuotas'}
+              {/* Payment plans */}
+              <div className="space-y-3 pt-2 border-t border-gray-800">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-white flex items-center gap-2">
+                    <CreditCard size={14} className="text-violet-400" /> Planes de cuotas
+                    {paymentPlans.length > 0 && <span className="text-xs text-gray-400 font-normal">({paymentPlans.length})</span>}
+                  </p>
+                  <button onClick={() => setShowNewPlan(v => !v)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600/20 hover:bg-violet-600/40 text-violet-300 border border-violet-500/30 rounded-lg text-xs font-medium transition-colors">
+                    <Plus size={12} /> {showNewPlan ? 'Cancelar' : 'Nuevo plan'}
                   </button>
                 </div>
-              )}
 
-              {/* Plans list */}
-              {paymentPlans.length === 0 && !showNewPlan && (
-                <p className="text-xs text-gray-500 text-center py-3">Sin planes de cuotas</p>
-              )}
-              {paymentPlans.map(pp => (
-                <div key={pp.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => loadInstallments(pp.id)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-800/50 transition-colors text-left"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-white">
-                        {fmtAmount(pp.installment_amount)} · {pp.frequency === 'weekly' ? 'semanal' : pp.frequency === 'biweekly' ? 'quincenal' : 'mensual'}
-                        <span className="text-gray-400 font-normal ml-1">({pp.installments_paid}/{pp.installments_total} cuotas)</span>
-                      </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
-                        Total: {fmtAmount(pp.total_amount)}
-                        {pp.next_due_date ? ` · próximo vencimiento: ${fmtDate(pp.next_due_date)}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${pp.status === 'active' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' : pp.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
-                        {pp.status === 'active' ? 'Activo' : pp.status === 'completed' ? 'Completado' : pp.status}
-                      </span>
-                      {expandedPlan === pp.id ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
-                    </div>
-                  </button>
-
-                  {expandedPlan === pp.id && (
-                    <div className="border-t border-gray-800 divide-y divide-gray-800/50">
-                      {(planInstalls[pp.id] || []).map(inst => (
-                        <div key={inst.id} className={`flex items-center justify-between px-4 py-2.5 ${inst.status === 'overdue' || (inst.status === 'pending' && new Date(inst.due_date) < new Date()) ? 'bg-red-500/5' : ''}`}>
-                          <div>
-                            <span className="text-xs font-medium text-gray-300">Cuota {inst.installment_num}</span>
-                            <span className={`text-xs ml-2 ${new Date(inst.due_date) < new Date() && inst.status === 'pending' ? 'text-red-400' : 'text-gray-500'}`}>
-                              vence {fmtDate(inst.due_date)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-white">{fmtAmount(inst.amount)}</span>
-                            {inst.status === 'paid'
-                              ? <CheckCircle2 size={14} className="text-emerald-400" />
-                              : (
-                                <button
-                                  onClick={() => markInstallmentPaid(inst.id)}
-                                  className="p-1 rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 transition-colors"
-                                >
-                                  <CheckCircle2 size={13} />
-                                </button>
-                              )
-                            }
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* ── Recordatorios de cobranza (dentro de tab Cobros) ── */}
-          {tab === 'cobros' && debtReminders.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-gray-800">
-              <p className="text-sm font-semibold text-white flex items-center gap-2">
-                <Bell size={14} className="text-violet-400" /> Recordatorios enviados
-                <span className="text-xs text-gray-400 font-normal">({debtReminders.length})</span>
-              </p>
-              <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-800">
-                {debtReminders.map(r => (
-                  <div key={r.id} className="flex items-center justify-between px-4 py-2.5">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${
-                          r.status === 'sent'    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                          r.status === 'failed'  ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                          'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                        }`}>
-                          {r.status === 'sent' ? 'Enviado' : r.status === 'failed' ? 'Fallido' : 'Omitido'}
-                        </span>
-                        {r.amount_reminded != null && (
-                          <span className="text-xs text-gray-300">{fmtAmount(r.amount_reminded)}</span>
-                        )}
+                {showNewPlan && (
+                  <div className="bg-gray-800 border border-violet-500/30 rounded-xl p-4 space-y-3">
+                    <p className="text-xs font-semibold text-violet-300">Configurar plan de cuotas</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Total a financiar (S/)*</label>
+                        <input type="number" min="0" step="0.01" value={ppForm.total_amount} onChange={e => setPpForm(f => ({ ...f, total_amount: e.target.value }))}
+                          placeholder="0.00" className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        SofIA · {new Date(r.sent_at).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                      {r.error_message && <p className="text-xs text-red-400 mt-0.5">{r.error_message}</p>}
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Cuota (S/)*</label>
+                        <input type="number" min="0" step="0.01" value={ppForm.installment_amount} onChange={e => setPpForm(f => ({ ...f, installment_amount: e.target.value }))}
+                          placeholder="0.00" className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Frecuencia*</label>
+                        <select value={ppForm.frequency} onChange={e => setPpForm(f => ({ ...f, frequency: e.target.value }))}
+                          className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50">
+                          <option value="weekly">Semanal</option>
+                          <option value="biweekly">Quincenal</option>
+                          <option value="monthly">Mensual</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-400 mb-1">Nro. cuotas*</label>
+                        <input type="number" min="1" max="60" value={ppForm.installments_total} onChange={e => setPpForm(f => ({ ...f, installments_total: e.target.value }))}
+                          placeholder="12" className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-xs text-gray-400 mb-1">Fecha de inicio*</label>
+                        <input type="date" value={ppForm.start_date} onChange={e => setPpForm(f => ({ ...f, start_date: e.target.value }))}
+                          className="w-full px-2.5 py-1.5 bg-gray-900 border border-gray-700 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50" />
+                      </div>
                     </div>
-                    <Bell size={14} className="text-gray-600 flex-shrink-0" />
+                    {ppError && <p className="text-xs text-red-400">{ppError}</p>}
+                    <button onClick={savePaymentPlan} disabled={ppSaving}
+                      className="w-full py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">
+                      {ppSaving ? 'Guardando...' : 'Crear plan de cuotas'}
+                    </button>
+                  </div>
+                )}
+
+                {paymentPlans.length === 0 && !showNewPlan && (
+                  <p className="text-xs text-gray-500 text-center py-3">Sin planes de cuotas</p>
+                )}
+                {paymentPlans.map(pp => (
+                  <div key={pp.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                    <button onClick={() => loadInstallments(pp.id)}
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-800/50 transition-colors text-left">
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {fmtAmount(pp.installment_amount)} · {pp.frequency === 'weekly' ? 'semanal' : pp.frequency === 'biweekly' ? 'quincenal' : 'mensual'}
+                          <span className="text-gray-400 font-normal ml-1">({pp.installments_paid}/{pp.installments_total} cuotas)</span>
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          Total: {fmtAmount(pp.total_amount)}
+                          {pp.next_due_date ? ` · próximo: ${fmtDate(pp.next_due_date)}` : ''}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${pp.status === 'active' ? 'bg-violet-500/10 text-violet-400 border-violet-500/20' : pp.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                          {pp.status === 'active' ? 'Activo' : pp.status === 'completed' ? 'Completado' : pp.status}
+                        </span>
+                        {expandedPlan === pp.id ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />}
+                      </div>
+                    </button>
+                    {expandedPlan === pp.id && (
+                      <div className="border-t border-gray-800 divide-y divide-gray-800/50">
+                        {(planInstalls[pp.id] || []).map(inst => (
+                          <div key={inst.id} className={`flex items-center justify-between px-4 py-2.5 ${inst.status === 'pending' && new Date(inst.due_date) < new Date() ? 'bg-red-500/5' : ''}`}>
+                            <div>
+                              <span className="text-xs font-medium text-gray-300">Cuota {inst.installment_num}</span>
+                              <span className={`text-xs ml-2 ${new Date(inst.due_date) < new Date() && inst.status === 'pending' ? 'text-red-400' : 'text-gray-500'}`}>
+                                vence {fmtDate(inst.due_date)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-white">{fmtAmount(inst.amount)}</span>
+                              {inst.status === 'paid'
+                                ? <CheckCircle2 size={14} className="text-emerald-400" />
+                                : <button onClick={() => markInstallmentPaid(inst.id)} className="p-1 rounded-md bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-300 border border-emerald-500/30 transition-colors"><CheckCircle2 size={13} /></button>
+                              }
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+
+              {/* Debt reminders */}
+              {debtReminders.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-gray-800">
+                  <p className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Bell size={14} className="text-violet-400" /> Recordatorios de cobro
+                    <span className="text-xs text-gray-400 font-normal">({debtReminders.length})</span>
+                  </p>
+                  <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden divide-y divide-gray-800">
+                    {debtReminders.map(r => (
+                      <div key={r.id} className="flex items-center justify-between px-4 py-2.5">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex text-[10px] font-medium px-1.5 py-0.5 rounded-full border ${r.status === 'sent' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : r.status === 'failed' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                              {r.status === 'sent' ? 'Enviado' : r.status === 'failed' ? 'Fallido' : 'Omitido'}
+                            </span>
+                            {r.amount_reminded != null && <span className="text-xs text-gray-300">{fmtAmount(r.amount_reminded)}</span>}
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            SofIA · {new Date(r.sent_at).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                          {r.error_message && <p className="text-xs text-red-400 mt-0.5">{r.error_message}</p>}
+                        </div>
+                        <Bell size={14} className="text-gray-600 flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -877,27 +1269,20 @@ function PatientDetailPage() {
           {tab === 'presupuestos' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-white flex items-center gap-2">
-                  <ClipboardList size={14} className="text-violet-400" /> Planes de tratamiento
-                </p>
-                <button
-                  onClick={() => router.push(`/admin/treatment-plans/new?patient_id=${id}&patient_name=${encodeURIComponent(patient.full_name)}`)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600/20 hover:bg-violet-600/40 text-violet-300 border border-violet-500/30 rounded-lg text-xs font-medium transition-colors"
-                >
+                <p className="text-sm font-semibold text-white flex items-center gap-2"><ClipboardList size={14} className="text-violet-400" /> Planes de tratamiento</p>
+                <button onClick={() => router.push(`/admin/treatment-plans/new?patient_id=${id}&patient_name=${encodeURIComponent(patient.full_name)}`)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600/20 hover:bg-violet-600/40 text-violet-300 border border-violet-500/30 rounded-lg text-xs font-medium transition-colors">
                   <Plus size={12} /> Nuevo presupuesto
                 </button>
               </div>
-
               {crmLoading ? (
                 <div className="flex justify-center py-8"><RefreshCw size={20} className="text-gray-500 animate-spin" /></div>
               ) : plans.length === 0 ? (
                 <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
                   <ClipboardList size={28} className="mx-auto text-gray-600 mb-2" />
                   <p className="text-gray-400 text-sm">Sin planes de tratamiento</p>
-                  <button
-                    onClick={() => router.push(`/admin/treatment-plans/new?patient_id=${id}&patient_name=${encodeURIComponent(patient.full_name)}`)}
-                    className="mt-3 text-xs px-4 py-2 bg-violet-600/20 hover:bg-violet-600/40 text-violet-300 border border-violet-500/30 rounded-lg transition-colors"
-                  >
+                  <button onClick={() => router.push(`/admin/treatment-plans/new?patient_id=${id}&patient_name=${encodeURIComponent(patient.full_name)}`)}
+                    className="mt-3 text-xs px-4 py-2 bg-violet-600/20 hover:bg-violet-600/40 text-violet-300 border border-violet-500/30 rounded-lg transition-colors">
                     Crear primer presupuesto
                   </button>
                 </div>
@@ -925,10 +1310,29 @@ function PatientDetailPage() {
           )}
 
           {/* ── Tab: Odontograma ── */}
-          {tab === 'odontograma' && (
-            <Odontogram patientId={id} clinicId={patient.clinic_id} />
+          {tab === 'odontograma' && <Odontogram patientId={id} clinicId={patient.clinic_id} />}
+
+          {/* ── Tab: Notas internas ── */}
+          {tab === 'notas' && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-white flex items-center gap-2">
+                <StickyNote size={14} className="text-violet-400" /> Notas internas del staff
+              </p>
+              <p className="text-xs text-gray-500">Visibles solo para el equipo de la clínica, no para el paciente.</p>
+              <NotesTab patientId={id} />
+            </div>
           )}
 
+          {/* ── Tab: Recordatorios ── */}
+          {tab === 'recordatorios' && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-white flex items-center gap-2">
+                <AlarmClock size={14} className="text-violet-400" /> Recordatorios del staff
+              </p>
+              <p className="text-xs text-gray-500">Tareas pendientes sobre este paciente para el equipo.</p>
+              <RemindersTab patientId={id} />
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart2, MessageSquare, Calendar, AlertTriangle, Clock, RefreshCw, TrendingUp, Users } from 'lucide-react';
+import { BarChart2, MessageSquare, Calendar, AlertTriangle, Clock, RefreshCw, TrendingUp, Users, DollarSign, CreditCard, Bell, AlertCircle, Star, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, Cell, PieChart, Pie, Legend,
@@ -72,8 +72,37 @@ const INTENT_COLORS: Record<string, string> = {
 };
 const PIE_FALLBACK = ['#7c3aed', '#059669', '#2563eb', '#d97706', '#dc2626', '#6b7280'];
 
+interface DebtSummary {
+  patients_with_debt: number;
+  patients_overdue:   number;
+  total_debt:         number;
+  total_overdue:      number;
+}
+
+interface ReminderStats {
+  sent_today:  number;
+  sent_7days:  number;
+  last_sent_at: string | null;
+}
+
+interface NpsStats {
+  total:       number;
+  avg_score:   number;
+  nps_score:   number;
+  promoters:   number;
+  passives:    number;
+  detractors:  number;
+}
+
+function fmt(n: number) {
+  return `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
 export default function MetricsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [debt,    setDebt]    = useState<DebtSummary | null>(null);
+  const [reminders, setReminders] = useState<ReminderStats | null>(null);
+  const [nps,     setNps]     = useState<NpsStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [days, setDays] = useState(30);
@@ -82,10 +111,18 @@ export default function MetricsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/metrics?days=${days}`, { cache: 'no-store' });
-      const data = await res.json();
+      const [mRes, dRes, rRes, npsRes] = await Promise.all([
+        fetch(`/api/admin/metrics?days=${days}`, { cache: 'no-store' }),
+        fetch('/api/admin/payments?summary=1', { cache: 'no-store' }),
+        fetch('/api/admin/debt-reminders', { cache: 'no-store' }),
+        fetch(`/api/admin/nps?days=${days}`, { cache: 'no-store' }),
+      ]);
+      const data = await mRes.json();
       if (data.error) throw new Error(data.error);
       setMetrics(data);
+      if (dRes.ok) setDebt(await dRes.json());
+      if (rRes.ok) setReminders(await rRes.json());
+      if (npsRes.ok) setNps(await npsRes.json());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error cargando métricas');
     } finally {
@@ -326,7 +363,7 @@ export default function MetricsPage() {
       )}
 
       {/* Bottom summary row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="bg-gray-900 rounded-xl border border-gray-800 p-4">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Conversión</p>
           <p className="text-2xl font-bold text-white">{metrics.conversion_rate}%</p>
@@ -346,6 +383,128 @@ export default function MetricsPage() {
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">Confirmadas</p>
           <p className="text-2xl font-bold text-white">{metrics.confirmed_appointments}</p>
           <p className="text-xs text-gray-500 mt-1">de {metrics.total_appointments} citas</p>
+        </div>
+      </div>
+
+      {/* ── NPS ────────────────────────────────────────────────────── */}
+      {nps && (
+        <div className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-4">
+            <Star size={15} className="text-yellow-400" /> Satisfacción de Pacientes (NPS)
+          </h2>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-5 lg:col-span-1">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">NPS Score</p>
+              <p className={`text-3xl font-bold ${nps.nps_score >= 50 ? 'text-green-400' : nps.nps_score >= 0 ? 'text-yellow-400' : 'text-red-400'}`}>
+                {nps.nps_score > 0 ? '+' : ''}{nps.nps_score}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                {nps.nps_score >= 50 ? 'Excelente' : nps.nps_score >= 0 ? 'Bueno' : 'Por mejorar'}
+              </p>
+            </div>
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Promedio</p>
+              <p className="text-3xl font-bold text-white">{nps.avg_score > 0 ? nps.avg_score.toFixed(1) : '—'}</p>
+              <p className="text-xs text-gray-500 mt-1">de 5 · {nps.total} respuestas</p>
+            </div>
+            <div className="bg-gray-900 rounded-xl border border-green-900/30 p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Promotores</p>
+                  <p className="text-3xl font-bold text-green-400">{nps.promoters}</p>
+                  <p className="text-xs text-gray-500 mt-1">puntuaron 4-5 ⭐</p>
+                </div>
+                <ThumbsUp size={18} className="text-green-400 opacity-60 mt-1" />
+              </div>
+            </div>
+            <div className="bg-gray-900 rounded-xl border border-red-900/30 p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">Detractores</p>
+                  <p className="text-3xl font-bold text-red-400">{nps.detractors}</p>
+                  <p className="text-xs text-gray-500 mt-1">puntuaron 1-2 ⭐</p>
+                </div>
+                <ThumbsDown size={18} className="text-red-400 opacity-60 mt-1" />
+              </div>
+            </div>
+          </div>
+          {/* NPS bar visualization */}
+          {nps.total > 0 && (
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Distribución de respuestas</p>
+              <div className="flex rounded-lg overflow-hidden h-4">
+                {nps.promoters > 0 && (
+                  <div
+                    className="bg-green-500 transition-all"
+                    style={{ width: `${(nps.promoters / nps.total) * 100}%` }}
+                    title={`Promotores: ${nps.promoters}`}
+                  />
+                )}
+                {nps.passives > 0 && (
+                  <div
+                    className="bg-yellow-500 transition-all"
+                    style={{ width: `${(nps.passives / nps.total) * 100}%` }}
+                    title={`Pasivos: ${nps.passives}`}
+                  />
+                )}
+                {nps.detractors > 0 && (
+                  <div
+                    className="bg-red-500 transition-all"
+                    style={{ width: `${(nps.detractors / nps.total) * 100}%` }}
+                    title={`Detractores: ${nps.detractors}`}
+                  />
+                )}
+              </div>
+              <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500 inline-block" /> Promotores {nps.total > 0 ? Math.round(nps.promoters / nps.total * 100) : 0}%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-500 inline-block" /><Minus size={10} className="inline" /> Pasivos {nps.total > 0 ? Math.round(nps.passives / nps.total * 100) : 0}%</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500 inline-block" /> Detractores {nps.total > 0 ? Math.round(nps.detractors / nps.total * 100) : 0}%</span>
+              </div>
+            </div>
+          )}
+          {nps.total === 0 && (
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-5 text-center text-gray-500 text-sm">
+              Aún no hay respuestas NPS en este período. Se enviarán automáticamente después de cada cita completada.
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Cobros ─────────────────────────────────────────────────── */}
+      <div className="mb-2">
+        <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-4">
+          <DollarSign size={15} className="text-amber-400" /> Cobros y deuda pendiente
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Deuda total"
+            value={debt ? fmt(debt.total_debt) : '—'}
+            sub={debt ? `${debt.patients_with_debt} pacientes` : undefined}
+            icon={DollarSign}
+            color="text-amber-400"
+          />
+          <StatCard
+            label="Deuda vencida"
+            value={debt ? fmt(debt.total_overdue) : '—'}
+            sub={debt ? `${debt.patients_overdue} pacientes vencidos` : undefined}
+            icon={AlertCircle}
+            color="text-red-400"
+            warn={(debt?.total_overdue ?? 0) > 0}
+          />
+          <StatCard
+            label="Con plan de cuotas"
+            value={debt?.patients_with_debt ?? 0}
+            sub="pacientes con deuda activa"
+            icon={CreditCard}
+            color="text-blue-400"
+          />
+          <StatCard
+            label="Recordatorios (7d)"
+            value={reminders?.sent_7days ?? 0}
+            sub={reminders?.sent_today ? `${reminders.sent_today} hoy` : 'ninguno hoy'}
+            icon={Bell}
+            color="text-violet-400"
+          />
         </div>
       </div>
     </div>

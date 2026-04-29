@@ -496,6 +496,66 @@ export function MonthlyReportPDF({ m }: { m: ReportMetrics }) {
           </View>
         </View>
 
+        {/* ── Cobros del mes ── */}
+        <View style={{ marginTop: 14, marginBottom: 4 }}>
+          <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#f1f5f9', marginBottom: 8 }}>
+            Cobros del mes
+          </Text>
+          <View style={S.kpiRow}>
+            <View style={{ ...S.kpiCard as object, borderColor: '#78350f' }}>
+              <Text style={{ ...S.kpiValueAmber as object }}>
+                {`S/ ${Number(m.revenue_month).toLocaleString('es-PE', { minimumFractionDigits: 0 })}`}
+              </Text>
+              <Text style={S.kpiLabel}>Cobrado{'\n'}este mes</Text>
+            </View>
+            <View style={{ ...S.kpiCard as object, borderColor: '#7c3aed' }}>
+              <Text style={{ ...S.kpiValue as object }}>
+                {`S/ ${Number(m.debt_total).toLocaleString('es-PE', { minimumFractionDigits: 0 })}`}
+              </Text>
+              <Text style={S.kpiLabel}>Deuda{'\n'}total</Text>
+            </View>
+            <View style={{ ...S.kpiCard as object, borderColor: '#991b1b' }}>
+              <Text style={{ ...S.kpiValue as object, color: '#f87171' }}>
+                {`S/ ${Number(m.debt_overdue).toLocaleString('es-PE', { minimumFractionDigits: 0 })}`}
+              </Text>
+              <Text style={S.kpiLabel}>Deuda{'\n'}vencida</Text>
+            </View>
+            <View style={S.kpiCard}>
+              <Text style={S.kpiValue}>{m.debt_reminders_month}</Text>
+              <Text style={S.kpiLabel}>Recordat.{'\n'}de cobro</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* ── NPS ── */}
+        {m.nps_total > 0 && (
+          <View style={{ marginTop: 14, marginBottom: 4 }}>
+            <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#f1f5f9', marginBottom: 8 }}>
+              Satisfacción de Pacientes (NPS)
+            </Text>
+            <View style={S.kpiRow}>
+              <View style={{ ...S.kpiCardAccent as object }}>
+                <Text style={{ fontSize: 26, fontFamily: 'Helvetica-Bold', color: m.nps_score >= 50 ? '#34d399' : m.nps_score >= 0 ? '#fbbf24' : '#f87171', textAlign: 'center' }}>
+                  {m.nps_score > 0 ? '+' : ''}{m.nps_score}
+                </Text>
+                <Text style={S.kpiLabel}>NPS Score</Text>
+              </View>
+              <View style={S.kpiCard}>
+                <Text style={S.kpiValueAmber}>{m.nps_avg_score.toFixed(1)}</Text>
+                <Text style={S.kpiLabel}>Promedio{'\n'}(sobre 5)</Text>
+              </View>
+              <View style={S.kpiCard}>
+                <Text style={S.kpiValueGreen}>{m.nps_promoters}</Text>
+                <Text style={S.kpiLabel}>Promotores{'\n'}(4-5 ⭐)</Text>
+              </View>
+              <View style={{ ...S.kpiCard as object, borderColor: '#7f1d1d' }}>
+                <Text style={{ ...S.kpiValue as object, color: '#f87171' }}>{m.nps_detractors}</Text>
+                <Text style={S.kpiLabel}>Detractores{'\n'}(1-2 ⭐)</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Summary text */}
         <View style={{ ...S.chartContainer as object, marginTop: 8 }}>
           <Text style={S.chartLabel}>Resumen del mes</Text>
@@ -508,10 +568,9 @@ export function MonthlyReportPDF({ m }: { m: ReportMetrics }) {
             Se agendaron {m.total_appointments} citas en total, de las cuales{' '}
             {m.completed_appointments} fueron completadas exitosamente ({m.completion_rate}% de
             completación). Se enviaron {m.reminders_sent} recordatorios automáticos 24 horas
-            antes de cada cita.{'\n\n'}
-
-            {m.bot_appointments > 0 && `${m.bot_appointments} citas fueron agendadas automáticamente por SofIA y `}
-            {m.manual_appointments > 0 && `${m.manual_appointments} fueron registradas manualmente por el equipo. `}
+            antes de cada cita.{' '}
+            {m.revenue_month > 0 ? `Se cobraron S/ ${Number(m.revenue_month).toLocaleString('es-PE')} durante el mes. ` : ''}
+            {m.nps_total > 0 ? `Los pacientes dieron una puntuación promedio de ${m.nps_avg_score.toFixed(1)}/5 (NPS ${m.nps_score > 0 ? '+' : ''}${m.nps_score}).` : ''}
           </Text>
         </View>
 

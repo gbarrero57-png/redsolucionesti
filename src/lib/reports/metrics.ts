@@ -45,6 +45,21 @@ export interface ReportMetrics {
 
   reminders_sent: number;
 
+  // Financial
+  revenue_month:      number;  // total paid this month
+  debt_total:         number;
+  debt_overdue:       number;
+  patients_with_debt: number;
+  debt_reminders_month: number;
+
+  // NPS
+  nps_total:      number;
+  nps_avg_score:  number;
+  nps_score:      number;  // Net Promoter Score -100 to +100
+  nps_promoters:  number;
+  nps_passives:   number;
+  nps_detractors: number;
+
   // Chart data
   weekly_bars: WeekBar[];
   daily_line: DayLine[];
@@ -150,6 +165,51 @@ export async function fetchReportMetrics(
     .gte('start_time', from)
     .lt('start_time', to);
 
+  // ── Financial ─────────────────────────────────────────────────
+  // Revenue: direct payments paid this month
+  const { data: paidPayments = [] } = await supabaseAdmin
+    .from('payments')
+    .select('amount')
+    .eq('clinic_id', clinic_id)
+    .eq('status', 'paid')
+    .gte('paid_at', from)
+    .lt('paid_at', to);
+
+  // Revenue: installments paid this month
+  const { data: paidInstallments = [] } = await supabaseAdmin
+    .from('payment_installments')
+    .select('amount, payment_plans!inner(clinic_id)')
+    .eq('payment_plans.clinic_id', clinic_id)
+    .eq('status', 'paid')
+    .gte('paid_at', from)
+    .lt('paid_at', to);
+
+  const revenue_month =
+    (paidPayments as Array<{ amount: number }>).reduce((s, p) => s + Number(p.amount), 0) +
+    (paidInstallments as Array<{ amount: number }>).reduce((s, p) => s + Number(p.amount), 0);
+
+  // Clinic-wide debt snapshot
+  const { data: debtData } = await supabaseAdmin.rpc('get_clinic_debt_summary', { p_clinic_id: clinic_id });
+  const debt = (Array.isArray(debtData) ? debtData[0] : debtData) as { patients_with_debt: number; total_debt: number; total_overdue: number } | null;
+
+  // Debt reminders sent this month
+  const { count: debt_reminders_month } = await supabaseAdmin
+    .from('debt_reminders')
+    .select('id', { count: 'exact', head: true })
+    .eq('clinic_id', clinic_id)
+    .gte('sent_at', from)
+    .lt('sent_at', to);
+
+  // ── NPS ───────────────────────────────────────────────────────
+  const { data: npsData } = await supabaseAdmin.rpc('get_clinic_nps_stats', {
+    p_clinic_id: clinic_id,
+    p_days:      new Date(year, mon, 0).getDate(), // full month days
+  });
+  const nps = (Array.isArray(npsData) ? npsData[0] : npsData) as {
+    total: number; avg_score: number; nps_score: number;
+    promoters: number; passives: number; detractors: number;
+  } | null;
+
   // ── Daily line chart (conversations + appointments per day) ───
   const daily_line: DayLine[] = [];
   for (let d = 1; d <= daysInMonth; d++) {
@@ -195,6 +255,19 @@ export async function fetchReportMetrics(
     escalation_rate,
 
     reminders_sent: reminders_sent ?? 0,
+
+    revenue_month,
+    debt_total:         debt?.total_debt    ?? 0,
+    debt_overdue:       debt?.total_overdue ?? 0,
+    patients_with_debt: debt?.patients_with_debt ?? 0,
+    debt_reminders_month: debt_reminders_month ?? 0,
+
+    nps_total:      nps?.total      ?? 0,
+    nps_avg_score:  nps?.avg_score  ?? 0,
+    nps_score:      nps?.nps_score  ?? 0,
+    nps_promoters:  nps?.promoters  ?? 0,
+    nps_passives:   nps?.passives   ?? 0,
+    nps_detractors: nps?.detractors ?? 0,
 
     weekly_bars,
     daily_line,

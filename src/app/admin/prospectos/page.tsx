@@ -170,23 +170,15 @@ function StatCard({ icon: Icon, label, value, color, loading }: {
 }
 
 function ActivateButton({ lead, onActivate }: { lead: Lead; onActivate: (l: Lead) => Promise<void> }) {
-  const [phase, setPhase] = useState<'idle' | 'confirm' | 'loading'>('idle');
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  function handleClick() {
-    if (phase === 'idle') {
-      setPhase('confirm');
-      timerRef.current = setTimeout(() => setPhase('idle'), 3000);
-    } else if (phase === 'confirm') {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      setPhase('loading');
-      onActivate(lead).finally(() => setPhase('idle'));
-    }
+  async function handleClick() {
+    setLoading(true);
+    await onActivate(lead).catch(() => null);
+    setLoading(false);
   }
 
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
-
-  if (phase === 'loading') {
+  if (loading) {
     return (
       <button disabled className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600/10 text-emerald-400 border border-emerald-500/20 opacity-60">
         <RefreshCw size={11} className="animate-spin" />
@@ -194,22 +186,11 @@ function ActivateButton({ lead, onActivate }: { lead: Lead; onActivate: (l: Lead
       </button>
     );
   }
-  if (phase === 'confirm') {
-    return (
-      <button
-        onClick={handleClick}
-        className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600/25 text-emerald-300 border border-emerald-500/40 font-semibold animate-pulse"
-      >
-        <CheckCircle size={11} />
-        <span className="hidden sm:inline">¿Confirmar?</span>
-      </button>
-    );
-  }
   return (
     <button
       onClick={handleClick}
       className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 border border-emerald-500/20 transition-colors"
-      title="Marcar como paciente activo"
+      title="Convertir en paciente activo"
     >
       <UserCheck size={11} />
       <span className="hidden sm:inline">Activar</span>
