@@ -94,35 +94,82 @@ interface NpsStats {
   detractors:  number;
 }
 
+interface FunnelStage {
+  stage: string;
+  count: number;
+  pct:   number;
+  pos:   number;
+}
+
+interface AcquisitionRow {
+  acquisition_source: string;
+  lead_count:         number;
+  with_appointment:   number;
+  conversion_rate:    number;
+}
+
+interface TimelineRow {
+  day:   string;
+  leads: number;
+  ctwa:  number;
+  appts: number;
+}
+
+interface FunnelSummary {
+  funnel:      FunnelStage[];
+  acquisition: AcquisitionRow[];
+  timeline:    TimelineRow[];
+  new_leads:   number;
+  ctwa_leads:  number;
+}
+
 function fmt(n: number) {
   return `S/ ${n.toLocaleString('es-PE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+const STAGE_LABEL: Record<string, string> = {
+  nuevo: 'Nuevo', contactado: 'Contactado', cita_agendada: 'Cita agendada',
+  cita_confirmada: 'Cita confirmada', presupuesto_enviado: 'Presupuesto',
+  ganado: 'Ganado', perdido: 'Perdido',
+};
+const STAGE_COLOR: Record<string, string> = {
+  nuevo: '#6b7280', contactado: '#7c3aed', cita_agendada: '#2563eb',
+  cita_confirmada: '#0284c7', presupuesto_enviado: '#d97706',
+  ganado: '#059669', perdido: '#dc2626',
+};
+const ACQ_LABEL: Record<string, string> = {
+  organic: 'Orgánico', demo_flow: 'Demo SofIA', landing_page: 'Landing Page',
+  import: 'Importado', referral: 'Referido',
+};
+
 export default function MetricsPage() {
-  const [metrics, setMetrics] = useState<Metrics | null>(null);
-  const [debt,    setDebt]    = useState<DebtSummary | null>(null);
-  const [reminders, setReminders] = useState<ReminderStats | null>(null);
-  const [nps,     setNps]     = useState<NpsStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [days, setDays] = useState(30);
+  const [metrics,  setMetrics]  = useState<Metrics | null>(null);
+  const [debt,     setDebt]     = useState<DebtSummary | null>(null);
+  const [reminders,setReminders]= useState<ReminderStats | null>(null);
+  const [nps,      setNps]      = useState<NpsStats | null>(null);
+  const [funnel,   setFunnel]   = useState<FunnelSummary | null>(null);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState<string | null>(null);
+  const [days,     setDays]     = useState(30);
 
   async function fetchMetrics() {
     setLoading(true);
     setError(null);
     try {
-      const [mRes, dRes, rRes, npsRes] = await Promise.all([
+      const [mRes, dRes, rRes, npsRes, fRes] = await Promise.all([
         fetch(`/api/admin/metrics?days=${days}`, { cache: 'no-store' }),
         fetch('/api/admin/payments?summary=1', { cache: 'no-store' }),
         fetch('/api/admin/debt-reminders', { cache: 'no-store' }),
         fetch(`/api/admin/nps?days=${days}`, { cache: 'no-store' }),
+        fetch(`/api/admin/funnel?days=${days}`, { cache: 'no-store' }),
       ]);
       const data = await mRes.json();
       if (data.error) throw new Error(data.error);
       setMetrics(data);
-      if (dRes.ok) setDebt(await dRes.json());
-      if (rRes.ok) setReminders(await rRes.json());
+      if (dRes.ok)   setDebt(await dRes.json());
+      if (rRes.ok)   setReminders(await rRes.json());
       if (npsRes.ok) setNps(await npsRes.json());
+      if (fRes.ok)   setFunnel(await fRes.json());
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error cargando métricas');
     } finally {
@@ -507,6 +554,118 @@ export default function MetricsPage() {
           />
         </div>
       </div>
+
+      {/* ── Embudo de captación ─────────────────────────────────────── */}
+      {funnel && funnel.funnel.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-sm font-semibold text-gray-300 flex items-center gap-2 mb-2">
+            <TrendingUp size={15} className="text-violet-400" /> Embudo de captación
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">
+            {funnel.new_leads} leads nuevos · {funnel.ctwa_leads} desde anuncios CTWA · últimos {days} días
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-4">
+            {/* Funnel bars */}
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Pipeline de pacientes (todos)</p>
+              <div className="space-y-3">
+                {funnel.funnel.filter(s => s.count > 0 || s.pos <= 2).map(s => (
+                  <div key={s.stage} className="flex items-center gap-3">
+                    <div className="w-36 text-xs text-gray-400 shrink-0">{STAGE_LABEL[s.stage] ?? s.stage}</div>
+                    <div className="flex-1 h-5 bg-gray-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.max(s.pct ?? 0, s.count > 0 ? 2 : 0)}%`,
+                          background: STAGE_COLOR[s.stage] ?? '#6b7280',
+                        }}
+                      />
+                    </div>
+                    <div className="w-12 text-right text-sm font-semibold text-white shrink-0">{s.count}</div>
+                    <div className="w-10 text-right text-xs text-gray-500 shrink-0">{s.pct != null ? `${s.pct}%` : ''}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Timeline leads */}
+            {funnel.timeline.length > 0 && (
+              <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Leads nuevos por día</p>
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={funnel.timeline.map(r => ({ ...r, day: r.day.slice(5) }))} barSize={6}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                    <XAxis dataKey="day" tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                    <YAxis tick={{ fill: '#6b7280', fontSize: 10 }} axisLine={false} tickLine={false} width={20} allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }} labelStyle={{ color: '#e5e7eb' }} />
+                    <Bar dataKey="leads" name="Leads" fill="#7c3aed" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="ctwa"  name="CTWA"  fill="#00d4aa" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* Acquisition source table */}
+          {funnel.acquisition.length > 0 && (
+            <div className="bg-gray-900 rounded-xl border border-gray-800 p-5">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Origen de leads — últimos {days} días</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-xs text-gray-500 uppercase tracking-wider">
+                      <th className="text-left pb-3 font-medium">Fuente</th>
+                      <th className="text-right pb-3 font-medium">Leads</th>
+                      <th className="text-right pb-3 font-medium">Con cita</th>
+                      <th className="text-right pb-3 font-medium">Conversión</th>
+                      <th className="pb-3 px-4">Distribución</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {funnel.acquisition.map((row, i) => {
+                      const total = funnel.acquisition.reduce((s, r) => s + r.lead_count, 0);
+                      const pct   = total > 0 ? Math.round(row.lead_count / total * 100) : 0;
+                      const isCTWA = row.acquisition_source.startsWith('ctwa:');
+                      const label  = isCTWA
+                        ? `Anuncio: ${row.acquisition_source.replace('ctwa:', '')}`
+                        : (ACQ_LABEL[row.acquisition_source] ?? row.acquisition_source);
+                      return (
+                        <tr key={i} className="border-t border-gray-800">
+                          <td className="py-2.5 text-gray-300">
+                            <span className={`inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border ${
+                              isCTWA
+                                ? 'bg-violet-500/10 text-violet-300 border-violet-500/20'
+                                : 'bg-gray-700/40 text-gray-400 border-gray-700'
+                            }`}>
+                              {isCTWA ? '📣' : '💬'} {label}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-right font-semibold text-white">{row.lead_count}</td>
+                          <td className="py-2.5 text-right text-gray-400">{row.with_appointment}</td>
+                          <td className={`py-2.5 text-right font-medium ${
+                            row.conversion_rate >= 30 ? 'text-green-400' :
+                            row.conversion_rate >= 10 ? 'text-yellow-400' : 'text-gray-500'
+                          }`}>{row.conversion_rate}%</td>
+                          <td className="py-2.5 px-4">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                <div className="h-full bg-violet-500 rounded-full" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="text-xs text-gray-500 w-8 text-right">{pct}%</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
     </div>
   );
 }
