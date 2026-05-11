@@ -107,6 +107,14 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (!staff) {
+    // Fallback: check app_metadata.role (e.g. setter — no staff DB record needed)
+    const metaRole = data.user.app_metadata?.role as string | undefined;
+    if (metaRole) {
+      const redirect = metaRole === 'setter' ? '/admin/leads' : '/admin/inbox';
+      const res = NextResponse.json({ ok: true, role: metaRole, is_superadmin: false, redirect });
+      setSessionCookies(res, data.session.access_token, data.session.refresh_token, metaRole);
+      return res;
+    }
     return NextResponse.json(
       { error: 'Sin acceso al panel. Contacta al administrador.' },
       { status: 403 }
