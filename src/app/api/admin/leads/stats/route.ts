@@ -5,7 +5,8 @@ import { getAuthContext } from '@/lib/auth';
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
 
 const ALL_STATUSES = [
-  'nuevo', 'sin_email', 'enviado', 'email_enviado', 'follow_up_enviado',
+  'nuevo', 'sin_email', 'por_llamar', 'no_contesta', 'llamada_hecha',
+  'enviado', 'email_enviado', 'follow_up_enviado',
   'respondio', 'interesado', 'demo_agendada', 'cerrado', 'no_interesado',
 ];
 

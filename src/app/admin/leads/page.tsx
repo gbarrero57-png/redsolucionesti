@@ -44,6 +44,9 @@ interface LeadFull extends Lead {
 const STATUSES: Record<string, { label: string; color: string; bg: string }> = {
   nuevo:              { label: 'Nuevo',           color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/30' },
   sin_email:          { label: 'Sin email',        color: 'text-gray-400',   bg: 'bg-gray-500/10 border-gray-500/30' },
+  por_llamar:         { label: 'Para llamar',      color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/30' },
+  no_contesta:        { label: 'No contesta',      color: 'text-rose-400',   bg: 'bg-rose-500/10 border-rose-500/30' },
+  llamada_hecha:      { label: 'Llamada hecha',    color: 'text-teal-400',   bg: 'bg-teal-500/10 border-teal-500/30' },
   enviado:            { label: 'Enviado',          color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/30' },
   email_enviado:      { label: 'Email enviado',    color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/30' },
   follow_up_enviado:  { label: 'Follow-up',        color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/30' },
@@ -51,11 +54,12 @@ const STATUSES: Record<string, { label: string; color: string; bg: string }> = {
   interesado:         { label: 'Interesado',       color: 'text-green-400',  bg: 'bg-green-500/10 border-green-500/30' },
   demo_agendada:      { label: 'Demo agendada',    color: 'text-cyan-400',   bg: 'bg-cyan-500/10 border-cyan-500/30' },
   cerrado:            { label: 'Cerrado',          color: 'text-pink-400',   bg: 'bg-pink-500/10 border-pink-500/30' },
-  no_interesado:      { label: 'No interesado',   color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/30' },
+  no_interesado:      { label: 'No interesado',    color: 'text-red-400',    bg: 'bg-red-500/10 border-red-500/30' },
 };
 
 const PIPELINE_ORDER = [
-  'nuevo','enviado','follow_up_enviado','respondio','interesado','demo_agendada','cerrado',
+  'nuevo','por_llamar','no_contesta','llamada_hecha',
+  'enviado','follow_up_enviado','respondio','interesado','demo_agendada','cerrado',
 ];
 
 const CITIES = [
@@ -63,7 +67,7 @@ const CITIES = [
 ];
 
 const EMAIL_SENT_STATUSES = new Set(['enviado','email_enviado','follow_up_enviado','respondio','cerrado','interesado','demo_agendada']);
-const STALE_ACTIVE = new Set(['nuevo','enviado','email_enviado','follow_up_enviado','respondio','interesado']);
+const STALE_ACTIVE = new Set(['nuevo','por_llamar','no_contesta','llamada_hecha','enviado','email_enviado','follow_up_enviado','respondio','interesado']);
 
 const WA_FEATURES = [
   '* Atencion 24/7 a tus pacientes',
@@ -249,7 +253,19 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
                 </a>
               ) : (
                 <div className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-800 border border-gray-700 text-gray-600 text-sm rounded-xl cursor-not-allowed">
-                  <Mail size={15} /> Sin email
+                  <Mail size={15} /> Email
+                </div>
+              )}
+              {lead.telefono ? (
+                <a
+                  href={`tel:+${lead.telefono.replace(/\D/g,'').length <= 9 ? '51' + lead.telefono.replace(/\D/g,'') : lead.telefono.replace(/\D/g,'')}`}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 text-sm font-medium rounded-xl hover:bg-blue-600/30 transition-colors"
+                >
+                  <Phone size={15} /> Llamar
+                </a>
+              ) : (
+                <div className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-800 border border-gray-700 text-gray-600 text-sm rounded-xl cursor-not-allowed">
+                  <Phone size={15} /> Llamar
                 </div>
               )}
               {lead.telefono ? (
@@ -261,12 +277,12 @@ function LeadDrawer({ leadId, onClose, onUpdated }: {
                   {waTogggling
                     ? <Loader2 size={14} className="animate-spin" />
                     : <MessageSquare size={15} />}
-                  WhatsApp
+                  WA
                   {lead.whatsapp_enviado && <Check size={12} className="text-emerald-300" />}
                 </button>
               ) : (
                 <div className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-gray-800 border border-gray-700 text-gray-600 text-sm rounded-xl cursor-not-allowed">
-                  <MessageSquare size={15} /> Sin tel.
+                  <MessageSquare size={15} /> WA
                 </div>
               )}
             </div>
@@ -739,13 +755,23 @@ export default function LeadsPage() {
                         )}
                       </div>
                       {hoveredId === lead.id && lead.telefono && (
-                        <button
-                          onClick={e => quickSendWa(lead, e)}
-                          title="Abrir WhatsApp"
-                          className="flex-shrink-0 w-7 h-7 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-600/40 transition-colors"
-                        >
-                          <MessageSquare size={13} />
-                        </button>
+                        <div className="flex gap-1">
+                          <a
+                            href={`tel:+${lead.telefono.replace(/\D/g,'').length <= 9 ? '51' + lead.telefono.replace(/\D/g,'') : lead.telefono.replace(/\D/g,'')}`}
+                            onClick={e => e.stopPropagation()}
+                            title="Llamar"
+                            className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center hover:bg-blue-600/40 transition-colors"
+                          >
+                            <Phone size={13} />
+                          </a>
+                          <button
+                            onClick={e => quickSendWa(lead, e)}
+                            title="Abrir WhatsApp"
+                            className="flex-shrink-0 w-7 h-7 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-600/40 transition-colors"
+                          >
+                            <MessageSquare size={13} />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </td>
@@ -829,13 +855,21 @@ export default function LeadsPage() {
                 {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : 'Aplicar'}
               </button>
             </div>
+            {/* Queue for calling */}
+            <button
+              onClick={() => bulkUpdate({ status: 'por_llamar' })}
+              disabled={bulkLoading}
+              className="px-3 py-1.5 bg-orange-700/30 border border-orange-600/40 text-orange-400 text-xs font-medium rounded-lg hover:bg-orange-700/50 disabled:opacity-40 transition-colors"
+            >
+              Para llamar
+            </button>
             {/* Mark WA sent */}
             <button
               onClick={() => bulkUpdate({ whatsapp_enviado: true })}
               disabled={bulkLoading}
               className="px-3 py-1.5 bg-emerald-700/30 border border-emerald-600/40 text-emerald-400 text-xs font-medium rounded-lg hover:bg-emerald-700/50 disabled:opacity-40 transition-colors"
             >
-              Marcar WA enviado
+              Marcar WA
             </button>
             {/* Export CSV */}
             <button
