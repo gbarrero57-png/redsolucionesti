@@ -7,7 +7,7 @@ const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
 export async function GET(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!ctx.is_superadmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!ctx.is_superadmin && ctx.role !== 'setter') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { searchParams } = new URL(req.url);
   const page    = Math.max(1, parseInt(searchParams.get('page') || '1'));

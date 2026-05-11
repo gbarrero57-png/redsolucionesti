@@ -71,16 +71,24 @@ export async function getAuthContext(req: NextRequest): Promise<AuthContext | nu
     .eq('active', true)
     .single();
 
-  if (!staff) return null;
+  if (staff) {
+    return {
+      user,
+      clinic_id: staff.clinic_id as string,
+      role: staff.role as string,
+      is_superadmin: false,
+      accessToken,
+      newAccessToken,
+    };
+  }
 
-  return {
-    user,
-    clinic_id: staff.clinic_id as string,
-    role: staff.role as string,
-    is_superadmin: false,
-    accessToken,
-    newAccessToken,
-  };
+  // ── app_metadata role fallback (e.g. setter — no clinic required) ──
+  const metaRole = user.app_metadata?.role as string | undefined;
+  if (metaRole) {
+    return { user, clinic_id: '', role: metaRole, is_superadmin: false, accessToken, newAccessToken };
+  }
+
+  return null;
 }
 
 /** Apply refreshed token cookie to a NextResponse if the context has a new token */

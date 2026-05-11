@@ -10,7 +10,7 @@ export async function GET(
 ) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!ctx.is_superadmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!ctx.is_superadmin && ctx.role !== 'setter') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
   const { data, error } = await supabaseAdmin
@@ -29,7 +29,7 @@ export async function PATCH(
 ) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!ctx.is_superadmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!ctx.is_superadmin && ctx.role !== 'setter') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
   const body = await req.json();

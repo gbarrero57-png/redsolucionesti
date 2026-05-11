@@ -13,7 +13,7 @@ const ALL_STATUSES = [
 export async function GET(req: NextRequest) {
   const ctx = await getAuthContext(req);
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!ctx.is_superadmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!ctx.is_superadmin && ctx.role !== 'setter') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   // Count each status in parallel — avoids Supabase's 1000-row default limit
   const results = await Promise.all(

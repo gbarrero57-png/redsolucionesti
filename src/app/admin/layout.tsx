@@ -36,7 +36,12 @@ const SUPERADMIN_NAV = [
   { href: '/admin/onboarding',     label: 'Clínicas',          icon: Building2 },
 ];
 
+const SETTER_NAV = [
+  { href: '/admin/leads', label: 'Leads CRM', icon: Users },
+];
+
 const SA_PATHS = ['/admin/global-metrics', '/admin/leads', '/admin/leads-metrics', '/admin/onboarding'];
+const SETTER_PATHS = ['/admin/leads'];
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 const WARN_BEFORE_MS  =  2 * 60 * 1000;
@@ -49,7 +54,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const pathImpliesSA = SA_PATHS.some(p => pathname.startsWith(p));
   const [isSuperadmin, setIsSuperadmin] = useState(pathImpliesSA);
-  const [role,         setRole]         = useState<'admin' | 'staff'>('admin');
+  const [role,         setRole]         = useState<'admin' | 'staff' | 'setter'>('admin');
   const [showWarning,  setShowWarning]  = useState(false);
   const [countdown,    setCountdown]    = useState(120);
   const [sidebarOpen,  setSidebarOpen]  = useState(false);
@@ -105,7 +110,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       .then(d => {
         if (d) {
           setIsSuperadmin(d.is_superadmin === true);
-          if (d.role === 'staff') setRole('staff');
+          if (d.role === 'staff')  setRole('staff');
+          if (d.role === 'setter') setRole('setter');
         }
       })
       .catch(() => {});
@@ -113,17 +119,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const onSAPath = SA_PATHS.some(p => pathname.startsWith(p));
-    // Never redirect away from the login page — prevents logout loop
+    const onSetterPath = SETTER_PATHS.some(p => pathname.startsWith(p));
     if (pathname.startsWith('/admin/login')) return;
     if (isSuperadmin && !onSAPath && pathname !== '/admin' && pathname !== '/admin/') {
       router.replace('/admin/global-metrics');
     }
-    if (!isSuperadmin && onSAPath) {
+    if (!isSuperadmin && onSAPath && !onSetterPath) {
+      router.replace(role === 'setter' ? '/admin/leads' : '/admin/inbox');
+    }
+    if (!isSuperadmin && onSAPath && onSetterPath && role !== 'setter') {
       router.replace('/admin/inbox');
     }
-  }, [isSuperadmin, pathname, router]);
+  }, [isSuperadmin, role, pathname, router]);
 
-  const visibleNav = isSuperadmin ? SUPERADMIN_NAV : role === 'staff' ? STAFF_NAV : ADMIN_NAV;
+  const visibleNav = isSuperadmin ? SUPERADMIN_NAV : role === 'setter' ? SETTER_NAV : role === 'staff' ? STAFF_NAV : ADMIN_NAV;
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   // Nombre de la página actual para el header móvil y el título del tab
@@ -144,7 +153,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div>
             <p className="text-sm font-semibold text-white">SofIA Admin</p>
-            <p className="text-xs text-gray-400">{isSuperadmin ? 'Super Admin' : role === 'staff' ? 'Staff' : 'Administrador'}</p>
+            <p className="text-xs text-gray-400">{isSuperadmin ? 'Super Admin' : role === 'setter' ? 'Setter' : role === 'staff' ? 'Staff' : 'Administrador'}</p>
           </div>
           {isSuperadmin && (
             <span className="ml-2 text-[10px] bg-amber-600/20 text-amber-400 border border-amber-600/30 px-1.5 py-0.5 rounded-full font-medium">SA</span>
