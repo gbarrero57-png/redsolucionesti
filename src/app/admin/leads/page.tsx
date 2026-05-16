@@ -547,7 +547,7 @@ export default function LeadsPage() {
     <div className="flex flex-col h-full bg-gray-950">
 
       {/* ── Header ── */}
-      <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-800">
+      <div className="flex-shrink-0 px-4 pt-4 pb-3 md:px-6 md:pt-6 md:pb-4 border-b border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">
@@ -600,12 +600,12 @@ export default function LeadsPage() {
 
         {/* Filter dropdowns */}
         {showFilters && (
-          <div className="flex gap-2 mt-2 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-2 mt-2">
             <div className="relative">
               <select
                 value={status}
                 onChange={e => { setStatus(e.target.value); setPage(1); }}
-                className="appearance-none bg-gray-900 border border-gray-700 rounded-lg pl-3 pr-7 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 cursor-pointer"
+                className="w-full appearance-none bg-gray-900 border border-gray-700 rounded-lg pl-3 pr-7 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500 cursor-pointer"
               >
                 <option value="">Todos los estados</option>
                 {Object.entries(STATUSES).map(([k, v]) => (
@@ -618,7 +618,7 @@ export default function LeadsPage() {
               <select
                 value={ciudad}
                 onChange={e => { setCiudad(e.target.value); setPage(1); }}
-                className="appearance-none bg-gray-900 border border-gray-700 rounded-lg pl-3 pr-7 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 cursor-pointer"
+                className="w-full appearance-none bg-gray-900 border border-gray-700 rounded-lg pl-3 pr-7 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500 cursor-pointer"
               >
                 <option value="">Todas las ciudades</option>
                 {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -629,7 +629,7 @@ export default function LeadsPage() {
               <select
                 value={fuente}
                 onChange={e => { setFuente(e.target.value); setPage(1); }}
-                className="appearance-none bg-gray-900 border border-gray-700 rounded-lg pl-3 pr-7 py-2 text-sm text-gray-300 focus:outline-none focus:border-violet-500 cursor-pointer"
+                className="w-full appearance-none bg-gray-900 border border-gray-700 rounded-lg pl-3 pr-7 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-violet-500 cursor-pointer"
               >
                 <option value="">Todas las fuentes</option>
                 <option value="meta_ads">Meta Ads</option>
@@ -684,7 +684,83 @@ export default function LeadsPage() {
             <p className="text-sm">Sin resultados</p>
           </div>
         ) : (
-          <table className="w-full text-sm">
+          <>
+          {/* ── Mobile card list ── */}
+          <div className={`md:hidden divide-y divide-gray-800/50 ${loading ? 'opacity-50' : ''}`}>
+            {leads.map(lead => {
+              const days = getDaysStale(lead);
+              const staleBorder = days === null ? 'border-l-2 border-transparent' : days > 14 ? 'border-l-2 border-red-500/60' : days > 7 ? 'border-l-2 border-amber-500/40' : 'border-l-2 border-transparent';
+              return (
+                <div
+                  key={lead.id}
+                  onClick={() => setSelected(lead.id)}
+                  className={`px-4 py-4 cursor-pointer active:bg-gray-900 transition-colors ${checkedIds.has(lead.id) ? 'bg-violet-950/20' : ''} ${staleBorder}`}
+                >
+                  {/* Row 1: checkbox + name + status + days */}
+                  <div className="flex items-start gap-3 mb-1.5">
+                    <div className="pt-0.5 flex-shrink-0" onClick={e => { e.stopPropagation(); toggleCheck(lead.id); }}>
+                      <input type="checkbox" checked={checkedIds.has(lead.id)} readOnly
+                        className="w-4 h-4 rounded border-gray-600 bg-gray-800 accent-violet-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-white text-sm leading-snug line-clamp-1">{lead.nombre}</p>
+                      {lead.ciudad && (
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {lead.distrito ? `${lead.distrito}, ` : ''}{lead.ciudad}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      <StatusBadge status={lead.status} />
+                      {days !== null && (
+                        <span className={`text-[10px] tabular-nums font-medium ${days > 14 ? 'text-red-400' : days > 7 ? 'text-amber-400' : 'text-gray-600'}`}>
+                          {days === 0 ? 'hoy' : `${days}d`}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Row 2: score/rating */}
+                  {(lead.score_relevancia > 0 || lead.rating) && (
+                    <div className="flex items-center gap-3 text-xs text-gray-500 ml-7 mb-3">
+                      {lead.score_relevancia > 0 && <span className="text-violet-400 font-medium">Score {lead.score_relevancia}</span>}
+                      {lead.rating && <span className="text-amber-400">★{lead.rating}</span>}
+                      {lead.total_resenas > 0 && <span>{lead.total_resenas} reseñas</span>}
+                    </div>
+                  )}
+                  {/* Row 3: action buttons */}
+                  <div className="flex gap-2 ml-7" onClick={e => e.stopPropagation()}>
+                    {lead.telefono ? (
+                      <a
+                        href={`tel:+${lead.telefono.replace(/\D/g,'').length <= 9 ? '51' + lead.telefono.replace(/\D/g,'') : lead.telefono.replace(/\D/g,'')}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 text-xs font-medium rounded-xl"
+                      >
+                        <Phone size={14} /> Llamar
+                      </a>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-gray-800 border border-gray-700 text-gray-600 text-xs rounded-xl">
+                        <Phone size={14} /> Sin tel.
+                      </div>
+                    )}
+                    {lead.telefono ? (
+                      <button
+                        onClick={e => quickSendWa(lead, e)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 text-xs font-medium rounded-xl"
+                      >
+                        <MessageSquare size={14} /> WhatsApp
+                      </button>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-gray-800 border border-gray-700 text-gray-600 text-xs rounded-xl">
+                        <MessageSquare size={14} /> Sin tel.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── Desktop table ── */}
+          <table className="hidden md:table w-full text-sm">
             <thead className="sticky top-0 bg-gray-900 z-10">
               <tr className="border-b border-gray-800">
                 <th className="px-3 py-3 w-8">
@@ -734,88 +810,53 @@ export default function LeadsPage() {
                   onMouseLeave={() => setHoveredId(null)}
                   className={`border-b border-gray-800/50 cursor-pointer transition-colors group ${checkedIds.has(lead.id) ? 'bg-violet-950/20' : staleClass} hover:bg-gray-900`}
                 >
-                  {/* Checkbox */}
                   <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      checked={checkedIds.has(lead.id)}
-                      onChange={() => toggleCheck(lead.id)}
-                      className="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 accent-violet-500 cursor-pointer"
-                    />
+                    <input type="checkbox" checked={checkedIds.has(lead.id)} onChange={() => toggleCheck(lead.id)}
+                      className="w-3.5 h-3.5 rounded border-gray-600 bg-gray-800 accent-violet-500 cursor-pointer" />
                   </td>
-                  {/* Nombre */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-200 group-hover:text-white transition-colors line-clamp-1">
-                          {lead.nombre}
-                        </p>
-                        {lead.email && (
-                          <p className="text-[11px] text-gray-600 truncate max-w-[180px]">{lead.email}</p>
-                        )}
+                        <p className="font-medium text-gray-200 group-hover:text-white transition-colors line-clamp-1">{lead.nombre}</p>
+                        {lead.email && <p className="text-[11px] text-gray-600 truncate max-w-[180px]">{lead.email}</p>}
                       </div>
                       {hoveredId === lead.id && lead.telefono && (
                         <div className="flex gap-1">
-                          <a
-                            href={`tel:+${lead.telefono.replace(/\D/g,'').length <= 9 ? '51' + lead.telefono.replace(/\D/g,'') : lead.telefono.replace(/\D/g,'')}`}
-                            onClick={e => e.stopPropagation()}
-                            title="Llamar"
-                            className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center hover:bg-blue-600/40 transition-colors"
-                          >
+                          <a href={`tel:+${lead.telefono.replace(/\D/g,'').length <= 9 ? '51' + lead.telefono.replace(/\D/g,'') : lead.telefono.replace(/\D/g,'')}`}
+                            onClick={e => e.stopPropagation()} title="Llamar"
+                            className="flex-shrink-0 w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center hover:bg-blue-600/40 transition-colors">
                             <Phone size={13} />
                           </a>
-                          <button
-                            onClick={e => quickSendWa(lead, e)}
-                            title="Abrir WhatsApp"
-                            className="flex-shrink-0 w-7 h-7 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-600/40 transition-colors"
-                          >
+                          <button onClick={e => quickSendWa(lead, e)} title="WhatsApp"
+                            className="flex-shrink-0 w-7 h-7 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-600/40 transition-colors">
                             <MessageSquare size={13} />
                           </button>
                         </div>
                       )}
                     </div>
                   </td>
-                  {/* Ciudad */}
                   <td className="px-4 py-3 hidden md:table-cell">
                     {lead.ciudad ? (
                       <span className="text-xs text-gray-400">
-                        {lead.distrito ? <span className="text-gray-500">{lead.distrito}, </span> : null}
-                        {lead.ciudad}
+                        {lead.distrito ? <span className="text-gray-500">{lead.distrito}, </span> : null}{lead.ciudad}
                       </span>
                     ) : <span className="text-gray-700">—</span>}
                   </td>
-                  {/* Contacto icons */}
                   <td className="px-4 py-3 hidden lg:table-cell">
                     <div className="flex gap-1.5">
-                      <span className={`w-5 h-5 rounded flex items-center justify-center ${lead.email ? 'bg-violet-500/15 text-violet-400' : 'bg-gray-800 text-gray-700'}`}>
-                        <Mail size={11} />
-                      </span>
-                      <span className={`w-5 h-5 rounded flex items-center justify-center ${lead.telefono ? 'bg-emerald-500/15 text-emerald-400' : 'bg-gray-800 text-gray-700'}`}>
-                        <Phone size={11} />
-                      </span>
+                      <span className={`w-5 h-5 rounded flex items-center justify-center ${lead.email ? 'bg-violet-500/15 text-violet-400' : 'bg-gray-800 text-gray-700'}`}><Mail size={11} /></span>
+                      <span className={`w-5 h-5 rounded flex items-center justify-center ${lead.telefono ? 'bg-emerald-500/15 text-emerald-400' : 'bg-gray-800 text-gray-700'}`}><Phone size={11} /></span>
                     </div>
                   </td>
-                  {/* Status */}
-                  <td className="px-4 py-3">
-                    <StatusBadge status={lead.status} />
-                  </td>
-                  {/* Score */}
+                  <td className="px-4 py-3"><StatusBadge status={lead.status} /></td>
                   <td className="px-4 py-3 hidden xl:table-cell">
                     <span className="text-xs font-mono text-violet-400">{lead.score_relevancia}</span>
-                    {lead.rating && (
-                      <span className="text-[10px] text-amber-500 ml-1.5">★{lead.rating}</span>
-                    )}
+                    {lead.rating && <span className="text-[10px] text-amber-500 ml-1.5">★{lead.rating}</span>}
                   </td>
-                  {/* Fecha */}
-                  <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-gray-600">
-                    {fmt(lead.fecha_envio || lead.created_at)}
-                  </td>
-                  {/* Días sin tocar */}
+                  <td className="px-4 py-3 hidden xl:table-cell text-[11px] text-gray-600">{fmt(lead.fecha_envio || lead.created_at)}</td>
                   <td className="px-4 py-3 hidden xl:table-cell text-right">
                     {days !== null && (
-                      <span className={`text-xs tabular-nums font-medium ${
-                        days > 14 ? 'text-red-400' : days > 7 ? 'text-amber-400' : 'text-gray-600'
-                      }`}>
+                      <span className={`text-xs tabular-nums font-medium ${days > 14 ? 'text-red-400' : days > 7 ? 'text-amber-400' : 'text-gray-600'}`}>
                         {days === 0 ? 'hoy' : `${days}d`}
                       </span>
                     )}
@@ -825,22 +866,41 @@ export default function LeadsPage() {
               })}
             </tbody>
           </table>
+          </>
         )}
       </div>
 
       {/* ── Bulk action toolbar ── */}
       {checkedIds.size > 0 && (
-        <div className="flex-shrink-0 flex items-center gap-3 px-6 py-3 border-t border-amber-600/30 bg-amber-950/20">
-          <span className="text-sm font-medium text-amber-400">
-            {checkedIds.size} seleccionado{checkedIds.size > 1 ? 's' : ''}
-          </span>
-          <div className="flex gap-2 ml-auto flex-wrap">
-            {/* Change status */}
-            <div className="flex gap-1">
+        <div className="flex-shrink-0 px-4 py-3 border-t border-amber-600/30 bg-amber-950/20 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-amber-400">
+              {checkedIds.size} seleccionado{checkedIds.size > 1 ? 's' : ''}
+            </span>
+            <button onClick={() => setCheckedIds(new Set())} className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors">
+              <X size={14} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => bulkUpdate({ status: 'por_llamar' })}
+              disabled={bulkLoading}
+              className="flex items-center justify-center gap-1.5 py-2.5 bg-orange-700/30 border border-orange-600/40 text-orange-400 text-xs font-medium rounded-xl hover:bg-orange-700/50 disabled:opacity-40 transition-colors"
+            >
+              <Phone size={12} /> Para llamar
+            </button>
+            <button
+              onClick={() => bulkUpdate({ whatsapp_enviado: true })}
+              disabled={bulkLoading}
+              className="flex items-center justify-center gap-1.5 py-2.5 bg-emerald-700/30 border border-emerald-600/40 text-emerald-400 text-xs font-medium rounded-xl hover:bg-emerald-700/50 disabled:opacity-40 transition-colors"
+            >
+              <MessageSquare size={12} /> Marcar WA
+            </button>
+            <div className="flex gap-1.5 col-span-2">
               <select
                 value={bulkStatus}
                 onChange={e => setBulkStatus(e.target.value)}
-                className="appearance-none bg-gray-800 border border-gray-700 rounded-lg pl-2 pr-6 py-1.5 text-xs text-gray-300 focus:outline-none focus:border-violet-500 cursor-pointer"
+                className="flex-1 appearance-none bg-gray-800 border border-gray-700 rounded-xl pl-3 pr-2 py-2.5 text-xs text-gray-300 focus:outline-none focus:border-violet-500"
               >
                 <option value="">Cambiar estado...</option>
                 {Object.entries(STATUSES).map(([k, v]) => (
@@ -850,40 +910,16 @@ export default function LeadsPage() {
               <button
                 onClick={() => bulkStatus && bulkUpdate({ status: bulkStatus })}
                 disabled={!bulkStatus || bulkLoading}
-                className="px-3 py-1.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition-colors"
+                className="px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-white text-xs font-semibold rounded-xl transition-colors"
               >
                 {bulkLoading ? <Loader2 size={12} className="animate-spin" /> : 'Aplicar'}
               </button>
             </div>
-            {/* Queue for calling */}
-            <button
-              onClick={() => bulkUpdate({ status: 'por_llamar' })}
-              disabled={bulkLoading}
-              className="px-3 py-1.5 bg-orange-700/30 border border-orange-600/40 text-orange-400 text-xs font-medium rounded-lg hover:bg-orange-700/50 disabled:opacity-40 transition-colors"
-            >
-              Para llamar
-            </button>
-            {/* Mark WA sent */}
-            <button
-              onClick={() => bulkUpdate({ whatsapp_enviado: true })}
-              disabled={bulkLoading}
-              className="px-3 py-1.5 bg-emerald-700/30 border border-emerald-600/40 text-emerald-400 text-xs font-medium rounded-lg hover:bg-emerald-700/50 disabled:opacity-40 transition-colors"
-            >
-              Marcar WA
-            </button>
-            {/* Export CSV */}
             <button
               onClick={exportCSV}
-              className="px-3 py-1.5 bg-gray-800 border border-gray-700 text-gray-300 text-xs font-medium rounded-lg hover:bg-gray-700 transition-colors"
+              className="col-span-2 py-2 bg-gray-800 border border-gray-700 text-gray-400 text-xs font-medium rounded-xl hover:bg-gray-700 transition-colors"
             >
               Exportar CSV
-            </button>
-            {/* Clear selection */}
-            <button
-              onClick={() => setCheckedIds(new Set())}
-              className="p-1.5 text-gray-500 hover:text-gray-300 transition-colors"
-            >
-              <X size={14} />
             </button>
           </div>
         </div>
@@ -891,7 +927,7 @@ export default function LeadsPage() {
 
       {/* ── Pagination ── */}
       {totalPages > 1 && (
-        <div className="flex-shrink-0 flex items-center justify-between px-6 py-3 border-t border-gray-800 bg-gray-900">
+        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900">
           <p className="text-xs text-gray-600">
             {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, total)} de {total.toLocaleString()}
           </p>
@@ -899,11 +935,11 @@ export default function LeadsPage() {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="p-1.5 rounded-lg text-gray-500 hover:text-gray-200 hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="p-2 rounded-lg text-gray-500 hover:text-gray-200 hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
-            {/* Page numbers (window of 5) */}
+            {/* Page numbers hidden on mobile */}
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const start = Math.max(1, Math.min(page - 2, totalPages - 4));
               const p = start + i;
@@ -911,7 +947,7 @@ export default function LeadsPage() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${
+                  className={`hidden sm:flex w-7 h-7 rounded-lg text-xs font-medium transition-colors items-center justify-center ${
                     p === page
                       ? 'bg-amber-600/20 text-amber-400 border border-amber-600/30'
                       : 'text-gray-500 hover:text-gray-200 hover:bg-gray-800'
